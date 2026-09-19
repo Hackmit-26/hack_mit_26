@@ -1,0 +1,52 @@
+time,date,item_purchased,quantity,amount_usd,retailer,person
+08:07,2026-09-01,Oat latte,1,5.75,Grain & Co. Café,Madhav
+08:10,2026-09-02,Oat latte,1,5.75,Grain & Co. Café,Madhav
+08:05,2026-09-03,Oat latte,1,5.75,Grain & Co. Café,Madhav
+16:26,2026-09-03,Taro milk tea,1,6.75,Pip's Boba,Madhav
+10:16,2026-09-04,White tee,1,22.00,Halfmoon Basics,Madhav
+21:15,2026-09-04,Black long-sleeve tee,1,24.00,Basic Theory,Madhav
+14:40,2026-09-05,Notebook 3-pack,1,16.00,Paper Trail,Madhav
+08:12,2026-09-08,Oat latte,1,5.75,Grain & Co. Café,Madhav
+08:09,2026-09-09,Oat latte,1,5.75,Grain & Co. Café,Madhav
+12:32,2026-09-09,Potting soil,1,9.00,Green Thumb Nursery,Madhav
+19:07,2026-09-09,LED bulbs (2-pack),1,12.00,Lumen & Co,Madhav
+08:11,2026-09-10,Oat latte,1,5.75,Grain & Co. Café,Madhav
+11:10,2026-09-10,Wool socks,1,11.50,Sock Society,Madhav
+09:51,2026-09-11,Sparkling lemonade,1,4.75,Blue Door Bakery,Madhav
+20:12,2026-09-11,Ceramic vase,1,22.00,Hearth & Home,Madhav
+16:16,2026-09-12,Succulent,1,8.50,Green Thumb Nursery,Madhav
+16:46,2026-09-13,Fresh OJ,1,6.50,Sunny Side Juice,Madhav
+21:03,2026-09-13,Fountain pen,1,24.00,Ink & Anchor,Madhav
+15:30,2026-09-14,Iced matcha,1,7.25,Mori Tea House,Madhav
+18:12,2026-09-14,Canvas tote bag,1,16.00,Plain Sight,Madhav
+08:13,2026-09-15,Oat latte,1,5.75,Grain & Co. Café,Madhav
+08:06,2026-09-16,Oat latte,1,5.75,Grain & Co. Café,Madhav
+16:24,2026-09-16,Green juice,1,8.75,Sunny Side Juice,Madhav
+08:10,2026-09-17,Oat latte,1,5.75,Grain & Co. Café,Madhav
+12:09,2026-09-17,Brown sugar boba,1,7.50,Pip's Boba,Madhav
+20:34,2026-09-17,Linen throw pillow,1,28.00,Hearth & Home,Madhav
+10:39,2026-09-18,Nitro cold brew,1,6.00,Brewhouse,Madhav
+12:23,2026-09-18,Adidas crew socks,1,14.00,Adidas,Madhav
+17:46,2026-09-18,Pocket notebook 2-pack,1,12.50,Field Notes Market,Madhav
+15:33,2026-09-19,Denim jacket,1,36.00,Marrow Vintage,Madhav
+17:54,2026-09-19,Chai latte,1,5.00,Tea Leaf,Madhav
+10:38,2026-09-20,Corduroy pants,1,22.00,Retro Row,Madhav
+13:55,2026-09-20,Ink cartridges,1,6.00,Ink & Anchor,Madhav
+14:06,2026-09-21,Ceramic planter,1,14.00,Green Thumb Nursery,Madhav
+20:53,2026-09-21,Hoodie,1,58.00,Loom & Lane,Madhav
+08:08,2026-09-22,Oat latte,1,5.75,Grain & Co. Café,Madhav
+13:43,2026-09-22,Earl grey tea,1,4.50,Tea Leaf,Madhav
+19:23,2026-09-22,Desk lamp,1,26.00,Lumen & Co,Madhav
+08:12,2026-09-23,Oat latte,1,5.75,Grain & Co. Café,Madhav
+14:27,2026-09-23,Iced chai,1,5.50,Blue Door Bakery,Madhav
+19:10,2026-09-23,Charging cable,1,11.99,Volt & Co,Madhav
+08:05,2026-09-24,Oat latte,1,5.75,Grain & Co. Café,Madhav
+14:07,2026-09-24,Ribbed beanie,1,10.50,Halfmoon Basics,Madhav
+20:58,2026-09-25,Phone case,1,15.00,Circuit Hut,Madhav
+12:05,2026-09-27,Washi tape set,1,5.50,Paper Trail,Madhav
+16:31,2026-09-28,Dot-grid notebook,1,11.00,Paper Trail,Madhav
+08:11,2026-09-29,Oat latte,1,5.75,Grain & Co. Café,Madhav
+15:14,2026-09-29,Cold brew,1,5.25,Brewhouse,Madhav
+08:09,2026-09-30,Oat latte,1,5.75,Grain & Co. Café,Madhav
+10:41,2026-09-30,Vintage flannel,1,18.00,Second Sunday Thrift,Madhav
+17:28,2026-09-30,Grey tee,1,19.00,Basic Theory,Madhav
