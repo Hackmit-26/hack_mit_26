@@ -73,7 +73,9 @@ export type ArtKind =
   | "sandal"
   | "poles"
   | "plate"
-  | "grinder";
+  | "grinder"
+  | "instant"
+  | "wok";
 
 export interface User {
   id: UserId;

@@ -717,4 +717,26 @@ const shapes: Record<ArtKind, React.ReactNode> = {
       <circle cx="100" cy="144" r="10" fill="#F5E39B" />
     </>
   ),
+  instant: (
+    <>
+      <path d="M30 56 H170 Q180 56 180 68 V150 Q180 162 170 162 H30 Q20 162 20 150 V68 Q20 56 30 56 Z" fill="#F5ECD9" />
+      <path d="M20 84 H180 V118 H20 Z" fill="#E8806F" />
+      <path d="M20 122 H180 V150 Q180 162 170 162 H30 Q20 162 20 150 Z" fill="#D9DEEA" />
+      <circle cx="100" cy="101" r="26" fill="#141A47" />
+      <circle cx="100" cy="101" r="14" fill="#4A56FF" />
+      <rect x="38" y="66" width="22" height="12" rx="3" fill="#F5E39B" />
+      <rect x="52" y="138" width="96" height="42" rx="4" fill="#F5ECD9" />
+      <rect x="60" y="146" width="80" height="26" fill="#A8DCC2" strokeWidth="2" />
+    </>
+  ),
+  wok: (
+    <>
+      <path d="M16 74 H184 C184 132 147 166 100 166 C53 166 16 132 16 74 Z" fill="#2A2F6B" />
+      <ellipse cx="100" cy="74" rx="84" ry="18" fill="#3A4180" />
+      <ellipse cx="100" cy="74" rx="62" ry="11" fill="#141A47" stroke="none" />
+      <path d="M22 62 C4 56 4 40 22 36" fill="none" strokeWidth="9" />
+      <path d="M178 62 C196 56 196 40 178 36" fill="none" strokeWidth="9" />
+      <path d="M62 108 q38 26 76 0" fill="none" stroke="#F5E39B" strokeWidth="3" />
+    </>
+  ),
 };
