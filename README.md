@@ -3,10 +3,25 @@
 A private monthly recap for a close friend group. Social first, commerce second:
 every recommendation arrives as something a friend already found.
 
+Two processes. The backend is a real Fastify API over Supabase, with Anthropic
+doing the gift reasoning and Visa Direct moving the money.
+
 ```bash
+# backend
+cd backend && pnpm install
+cp .env.example .env                 # runs offline as-is
+pnpm dev                             # http://localhost:8080
+
+# frontend, in a second terminal, from the repo root
 npm install
-npm run dev      # http://localhost:3000
+cp .env.local.example .env.local     # API base URL + the viewer to sign in as
+npm run dev                          # http://localhost:3000
 ```
+
+Out of the box `.env.example` is fully offline: `DB_MODE=memory` seeds from
+fixtures, `LLM_MOCK=true` resolves every model call to a registered fixture and
+`VISA_MODE=mock` answers like the sandbox does. Fill in the credentials and the
+same code paths go live — there is no separate "demo" implementation.
 
 ## The demo path
 
@@ -43,19 +58,73 @@ src/
   state/          one reducer for reactions, privacy, saved items, orders
 ```
 
-## Swapping in the backend
+## The backend
 
-Nothing fake lives in a component.
+`backend/` is a Fastify + TypeScript API over Supabase, with the AI and the
+payments both real.
+
+```
+backend/src/
+  routes/         items, finds, wishlist, reactions, comments, wrapped,
+                  threads, contributions, reveals, birthdays, passkeys
+  ai/             giftPicker, wrappedGenerator, ingest (receipt vision),
+                  taste, embed — prompts under ai/prompts/
+  domain/         threadStateMachine, splits, permissions, productLinks
+  visa/           visaDirect (pull/push/reverse), mle, client, cards
+  db/             store (authoritative), postgres (hydrate), mirror (write-through)
+```
+
+**Persistence.** The in-memory store is authoritative for the duration of a
+request; Postgres is a projection. The API hydrates its working set from
+Supabase at boot and mirrors writes back through `db/mirror.ts`, so the demo
+never blocks on a round trip but nothing is lost across a restart.
+
+**Gift picking is genuinely AI.** `ai/giftPicker.ts` builds a taste profile from
+what the recipient actually saved, searches the catalogue over embeddings, and
+asks Claude for a shortlist. Every pick must cite real items the recipient
+hearted or wishlisted — a pick that cites nothing is rejected and retried, so
+the reasoning you read on a card is grounded in that person's own history.
+
+**Visa Direct.** `visa/visaDirect.ts` speaks the Funds Transfer API directly
+over two-way SSL: `pullfundstransactions` to collect each contributor's share,
+`pushfundstransactions` to disburse, `reversefundstransactions` to unwind a
+cancelled pool. Transactions are written to an append-only audit trail, and
+`visa/mle.ts` implements Message Level Encryption (JWE, `RSA-OAEP-256` +
+`A128GCM`) for projects that require it. `pnpm visa:probe` tells apart the three
+ways a call can fail before it reaches the funds-transfer logic — 9611 not
+entitled, 9005 no such route, 9125 MLE expected.
+
+**A gift pool is a state machine.** `picking → voting → collecting → funded →
+bought → revealed`, with `refunding → refunded` for a cancellation. Every
+transition is guarded in `domain/threadStateMachine.ts`, so a late vote or a
+double approval is a 409 rather than a double charge.
+
+**Privacy is enforced server-side, not hidden in the UI.** The recipient of a
+gift gets a 404 — never a 403 — on the thread, the reveal and its comments,
+because *whether a gift exists* is itself the secret. Hearts are returned as an
+anonymous count and never name who reacted. Finds carry no prices.
+
+## Swapping in the rest
 
 - **Product sourcing** — `services/commerce.ts`. `findOptions()` returns the same
   item, a close match and a budget option. Point it at a shopping-results API;
   callers don't change.
-- **Payments** — `services/checkout.ts`, shaped after Visa Intelligent Commerce:
-  `buildPaymentInstruction` → `requestPasskeyApproval` → `requestCredentials` →
-  `completePurchase` → `sendOutcomeSignal`. `runCheckout()` drives the sheet's
-  stages. Replace the four calls with the sandbox and the UI is untouched.
-- **Data** — every module under `src/data/` exports plain typed values matching
-  `src/lib/types.ts`. Re-export the same names from API clients to go live.
+- **Payments UI** — `services/checkout.ts`, shaped after Visa Intelligent
+  Commerce: `buildPaymentInstruction` → `requestPasskeyApproval` →
+  `requestCredentials` → `completePurchase` → `sendOutcomeSignal`.
+  `runCheckout()` drives the sheet's stages; the money itself moves through
+  Visa Direct on the backend.
+
+## Tests
+
+```bash
+npx vitest run                  # frontend
+cd backend && pnpm test         # backend
+```
+
+Both suites are offline and deterministic: the backend's `vitest.config.ts`
+pins `DB_MODE=memory` and `LLM_MOCK=true` so a populated `.env` can never point
+the suite at live Supabase or a real model.
 
 ## Design source
 

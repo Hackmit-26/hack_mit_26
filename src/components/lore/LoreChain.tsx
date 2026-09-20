@@ -1,9 +1,11 @@
 "use client";
 
 import { Avatar } from "@/components/primitives/Avatar";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { chainFootnote, chainReaction, loreCases } from "@/data/wrapped";
 import type { ArtKind } from "@/lib/types";
+import { searchUrl } from "@/services/commerce";
 import { LoreFrame, LoreHeader } from "./LoreFrame";
 
 const POS = [
@@ -147,6 +149,17 @@ export function LoreChain() {
             boxShadow: "4px 4px 0 rgba(0,0,0,0.35)",
           }}
         >
+          <ItemLink
+            url={searchUrl(node.title, null)}
+            label={node.title}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
           <div
             style={{
               width: 60,
@@ -200,6 +213,7 @@ export function LoreChain() {
             </div>
             <div style={{ fontSize: 13.5, lineHeight: 1.2 }}>{node.when}</div>
           </div>
+          </ItemLink>
           <div
             style={{
               position: "absolute",

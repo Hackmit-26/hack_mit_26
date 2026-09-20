@@ -4,13 +4,14 @@ import Link from "next/link";
 
 import { Avatar } from "@/components/primitives/Avatar";
 import { Lock } from "@/components/primitives/Glyphs";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { purchasesFor } from "@/data/purchases";
 import { viewer } from "@/data/users";
 import { wrappedCards } from "@/data/wrapped";
 import { getChapter } from "@/data/chapters";
-import { formatPrice } from "@/services/commerce";
+import { formatPrice, searchUrl } from "@/services/commerce";
 import { useApp } from "@/state/store";
 import type { SharingState } from "@/lib/types";
 
@@ -195,30 +196,43 @@ export default function SettingsPage() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <div
+                  <ItemLink
+                    url={searchUrl(p.item, p.merchant)}
+                    label={`${p.item} at ${p.merchant}`}
                     style={{
-                      width: 52,
-                      height: 52,
-                      flexShrink: 0,
-                      border: "2px solid #141A47",
-                      borderRadius: 14,
-                      background: "#F5ECD9",
-                      padding: 5,
-                      boxSizing: "border-box",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      flex: "1 1 220px",
+                      minWidth: 0,
                     }}
                   >
-                    <ProductArt kind={p.art} src={p.image} />
-                  </div>
-                  <div style={{ flex: "1 1 180px", minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
-                      {p.item}
+                    <div
+                      style={{
+                        width: 52,
+                        height: 52,
+                        flexShrink: 0,
+                        border: "2px solid #141A47",
+                        borderRadius: 14,
+                        background: "#F5ECD9",
+                        padding: 5,
+                        boxSizing: "border-box",
+                      }}
+                    >
+                      <ProductArt kind={p.art} src={p.image} />
                     </div>
-                    <div style={{ fontSize: 13, opacity: 0.78 }}>
-                      {p.merchant} · {p.category}
-                      {privacy.showAmounts && ` · ${formatPrice(p.amountCents)}`}
-                      {excluded && " · excluded category"}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
+                        {p.item}
+                      </div>
+                      <div style={{ fontSize: 13, opacity: 0.78 }}>
+                        <span style={{ textDecoration: "underline" }}>{p.merchant}</span> ·{" "}
+                        {p.category}
+                        {privacy.showAmounts && ` · ${formatPrice(p.amountCents)}`}
+                        {excluded && " · excluded category"}
+                      </div>
                     </div>
-                  </div>
+                  </ItemLink>
                   <div style={{ display: "flex", gap: 6 }}>
                     {SHARING_OPTIONS.map((o) => {
                       const on = state === o.value;

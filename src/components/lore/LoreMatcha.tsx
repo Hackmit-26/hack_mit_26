@@ -1,8 +1,10 @@
 "use client";
 
 import { Avatar } from "@/components/primitives/Avatar";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { getUser } from "@/data/users";
 import { loreCases, matchaTimeline } from "@/data/wrapped";
+import { searchUrl } from "@/services/commerce";
 import { LoreFrame, LoreHeader, LoreStamp } from "./LoreFrame";
 
 const BGS = ["#A8DCC2", "#EBB5BD", "#BBA9E8", "#F5E39B"];
@@ -109,10 +111,21 @@ export function LoreMatcha() {
                   >
                     {getUser(e.userId).name}
                   </div>
-                  <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.15 }}>{e.store}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.2, opacity: 0.85 }}>
-                    {e.item} · {e.time}
-                  </div>
+                  <ItemLink url={searchUrl(e.item, e.store)} label={`${e.item} at ${e.store}`}>
+                    <div
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 700,
+                        lineHeight: 1.15,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      {e.store}
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.2, opacity: 0.85 }}>
+                      {e.item} · {e.time}
+                    </div>
+                  </ItemLink>
                 </div>
 
                 <div
