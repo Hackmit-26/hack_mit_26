@@ -431,6 +431,7 @@ async function hydrateReactions(reactions: Row[]): Promise<void> {
 const COMMENT_TARGETS = new Set<CommentTargetType>([
   'purchase',
   'product',
+  'wrapped_card',
   'gift_thread',
   'gift_pick',
 ]);
@@ -439,8 +440,9 @@ const COMMENT_TARGETS = new Set<CommentTargetType>([
  * `comments` is polymorphic over the same `target_kind` enum as `reactions`, and is filtered the
  * same way: a comment is only loaded if this backend owns the row it hangs off and can therefore
  * decide who may read it. `purchase`/`product` targets resolve to items, `gift_thread`/`gift_pick`
- * to a thread. Comments on wrapped cards, lore and spotlights are the frontend's concern - it
- * reads Supabase directly - and loading them here would mean serving rows we cannot authorise.
+ * to a thread. A `wrapped_card` target is a key the client derived from generated copy, not a row,
+ * so there is nothing to resolve it against; its `group_id` carries the permission instead, which
+ * is the same rule the route applies.
  *
  * Soft-deleted rows are excluded by the caller's query. A row whose target no longer resolves is
  * dropped rather than kept orphaned: an unresolvable target is one `assertTargetVisibleTo` would
@@ -451,9 +453,12 @@ function hydrateComments(comments: Row[]): void {
   const threadIds = new Set(db.giftThreads.all().map((t) => t.id));
   const pickIds = new Set(db.giftPicks.all().map((p) => p.id));
 
-  const resolves = (targetType: CommentTargetType, targetId: string): boolean => {
+  const groupIds = new Set(db.groups.all().map((g) => g.id));
+
+  const resolves = (targetType: CommentTargetType, targetId: string, groupId: string | null) => {
     if (targetType === 'gift_thread') return threadIds.has(targetId);
     if (targetType === 'gift_pick') return pickIds.has(targetId);
+    if (targetType === 'wrapped_card') return groupId !== null && groupIds.has(groupId);
     return itemIds.has(targetId);
   };
 
@@ -462,12 +467,13 @@ function hydrateComments(comments: Row[]): void {
     const targetType = String(r.target_type) as CommentTargetType;
     if (!COMMENT_TARGETS.has(targetType)) continue;
     const targetId = String(r.target_id);
-    if (!resolves(targetType, targetId)) continue;
+    const groupId = text(r.group_id);
+    if (!resolves(targetType, targetId, groupId)) continue;
 
     rows.push({
       id: String(r.id),
       userId: String(r.user_id),
-      groupId: text(r.group_id),
+      groupId,
       targetType,
       targetId,
       parentId: text(r.parent_id),
