@@ -95,10 +95,22 @@ describe('purchaseParams', () => {
     expect(purchaseParams(item({ merchant: 'Some Shop Nobody Seeded' }), null)[5]).toBeNull();
   });
 
-  it('carries a wishlist-link row as an unpurchased private item', () => {
-    const params = purchaseParams(item({ purchasedAt: null, visibility: 'private' }), null);
-    expect(params[8]).toBeNull();
+  it('dates an unpurchased wishlist link by the day it was saved', () => {
+    // `purchases.purchased_at` is NOT NULL, so a null here loses the whole row.
+    const params = purchaseParams(
+      item({ purchasedAt: null, visibility: 'private', createdAt: '2026-09-20T02:12:42.589Z' }),
+      null,
+    );
+    expect(params[8]).toBe('2026-09-20');
     expect(params[9]).toBe('private');
+  });
+
+  it('prefers a real purchase date over the created date', () => {
+    const params = purchaseParams(
+      item({ purchasedAt: '2026-08-01', createdAt: '2026-09-20T02:12:42.589Z' }),
+      null,
+    );
+    expect(params[8]).toBe('2026-08-01');
   });
 
   it('never binds the embedding: our 512-dim vectors do not fit their column', () => {

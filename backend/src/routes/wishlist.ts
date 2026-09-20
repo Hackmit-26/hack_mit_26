@@ -3,13 +3,30 @@ import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { db, newId, now } from '../db/index.js';
 import { mirrorReaction } from '../db/mirror.js';
+import { assertMember } from '../domain/permissions.js';
 import { linkPreview, type LinkPreview } from '../products/linkPreview.js';
 import { toItem } from './items.js';
 
 const body = z.object({
   url: z.url(),
   priceCents: z.int().nonnegative().optional(),
+  groupId: z.string().min(1).optional(),
 });
+
+/**
+ * `purchases.group_id` is NOT NULL, so an ungrouped wishlist item cannot be mirrored and would
+ * vanish on restart. The item stays `private` either way - `GET /groups/:id/finds` filters those
+ * out - so the group id is tenancy, not exposure. Ambiguous membership is left null rather than
+ * guessed at.
+ */
+function resolveGroupId(userId: string, requested: string | undefined): string | null {
+  if (requested) {
+    assertMember(requested, userId);
+    return requested;
+  }
+  const mine = db.memberships.filter((m) => m.userId === userId);
+  return mine.length === 1 ? (mine[0]?.groupId ?? null) : null;
+}
 
 function hostnameOf(url: string): string {
   return new URL(url).hostname.replace(/^www\./, '');
@@ -48,7 +65,7 @@ export default async function wishlistRoutes(app: FastifyInstance): Promise<void
     const item = db.items.insert({
       id: newId(),
       ownerId: userId,
-      groupId: null,
+      groupId: resolveGroupId(userId, parsed.groupId),
       name: link.title,
       category: 'other',
       merchant: link.merchant ?? hostnameOf(parsed.url),

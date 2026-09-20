@@ -457,6 +457,46 @@ describe('wishlist', () => {
     expect(mine.json<Item[]>().map((i) => i.id)).toContain(created.id);
   });
 
+  it('files the item under the caller\u2019s only group, still private', async () => {
+    const alice = user('Alice');
+    const crew = group();
+    member(crew, alice.id);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/wishlist/link',
+      headers: auth(alice.id),
+      payload: { url: 'https://www.shop.example.com/things/3' },
+    });
+
+    const created = res.json<Item>();
+    expect(db.items.find((i) => i.id === created.id)?.groupId).toBe(crew);
+    expect(created.visibility).toBe('private');
+
+    // Private items never reach the shared feed, so the group id is tenancy and not exposure.
+    const finds = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/finds`,
+      headers: auth(alice.id),
+    });
+    expect(finds.json<FindItem[]>().map((f) => f.id)).not.toContain(created.id);
+  });
+
+  it('leaves the group null when membership is ambiguous', async () => {
+    const alice = user('Alice');
+    member(group('One'), alice.id);
+    member(group('Two'), alice.id);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/wishlist/link',
+      headers: auth(alice.id),
+      payload: { url: 'https://www.shop.example.com/things/4' },
+    });
+
+    expect(db.items.find((i) => i.id === res.json<Item>().id)?.groupId).toBeNull();
+  });
+
   it('lists only starred items, and only the caller\u2019s', async () => {
     const alice = user('Alice');
     const bob = user('Bob');

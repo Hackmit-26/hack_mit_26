@@ -433,6 +433,10 @@ export const PURCHASE_SQL = `
  * hid is not ours to do), and `embedding` is not written at all - our vectors are 512-dim from
  * EMBED_DIM while their pgvector column is sized by their own pipeline, and a dimension
  * mismatch would fail the whole statement to save a column nothing renders.
+ *
+ * `purchased_at` is NOT NULL on their side but genuinely unknown for a wishlist link - nobody
+ * bought it. The day it was saved is the only honest stand-in, and hydration reads it straight
+ * back, so the round trip is stable.
  */
 export function purchaseParams(item: ItemRow, merchant: string | null): unknown[] {
   return [
@@ -444,7 +448,7 @@ export function purchaseParams(item: ItemRow, merchant: string | null): unknown[
     merchant,
     item.imageUrl,
     item.priceCents,
-    item.purchasedAt,
+    item.purchasedAt ?? item.createdAt.slice(0, 10),
     item.visibility,
     item.createdAt,
   ];
