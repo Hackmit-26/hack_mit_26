@@ -110,7 +110,10 @@ export default async function debateRoutes(app: FastifyInstance): Promise<void> 
       merchant: item.merchant,
       category: item.category,
       imageUrl: item.imageUrl,
-      priceCents: item.priceCents,
+      // The debate is a social surface about a find, and finds carry no prices (§1 rule 4) - the
+      // same rule social.test.ts asserts on /finds. Kept on the type as null so the card's
+      // existing `priceCents !== null` guard simply stops rendering the figure.
+      priceCents: null,
       ownerId,
       commentCount: winner.comments.length,
       participants,
