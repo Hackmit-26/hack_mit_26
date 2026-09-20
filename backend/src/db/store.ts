@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type {
+  CommentRow,
   ContributionRow,
   GiftPickRow,
   GiftThreadRow,
@@ -84,6 +85,7 @@ export const db = {
   memberships: new Table<MembershipRow>(),
   items: new Table<ItemRow>(),
   reactions: new Table<ReactionRow>(),
+  comments: new Table<CommentRow>(),
   wrapped: new Table<WrappedRow>(),
   wrappedVetoes: new Table<WrappedVetoRow>(),
   giftThreads: new Table<GiftThreadRow>(),

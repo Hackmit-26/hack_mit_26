@@ -1,8 +1,8 @@
 import type { ContributionStatus } from '../domain/splits.js';
 import type { ThreadState } from '../domain/threadStateMachine.js';
-import type { PickSource, Visibility } from '../db/types.js';
+import type { CommentTargetType, PickSource, Visibility } from '../db/types.js';
 
-export type { ContributionStatus, ThreadState, PickSource, Visibility };
+export type { ContributionStatus, ThreadState, PickSource, Visibility, CommentTargetType };
 
 export type ApiError = { error: { code: string; message: string } };
 
@@ -127,6 +127,24 @@ export type Thread = {
   picks: GiftPick[];
   myVotePickId: string | null;
   contributions: Contribution[];
+};
+
+/**
+ * `authorName` is denormalised on purpose: a comment list is useless without it and the client
+ * should never have to fan out to /groups/:id just to render a thread. Unlike a find's owner,
+ * a commenter is never anonymised - speaking is a deliberate act, whereas owning an anonymous
+ * item is not (§1 rule 3 covers the latter only).
+ */
+export type Comment = {
+  id: string;
+  targetType: CommentTargetType;
+  targetId: string;
+  parentId: string | null;
+  authorId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
 };
 
 export type Reveal = { giftName: string; imageUrl: string | null; contributors: string[] };

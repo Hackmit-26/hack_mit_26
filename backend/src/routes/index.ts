@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import birthdaysRoutes from './birthdays.js';
+import commentsRoutes from './comments.js';
 import contributionsRoutes from './contributions.js';
 import demoRoutes from './demo.js';
 import findsRoutes from './finds.js';
@@ -21,6 +22,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     itemsRoutes,
     ingestRoutes,
     reactionsRoutes,
+    commentsRoutes,
     findsRoutes,
     wishlistRoutes,
     birthdaysRoutes,

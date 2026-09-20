@@ -13,6 +13,8 @@ import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { db } from './store.js';
 import type {
+  CommentRow,
+  CommentTargetType,
   ContributionRow,
   GiftPickRow,
   GiftThreadRow,
@@ -281,11 +283,16 @@ export async function hydrateFromPostgres(): Promise<void> {
     ),
   );
 
+  // Read last and on its own: comments are authorised against items, threads and picks, so it
+  // can only decide what to keep once all three are in the working set.
+  hydrateComments(await query(`select * from comments where deleted_at is null`));
+
   logger.info('hydrated from postgres', {
     users: db.users.all().length,
     groups: db.groups.all().length,
     items: db.items.all().length,
     reactions: db.reactions.all().length,
+    comments: db.comments.all().length,
     threads: db.giftThreads.all().length,
     picks: db.giftPicks.all().length,
     contributions: db.contributions.all().length,
@@ -419,4 +426,64 @@ async function hydrateReactions(reactions: Row[]): Promise<void> {
   // Drop reactions whose synthetic item could not be built, or grounding would cite a ghost.
   const live = new Set(db.items.all().map((i) => i.id));
   db.reactions.insertMany(rows.filter((r) => live.has(r.itemId)));
+}
+
+const COMMENT_TARGETS = new Set<CommentTargetType>([
+  'purchase',
+  'product',
+  'gift_thread',
+  'gift_pick',
+]);
+
+/**
+ * `comments` is polymorphic over the same `target_kind` enum as `reactions`, and is filtered the
+ * same way: a comment is only loaded if this backend owns the row it hangs off and can therefore
+ * decide who may read it. `purchase`/`product` targets resolve to items, `gift_thread`/`gift_pick`
+ * to a thread. Comments on wrapped cards, lore and spotlights are the frontend's concern - it
+ * reads Supabase directly - and loading them here would mean serving rows we cannot authorise.
+ *
+ * Soft-deleted rows are excluded by the caller's query. A row whose target no longer resolves is
+ * dropped rather than kept orphaned: an unresolvable target is one `assertTargetVisibleTo` would
+ * 404 anyway, and keeping it only risks a future listing leaking it.
+ */
+function hydrateComments(comments: Row[]): void {
+  const itemIds = new Set(db.items.all().map((i) => i.id));
+  const threadIds = new Set(db.giftThreads.all().map((t) => t.id));
+  const pickIds = new Set(db.giftPicks.all().map((p) => p.id));
+
+  const resolves = (targetType: CommentTargetType, targetId: string): boolean => {
+    if (targetType === 'gift_thread') return threadIds.has(targetId);
+    if (targetType === 'gift_pick') return pickIds.has(targetId);
+    return itemIds.has(targetId);
+  };
+
+  const rows: CommentRow[] = [];
+  for (const r of comments) {
+    const targetType = String(r.target_type) as CommentTargetType;
+    if (!COMMENT_TARGETS.has(targetType)) continue;
+    const targetId = String(r.target_id);
+    if (!resolves(targetType, targetId)) continue;
+
+    rows.push({
+      id: String(r.id),
+      userId: String(r.user_id),
+      groupId: text(r.group_id),
+      targetType,
+      targetId,
+      parentId: text(r.parent_id),
+      body: String(r.body),
+      createdAt: iso(r.created_at),
+      editedAt: isoOrNull(r.edited_at),
+      deletedAt: isoOrNull(r.deleted_at),
+    });
+  }
+
+  // A reply whose parent was dropped (or soft-deleted) would dangle, so it is re-rooted rather
+  // than discarded: the words are still someone's, and their table's own FK would allow neither.
+  const kept = new Set(rows.map((c) => c.id));
+  for (const row of rows) {
+    if (row.parentId && !kept.has(row.parentId)) row.parentId = null;
+  }
+
+  db.comments.insertMany(rows);
 }

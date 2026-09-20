@@ -50,6 +50,35 @@ export type ReactionRow = {
   createdAt: string;
 };
 
+/**
+ * The subset of their `target_kind` enum that this backend can authorise a read against.
+ * `purchase` and `product` both resolve to an `ItemRow` (postgres.ts turns catalogue saves into
+ * synthetic items); `gift_thread` and `gift_pick` resolve to a thread, which is what makes the
+ * §5.2 recipient rule apply to comments. The remaining kinds - wrapped_card, lore_case,
+ * spotlight, taste_pair - have no row in the working set, so we cannot say who may read them
+ * and deliberately refuse to serve them at all.
+ */
+export type CommentTargetType = 'purchase' | 'product' | 'gift_thread' | 'gift_pick';
+
+/**
+ * Mirrors their `comments` table one-for-one, including the soft delete: `deleted_at` is how
+ * their schema retires a comment, and honouring it is what lets the write-through mirror keep
+ * its never-DELETE promise.
+ */
+export type CommentRow = {
+  id: string;
+  userId: string;
+  /** Their column is NOT NULL, but a comment on an ungrouped private item has no group. */
+  groupId: string | null;
+  targetType: CommentTargetType;
+  targetId: string;
+  parentId: string | null;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  deletedAt: string | null;
+};
+
 export type WrappedRow = {
   id: string;
   groupId: string;

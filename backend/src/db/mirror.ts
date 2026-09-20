@@ -28,7 +28,14 @@ import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { getPool } from './postgres.js';
 import { db, newId, now } from './store.js';
-import type { ContributionRow, GiftThreadRow, ItemRow, ReactionRow, ReactionType } from './types.js';
+import type {
+  CommentRow,
+  ContributionRow,
+  GiftThreadRow,
+  ItemRow,
+  ReactionRow,
+  ReactionType,
+} from './types.js';
 import type { ContributionStatus } from '../domain/splits.js';
 import type { ThreadState } from '../domain/threadStateMachine.js';
 import type { TxnKind } from '../visa/types.js';
@@ -539,6 +546,82 @@ export function unmirrorReaction(
     await client.query(
       `delete from reactions where user_id = $1 and target_id = $2 and kind = $3`,
       [userId, itemId, REACTION_KIND[type]],
+    );
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Comments                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Their `comments` table soft-deletes via `deleted_at`, so retiring a comment is an UPDATE and
+ * the no-DELETE rule above costs us nothing. Two more differences from the reaction mirror:
+ * `target_id` carries no foreign key (the column is polymorphic), so there is nothing to push
+ * ahead of a comment; but `group_id` IS a NOT NULL foreign key, so a comment on an ungrouped
+ * private item is unmirrorable by construction and is skipped rather than forced.
+ */
+
+export const COMMENT_SQL = `
+  insert into comments
+    (id, user_id, group_id, target_type, target_id, parent_id, body, created_at, edited_at, deleted_at)
+  values ($1,$2,$3,$4::target_kind,$5,$6,$7,$8,$9,$10)
+  on conflict (id) do update set
+    body       = excluded.body,
+    edited_at  = excluded.edited_at,
+    -- a retired comment stays retired; the mirror never resurrects one
+    deleted_at = coalesce(comments.deleted_at, excluded.deleted_at)`;
+
+export function commentParams(row: CommentRow): unknown[] {
+  return [
+    row.id,
+    row.userId,
+    row.groupId,
+    row.targetType,
+    row.targetId,
+    row.parentId,
+    row.body,
+    row.createdAt,
+    row.editedAt,
+    row.deletedAt,
+  ];
+}
+
+async function pushComment(client: PoolClient, row: CommentRow): Promise<void> {
+  // Their `group_id` is NOT NULL and an FK; there is no honest value to invent for a comment on
+  // an ungrouped private item, so it simply does not exist for the frontend.
+  if (!row.groupId) {
+    logger.info('comment not mirrored: no group', { commentId: row.id });
+    return;
+  }
+  await client.query(COMMENT_SQL, commentParams(row));
+}
+
+/** Mirrors one comment, pushing its parent first so the self-FK is always satisfiable. */
+export function mirrorComment(commentId: string): Promise<void> {
+  return mirror('comment', { commentId }, async (client) => {
+    const row = db.comments.find((c) => c.id === commentId);
+    if (!row) return;
+
+    if (row.parentId) {
+      const parent = db.comments.find((c) => c.id === row.parentId);
+      if (parent) await pushComment(client, parent);
+    }
+    await pushComment(client, row);
+  });
+}
+
+/**
+ * Retires a comment. This is an UPDATE, never a DELETE: their schema already models removal as
+ * `deleted_at`, and the predicate is pinned to the single row the author actually deleted -
+ * every teammate's comments, on every target type they own, live in this same table.
+ */
+export function unmirrorComment(commentId: string): Promise<void> {
+  return mirror('comment.delete', { commentId }, async (client) => {
+    const row = db.comments.find((c) => c.id === commentId);
+    await client.query(
+      `update comments set deleted_at = coalesce(deleted_at, $2) where id = $1`,
+      [commentId, row?.deletedAt ?? now()],
     );
   });
 }
