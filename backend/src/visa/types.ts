@@ -19,6 +19,9 @@ export type VisaTxnResult = {
   actionCode?: string;
   /** Only returned when the POST timed out; use it with queryStatus to find out what happened. */
   statusIdentifier?: string;
+  /** Both echoed back on an approval, and both required to reverse it later. */
+  approvalCode?: string;
+  transmissionDateTime?: string;
   raw: unknown;
   error?: string;
 };
@@ -29,6 +32,9 @@ export type StoredPull = {
   txnId?: string;
   amountCents: number;
   cardRef: string;
+  /** From the pull's own response: Visa rejects `originalDataElements` without them. */
+  approvalCode?: string;
+  transmissionDateTime?: string;
 };
 
 export interface VisaDirect {

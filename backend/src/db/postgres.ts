@@ -279,6 +279,8 @@ export async function hydrateFromPostgres(): Promise<void> {
         pullTxnId: text(r.pull_txn_id),
         pullStan: null,
         pullRrn: null,
+        pullApprovalCode: null,
+        pullTransmissionDateTime: null,
         statusIdentifier: null,
         reversalTxnId: text(r.reversal_txn_id),
         idempotencyKey: `contribution:${String(r.id)}`,

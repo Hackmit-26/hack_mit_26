@@ -88,11 +88,20 @@ the reasoning you read on a card is grounded in that person's own history.
 **Visa Direct.** `visa/visaDirect.ts` speaks the Funds Transfer API directly
 over two-way SSL: `pullfundstransactions` to collect each contributor's share,
 `pushfundstransactions` to disburse, `reversefundstransactions` to unwind a
-cancelled pool. Transactions are written to an append-only audit trail, and
-`visa/mle.ts` implements Message Level Encryption (JWE, `RSA-OAEP-256` +
-`A128GCM`) for projects that require it. `pnpm visa:probe` tells apart the three
-ways a call can fail before it reaches the funds-transfer logic — 9611 not
-entitled, 9005 no such route, 9125 MLE expected.
+cancelled pool. All three are live against the Visa sandbox: `pnpm visa:smoke`
+runs a pull, a push and a reversal and expects `actionCode: "00"` from each.
+
+Our project has Message Level Encryption on, so plaintext bodies are rejected
+outright; `visa/mle.ts` wraps every request as a compact JWE (`RSA-OAEP-256` +
+`A128GCM`) under an `encData` key and decrypts the response, which Visa seals to
+our own certificate. Transactions are written to an append-only audit trail.
+
+Two diagnostics exist because both failures are miserable to re-derive from the
+error text. `pnpm visa:probe` separates the three ways a call dies before it
+reaches the funds-transfer logic — 9611 not entitled, 9005 no such route, 9125
+MLE expected — and checks the MLE certificate is Visa's rather than the
+client certificate that sits next to it on the dashboard, since encrypting to
+our own key reproduces 9125 exactly.
 
 **A gift pool is a state machine.** `picking → voting → collecting → funded →
 bought → revealed`, with `refunding → refunded` for a cancellation. Every

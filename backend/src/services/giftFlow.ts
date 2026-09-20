@@ -404,6 +404,8 @@ export function lockThread(threadId: string, userId: string): GiftThreadRow {
       pullTxnId: null,
       pullStan: null,
       pullRrn: null,
+      pullApprovalCode: null,
+      pullTransmissionDateTime: null,
       statusIdentifier: null,
       reversalTxnId: null,
       idempotencyKey: pullKey(id),
@@ -569,6 +571,8 @@ export async function approveShare(
     pullTxnId: result.txnId ?? null,
     pullStan: result.stan,
     pullRrn: result.rrn,
+    pullApprovalCode: result.approvalCode ?? null,
+    pullTransmissionDateTime: result.transmissionDateTime ?? null,
     statusIdentifier: result.statusIdentifier ?? null,
     updatedAt: now(),
   });
@@ -595,6 +599,8 @@ export async function resolvePendingPulls(threadId: string): Promise<void> {
         pullTxnId: result.txnId ?? row.pullTxnId,
         pullStan: result.stan ?? row.pullStan,
         pullRrn: result.rrn ?? row.pullRrn,
+        pullApprovalCode: result.approvalCode ?? row.pullApprovalCode,
+        pullTransmissionDateTime: result.transmissionDateTime ?? row.pullTransmissionDateTime,
         updatedAt: now(),
       });
     } else if (result.actionCode && result.actionCode !== '00') {
@@ -720,6 +726,8 @@ export async function runReversals(threadId: string): Promise<void> {
         txnId: current.pullTxnId ?? undefined,
         amountCents: current.amountCents,
         cardRef: getUser(current.userId).visaCardRef ?? '',
+        approvalCode: current.pullApprovalCode ?? undefined,
+        transmissionDateTime: current.pullTransmissionDateTime ?? undefined,
       },
       idempotencyKey: reverseKey(current.id),
     });

@@ -315,6 +315,8 @@ export function seedDemoThreads(today = new Date()): void {
         pullTxnId: isPulled ? `demo-pull-txn-${4_100_000_000_000 + index}` : null,
         pullStan: isPulled ? String(100_100 + index) : null,
         pullRrn: isPulled ? `62620${String(100_000 + index)}` : null,
+        pullApprovalCode: isPulled ? '98765X' : null,
+        pullTransmissionDateTime: isPulled ? createdAt : null,
         statusIdentifier: null,
         reversalTxnId: null,
         idempotencyKey: `contribution:contrib-${DEMO_REVERSAL_THREAD_ID}-${share.userId}:pull`,
