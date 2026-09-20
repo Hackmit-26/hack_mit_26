@@ -1,18 +1,24 @@
 /**
  * Base URL and viewer identity for the API client.
  *
- * Auth is a dev stub: the backend accepts `Authorization: Bearer dev:<userUuid>` and looks the
- * user straight up. The demo hops between four users, so the token lives in a module-level
- * variable that any component may overwrite:
+ * Auth is a dev stub: the backend accepts `Authorization: Bearer dev:<userId>` and looks the user
+ * straight up. The demo backend seeds the same four ids the UI uses - `kristina`, `esh`, `sabina`,
+ * `madhav` - so the token is just the UserId:
  *
- *   setViewer("8f3c...-uuid")   // sends `Bearer dev:8f3c...`
- *   setAuthToken("dev:8f3c...")  // or set the raw token yourself
+ *   setViewer("sabina")       // sends `Bearer dev:sabina`
+ *   setAuthToken("dev:sabina") // or set the raw token yourself
  *
- * The initial value comes from NEXT_PUBLIC_DEV_USER_ID so a fresh page load has a viewer.
- * This is module state, not React state - call setViewer() then re-fetch.
+ * This is module state, not React state - call setViewer() then re-fetch. The demo switcher in
+ * `@/components/demo/ViewerSwitcher` goes through `setViewerId` on the store, which does both.
  */
 
 const DEFAULT_BASE_URL = "http://localhost:8080";
+
+/**
+ * Who a fresh page load is. NEXT_PUBLIC_DEV_USER_ID still wins so a stale `.env.local` keeps
+ * working, but it is no longer required: the demo seed always has a Kristina.
+ */
+export const DEFAULT_VIEWER_ID = "kristina";
 
 /** Trailing slashes are stripped so path joins stay predictable. */
 export const API_BASE_URL = (
@@ -20,8 +26,7 @@ export const API_BASE_URL = (
 ).replace(/\/+$/, "");
 
 function initialToken(): string | null {
-  const userId = process.env.NEXT_PUBLIC_DEV_USER_ID;
-  return userId ? `dev:${userId}` : null;
+  return `dev:${process.env.NEXT_PUBLIC_DEV_USER_ID || DEFAULT_VIEWER_ID}`;
 }
 
 let authToken: string | null = initialToken();

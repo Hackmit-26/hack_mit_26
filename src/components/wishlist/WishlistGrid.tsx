@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+import { useItemDetail } from "@/components/commerce/ItemDetailModal";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { formatPrice } from "@/services/commerce";
@@ -41,6 +42,8 @@ export function WishlistTile({
   item: WishlistItem;
   onRemove: () => void;
 }) {
+  const { openItem } = useItemDetail();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -57,9 +60,13 @@ export function WishlistTile({
         boxShadow: "4px 4px 0 #141A47",
       }}
     >
+      {/* The tile opens the details; the link out lives inside them, and below. */}
       <ItemLink
         url={item.pending ? null : item.url}
         label={`${item.title} at ${item.merchant}`}
+        onActivate={
+          item.pending ? undefined : () => openItem({ kind: "wishlist", id: item.id })
+        }
       >
         <div
           style={{

@@ -11,6 +11,8 @@
  * the UI.
  */
 
+import { ApiError, approveMyContribution, getThread } from "@/lib/api";
+import type { Contribution, Thread } from "@/lib/apiTypes";
 import type { Product, UserId } from "@/lib/types";
 
 export interface PaymentInstruction {
@@ -187,4 +189,97 @@ export async function runCheckout(
   await sendOutcomeSignal(outcome);
   onStage(outcome.status === "confirmed" ? "confirmed" : "declined");
   return outcome;
+}
+
+/* ------------------------------------------------- real group-gift money */
+
+/**
+ * The one call that moves money. `POST /threads/:id/contributions/me/approve`
+ * runs the Visa pull for whoever the bearer token is, then settles the thread:
+ * the last approver's response is the request in which the pot is pushed to
+ * the organiser. So the whole group gift lands inside `approveShare`.
+ */
+export interface GroupGiftApi {
+  approve(threadId: string): Promise<Contribution>;
+  thread(threadId: string): Promise<Thread>;
+}
+
+const backendGroupGiftApi: GroupGiftApi = {
+  approve: (threadId) => approveMyContribution(threadId, { confirm: true }),
+  thread: getThread,
+};
+
+let groupGiftApi: GroupGiftApi = backendGroupGiftApi;
+
+/** THE API SEAM. Nothing else in the app approves a contribution. Tests inject here. */
+export function setGroupGiftApi(api: GroupGiftApi): void {
+  groupGiftApi = api;
+}
+
+export type ShareApproval =
+  | { ok: true; contribution: Contribution; thread: Thread }
+  | { ok: false; reason: string; contribution: Contribution | null };
+
+/** A pull that did not land, said plainly enough to read off a stage screen. */
+function pullFailure(status: Contribution["status"]): string {
+  switch (status) {
+    case "failed":
+      return "The bank declined this pull. Nothing was taken.";
+    case "pulling":
+      return "The pull timed out at the network. It is still settling — retry in a moment.";
+    case "opted_out":
+      return "You opted out of this gift.";
+    case "removed":
+      return "You are no longer on this gift.";
+    default:
+      return `The pull ended as "${status}".`;
+  }
+}
+
+/**
+ * Passkey first (the pre-flight the cardholder sees), then the real approve.
+ * Resolves rather than throws: a declined pull on stage has to render, not hang.
+ */
+export async function approveShare(
+  threadId: string,
+  instruction: PaymentInstruction,
+  onStage: (stage: CheckoutStage) => void,
+): Promise<ShareApproval> {
+  onStage("authorizing");
+  await requestPasskeyApproval(instruction);
+
+  onStage("processing");
+  let contribution: Contribution;
+  try {
+    contribution = await groupGiftApi.approve(threadId);
+  } catch (cause) {
+    onStage("declined");
+    return {
+      ok: false,
+      reason: cause instanceof ApiError ? cause.message : "Could not reach the server",
+      contribution: null,
+    };
+  }
+
+  if (contribution.status !== "pulled") {
+    onStage("declined");
+    return { ok: false, reason: pullFailure(contribution.status), contribution };
+  }
+
+  // The approve response is the contribution alone; the thread carries `state`
+  // and `pushStatus`, which is where the push receipt lives.
+  let thread: Thread;
+  try {
+    thread = await groupGiftApi.thread(threadId);
+  } catch (cause) {
+    onStage("declined");
+    return {
+      ok: false,
+      reason: cause instanceof ApiError ? cause.message : "Could not reach the server",
+      contribution,
+    };
+  }
+
+  onStage("confirmed");
+  return { ok: true, contribution, thread };
 }

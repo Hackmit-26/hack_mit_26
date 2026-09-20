@@ -111,6 +111,43 @@ export type FindItem = {
   taken?: boolean;
 };
 
+/**
+ * "Who else wants this" for one find, as `GET /groups/:id/wishlists` sends it. Items nobody
+ * starred are omitted rather than sent as empty rosters, so a missing id means nobody.
+ */
+export type WishlistRoster = {
+  itemId: string;
+  users: { id: string; name: string; avatarUrl: string | null }[];
+};
+
+export type DebateMessage = {
+  id: string;
+  userId: string;
+  userName: string;
+  body: string;
+  createdAt: string;
+  parentId: string | null;
+};
+
+/**
+ * The most argued-about item in the group, computed server-side from the real comment rows.
+ * `ownerId` is null for an anonymously shared item — the debate never outs the buyer.
+ */
+export type Debate = {
+  itemId: string;
+  name: string;
+  merchant: string | null;
+  category: string;
+  imageUrl: string | null;
+  priceCents: number | null;
+  ownerId: string | null;
+  commentCount: number;
+  participants: { id: string; name: string; avatarUrl: string | null }[];
+  spanDays: number;
+  verdict: string;
+  thread: DebateMessage[];
+};
+
 export type ExtractedItem = {
   name: string;
   category: string;

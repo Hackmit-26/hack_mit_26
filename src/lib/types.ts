@@ -65,6 +65,12 @@ export interface Purchase {
   art: ArtKind;
   /** Real product photo in `public/products`; falls back to `art` when absent. */
   image?: string;
+  /**
+   * The page this item lives on. Absent for anything bought in person — a
+   * café matcha has no product page — and `ItemLink` renders those as plain
+   * text rather than a dead link.
+   */
+  url?: string;
   /** ISO date, so real receipts can drop straight in. */
   date: string;
   time: string;
@@ -92,6 +98,12 @@ export interface Product {
   art: ArtKind;
   /** Real product photo in `public/products`; falls back to `art` when absent. */
   image?: string;
+  /**
+   * The product page to open. Optional: the real catalogue has a
+   * `product_url` on only a fraction of its rows, so the UI must survive
+   * without one.
+   */
+  url?: string;
   /** Tile background behind the illustration. */
   bg: string;
   /** True when the merchant is new to the recipient. */
@@ -129,7 +141,7 @@ export interface GiftProfile {
   tags: string[];
 }
 
-export type ChapterId = "taste" | "spotlights" | "lore" | "gift" | "closing";
+export type ChapterId = "taste" | "spotlights" | "lore" | "gift" | "debate" | "closing";
 
 export interface Chapter {
   id: ChapterId;

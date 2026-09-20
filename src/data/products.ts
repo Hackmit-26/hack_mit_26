@@ -1,4 +1,5 @@
 import type { GiftProfile, GroupGift, Product, Recommendation, UserId } from "@/lib/types";
+import { users } from "./users";
 
 /**
  * The sourced catalogue.
@@ -16,6 +17,7 @@ export const products: Product[] = [
     priceCents: 2400,
     art: "ring",
     image: "/products/prod-esh-rings.jpg",
+    url: "https://www.etsy.com/c/jewelry/rings",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -27,6 +29,7 @@ export const products: Product[] = [
     priceCents: 1800,
     art: "tube",
     image: "/products/prod-esh-mask.jpg",
+    url: "https://sokoglam.com/collections/sheet-face-mask",
     bg: "#A8DCC2",
     isNew: false,
     isVisaMerchant: true,
@@ -38,6 +41,7 @@ export const products: Product[] = [
     priceCents: 3400,
     art: "necklace",
     image: "/products/prod-esh-clip.jpg",
+    url: "https://www.1stdibs.com/jewelry/",
     bg: "#EBB5BD",
     isNew: true,
     isVisaMerchant: true,
@@ -49,6 +53,7 @@ export const products: Product[] = [
     priceCents: 3600,
     art: "serum",
     image: "/products/prod-esh-balm.jpg",
+    url: "https://sokoglam.com/collections/moisturizers",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -60,6 +65,7 @@ export const products: Product[] = [
     priceCents: 7800,
     art: "bag",
     image: "/products/prod-esh-bag.jpg",
+    url: "https://www.1stdibs.com/fashion/handbags-purses-bags/",
     bg: "#F5E39B",
     isNew: false,
     isVisaMerchant: true,
@@ -71,6 +77,7 @@ export const products: Product[] = [
     priceCents: 6400,
     art: "knit",
     image: "/products/prod-esh-scarf.jpg",
+    url: "https://www.nordstrom.com/browse/women/accessories/scarves-wraps",
     bg: "#EBB5BD",
     isNew: false,
     isVisaMerchant: true,
@@ -82,6 +89,7 @@ export const products: Product[] = [
     priceCents: 15000,
     art: "bag",
     image: "/products/prod-esh-vanity.jpg",
+    url: "https://www.1stdibs.com/furniture/dining-entertaining/sterling-silver/",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -95,6 +103,7 @@ export const products: Product[] = [
     priceCents: 2200,
     art: "charm",
     image: "/products/prod-sabina-bracelet.jpg",
+    url: "https://www.etsy.com/c/jewelry/bracelets",
     bg: "#EBB5BD",
     isNew: false,
     isVisaMerchant: true,
@@ -106,6 +115,7 @@ export const products: Product[] = [
     priceCents: 2400,
     art: "whisk",
     image: "/products/prod-sabina-whisk.jpg",
+    url: "https://ippodotea.com/collections/utensils",
     bg: "#A8DCC2",
     isNew: false,
     isVisaMerchant: true,
@@ -117,6 +127,7 @@ export const products: Product[] = [
     priceCents: 2800,
     art: "knit",
     image: "/products/prod-sabina-tee.jpg",
+    url: "https://www.nordstrom.com/browse/women/clothing/t-shirts",
     bg: "#A8DCC2",
     isNew: false,
     isVisaMerchant: true,
@@ -128,6 +139,7 @@ export const products: Product[] = [
     priceCents: 4400,
     art: "tote",
     image: "/products/prod-sabina-tote.jpg",
+    url: "https://www.baggu.com/collections/totes",
     bg: "#F5E39B",
     isNew: true,
     isVisaMerchant: true,
@@ -139,6 +151,7 @@ export const products: Product[] = [
     priceCents: 9500,
     art: "sneaker2",
     image: "/products/prod-sabina-campus.jpg",
+    url: "https://www.adidas.com/us/campus",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -150,6 +163,7 @@ export const products: Product[] = [
     priceCents: 7800,
     art: "boots",
     image: "/products/prod-sabina-boots.jpg",
+    url: "https://www.nordstrom.com/browse/women/shoes/boots-booties",
     bg: "#EBB5BD",
     isNew: true,
     isVisaMerchant: true,
@@ -161,6 +175,7 @@ export const products: Product[] = [
     priceCents: 12000,
     art: "camera",
     image: "/products/prod-sabina-camera.jpg",
+    url: "https://www.instax.com/mini_12/en/",
     bg: "#EBB5BD",
     isNew: false,
     isVisaMerchant: true,
@@ -174,6 +189,7 @@ export const products: Product[] = [
     priceCents: 1800,
     art: "tin",
     image: "/products/prod-madhav-hojicha.jpg",
+    url: "https://ippodotea.com/collections/green-tea",
     bg: "#F5E39B",
     isNew: false,
     isVisaMerchant: true,
@@ -185,6 +201,7 @@ export const products: Product[] = [
     priceCents: 1200,
     art: "notebook",
     image: "/products/prod-madhav-notebook.jpg",
+    url: "https://www.muji.us/collections/notebook",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -196,6 +213,7 @@ export const products: Product[] = [
     priceCents: 3000,
     art: "mug",
     image: "/products/prod-madhav-cup.jpg",
+    url: "https://www.etsy.com/c/home-and-living/kitchen-and-dining",
     bg: "#EBB5BD",
     isNew: true,
     isVisaMerchant: true,
@@ -207,6 +225,7 @@ export const products: Product[] = [
     priceCents: 2800,
     art: "cardcase",
     image: "/products/prod-madhav-cables.jpg",
+    url: "https://www.anker.com/collections/cables",
     bg: "#A8DCC2",
     isNew: false,
     isVisaMerchant: true,
@@ -218,6 +237,7 @@ export const products: Product[] = [
     priceCents: 6400,
     art: "cafe",
     image: "/products/prod-madhav-kettle.jpg",
+    url: "https://fellowproducts.com/products/stagg-ekg-electric-pour-over-kettle",
     bg: "#F5E39B",
     isNew: false,
     isVisaMerchant: true,
@@ -229,6 +249,7 @@ export const products: Product[] = [
     priceCents: 5800,
     art: "planner",
     image: "/products/prod-madhav-wrist.jpg",
+    url: "https://www.keychron.com/collections/palm-rests",
     bg: "#BBA9E8",
     isNew: false,
     isVisaMerchant: true,
@@ -240,6 +261,7 @@ export const products: Product[] = [
     priceCents: 9000,
     art: "cafe",
     image: "/products/prod-madhav-grinder.jpg",
+    url: "https://fellowproducts.com/collections/grinder",
     bg: "#F5E39B",
     isNew: false,
     isVisaMerchant: true,
@@ -254,6 +276,62 @@ export function getProduct(id: string): Product {
   const found = productsById[id];
   if (!found) throw new Error(`Unknown product: ${id}`);
   return found;
+}
+
+// ---- Birthdays -------------------------------------------------------
+/**
+ * The four birthdays, same dates the backend seeds into `users.birthday`.
+ * They live here because the gift chapter is the only thing that reads them;
+ * move them onto `User` once the profile screen needs them too.
+ */
+export const birthdays: Record<UserId, string> = {
+  kristina: "1999-03-07",
+  esh: "1997-11-15",
+  sabina: "1998-10-02",
+  madhav: "1999-06-27",
+};
+
+/** The backend's nudge window — past this, a gift is a just-because gift. */
+const BIRTHDAY_HORIZON_DAYS = 30;
+const DAY_MS = 86_400_000;
+
+/**
+ * Days until the next time this MM-DD comes round, counted in UTC and rolling
+ * into next year once the day has passed. Same arithmetic as the backend's
+ * `nextOccurrence`, so a card and the API never disagree by a day.
+ */
+export function daysUntilBirthday(userId: UserId, today = new Date()): number {
+  const [, month, day] = birthdays[userId].split("-").map(Number);
+  const startOfToday = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate(),
+  );
+  let next = Date.UTC(today.getUTCFullYear(), month - 1, day);
+  if (next < startOfToday) {
+    next = Date.UTC(today.getUTCFullYear() + 1, month - 1, day);
+  }
+  return Math.round((next - startOfToday) / DAY_MS);
+}
+
+export function birthdayIsSoon(userId: UserId): boolean {
+  return daysUntilBirthday(userId) <= BIRTHDAY_HORIZON_DAYS;
+}
+
+/**
+ * The countdown chip on the gift profile. Exported so a card can highlight it
+ * by comparing against this rather than against a hardcoded string.
+ */
+export function birthdayTag(userId: UserId): string {
+  return `Birthday in ${daysUntilBirthday(userId)} days`;
+}
+
+/** "Sabina's birthday is in 12 days", or the just-because line when it isn't. */
+function birthdayBanner(userId: UserId): string {
+  const days = daysUntilBirthday(userId);
+  if (days > BIRTHDAY_HORIZON_DAYS) return "No birthday soon. Just-because gift.";
+  const when = days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
+  return `${users[userId].name}'s birthday is ${when}`;
 }
 
 /**
@@ -276,7 +354,7 @@ export const giftProfiles: Record<string, GiftProfile> = {
     userId: "sabina",
     purchaseCount: 17,
     tags: [
-      "Birthday in 12 days",
+      birthdayTag("sabina"),
       "Thrifted denim & tees",
       "Beaded jewelry",
       "Sneaker splurges",
@@ -467,24 +545,24 @@ export const groupGifts: Record<string, GroupGift> = {
   esh: {
     forUserId: "esh",
     productId: "prod-esh-vanity",
-    banner: "No birthday soon. Just-because gift.",
-    bannerBg: "#A8DCC2",
+    banner: birthdayBanner("esh"),
+    bannerBg: birthdayIsSoon("esh") ? "#E8806F" : "#A8DCC2",
     why: "They bought silver drop earrings here on Sept 15. This is the whole shelf.",
     splitWays: 3,
   },
   sabina: {
     forUserId: "sabina",
     productId: "prod-sabina-camera",
-    banner: "Sabina's birthday is in 12 days",
-    bannerBg: "#E8806F",
+    banner: birthdayBanner("sabina"),
+    bannerBg: birthdayIsSoon("sabina") ? "#E8806F" : "#A8DCC2",
     why: "Sept 12: six stores, eight hours, zero photos. You know Lensmith well.",
     splitWays: 3,
   },
   madhav: {
     forUserId: "madhav",
     productId: "prod-madhav-grinder",
-    banner: "No birthday soon. Just-because gift.",
-    bannerBg: "#A8DCC2",
+    banner: birthdayBanner("madhav"),
+    bannerBg: birthdayIsSoon("madhav") ? "#E8806F" : "#A8DCC2",
     why: "9 visits to Grain & Co. earns a machine at home.",
     splitWays: 3,
   },
