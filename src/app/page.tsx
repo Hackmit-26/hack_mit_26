@@ -28,10 +28,15 @@ import {
   daysUntilBirthday,
   getProduct,
   giftProfiles,
-  giftableUserIds,
   groupGifts,
 } from "@/data/products";
-import { backendGroupId, group, getUser, userList } from "@/data/users";
+import {
+  backendGroupId,
+  group,
+  getUser,
+  groupMembersExcept,
+  userList,
+} from "@/data/users";
 import type { FindItem } from "@/lib/apiTypes";
 import type { UserId } from "@/lib/types";
 import { formatPrice } from "@/services/commerce";
@@ -59,7 +64,7 @@ const FEED_SIZE = 12;
  * its ids join the wishlist rosters and the comment threads on the server.
  */
 export default function HomePage() {
-  const { orders, savedProductIds, wishlist } = useApp();
+  const { orders, savedProductIds, viewerId, wishlist } = useApp();
   const { openItem } = useItemDetail();
   const [whose, setWhose] = useState<UserId | null>(null);
 
@@ -230,7 +235,7 @@ export default function HomePage() {
           marginTop: 14,
         }}
       >
-        {giftableUserIds.map((id) => (
+        {groupMembersExcept(viewerId).map((id) => (
           <GiftLead key={id} forUserId={id} />
         ))}
       </div>

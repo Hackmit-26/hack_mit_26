@@ -25,12 +25,17 @@ import { ReactionBar } from "@/components/wrapped/ReactionBar";
 import { Stage, useIsMobile } from "@/components/primitives/Stage";
 import { DesktopShell } from "@/components/shell/DesktopShell";
 import { wrappedCards } from "@/data";
+import { groupMembersExcept } from "@/data/users";
 import { cardTarget, useApp, type CommentTarget } from "@/state/store";
 import type { ChapterId, UserId } from "@/lib/types";
 
 export default function WrappedPage() {
   const isMobile = useIsMobile();
-  const { isVetoed } = useApp();
+  const { isVetoed, viewerId } = useApp();
+
+  // The gift chapter opens on the first friend who is not the viewer. The whole tree remounts
+  // on a viewer switch, so reading it once here is enough to keep the picker off the viewer.
+  const firstGiftee = groupMembersExcept(viewerId)[0];
 
   // Cards the viewer vetoed never appear in the story.
   const deck = wrappedCards.filter((c) => !isVetoed(c.id));
@@ -40,11 +45,11 @@ export default function WrappedPage() {
   const [buy, setBuy] = useState<BuyRequest | null>(null);
 
   // Chapter-local state lives here so switching cards doesn't lose it.
-  const [who, setWho] = useState<UserId>("kristina");
+  const [who, setWho] = useState<UserId>(viewerId);
   const [caseId, setCaseId] = useState("matcha");
   const [gift, setGift] = useState<GiftState>({
     step: "pick",
-    who: "esh",
+    who: firstGiftee,
     budget: "u50",
     item: -1,
   });
@@ -64,10 +69,10 @@ export default function WrappedPage() {
   const replay = useCallback(() => {
     setDirection(-1);
     setIndex(0);
-    setGift({ step: "pick", who: "esh", budget: "u50", item: -1 });
-    setWho("kristina");
+    setGift({ step: "pick", who: firstGiftee, budget: "u50", item: -1 });
+    setWho(viewerId);
     setCaseId("matcha");
-  }, []);
+  }, [firstGiftee, viewerId]);
 
   // Keyboard: arrows navigate, space advances, R replays.
   useEffect(() => {

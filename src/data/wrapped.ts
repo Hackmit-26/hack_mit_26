@@ -27,7 +27,7 @@ export const tasteMatch: TasteMatch = {
   budgetScore: 73,
   chaosScore: 77,
   sharedTags: ["silver jewelry", "neutral basics", "skincare", "little drinks under $10"],
-  lead: "You both gravitate toward silver jewelry, neutral basics, skincare, and little drinks under $10.",
+  lead: "Kristina and Esh both gravitate toward silver jewelry, neutral basics, skincare, and little drinks under $10.",
   disagreement: [
     {
       userId: "esh",
@@ -350,6 +350,6 @@ export const closingTiles = [
   { n: "1 · Taste match", title: "Taste twins", bg: "#EBB5BD", fg: "#141A47", label: "Kristina + Esh, 86%" },
   { n: "2 · Spotlights", title: "Four covers", bg: "#E8806F", fg: "#141A47", label: "The Midnight Researcher and friends" },
   { n: "3 · Group lore", title: "The Matcha Incident", bg: "#141A47", fg: "#F5ECD9", label: "The Matcha Incident" },
-  { n: "4 · Gift mode", title: "Gift mode", bg: "#F5E39B", fg: "#141A47", label: "Gift mode for Esh" },
+  { n: "4 · Gift mode", title: "Gift mode", bg: "#F5E39B", fg: "#141A47", label: "Three friends, three shortlists" },
   { n: "5 · The group chat", title: "The group chat", bg: "#BBA9E8", fg: "#141A47", label: "The month's most debated buy" },
 ];

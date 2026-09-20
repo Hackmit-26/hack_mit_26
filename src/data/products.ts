@@ -339,6 +339,17 @@ function birthdayBanner(userId: UserId): string {
  * `purchaseCount` is the number quoted on the card.
  */
 export const giftProfiles: Record<string, GiftProfile> = {
+  kristina: {
+    userId: "kristina",
+    purchaseCount: 19,
+    tags: [
+      "Skincare, mostly after 9 PM",
+      "Silver from small shops",
+      "Vintage & antique",
+      "Café matcha under $10",
+      "One late splurge a month",
+    ],
+  },
   esh: {
     userId: "esh",
     purchaseCount: 14,
@@ -374,9 +385,6 @@ export const giftProfiles: Record<string, GiftProfile> = {
   },
 };
 
-/** Friends you can shop for — the viewer is not in the picker. */
-export const giftableUserIds: UserId[] = ["esh", "sabina", "madhav"];
-
 export const budgets: { key: "u25" | "u50" | "u100" | "group"; label: string }[] = [
   { key: "u25", label: "Under $25" },
   { key: "u50", label: "$25 to $50" },
@@ -389,6 +397,56 @@ export const budgets: { key: "u25" | "u50" | "u100" | "group"; label: string }[]
  * now" — the why-we-think rule from the design system.
  */
 export const recommendations: Recommendation[] = [
+  // Kristina
+  {
+    id: "rec-19",
+    productId: "prod-esh-mask",
+    forUserId: "kristina",
+    budget: "u25",
+    behavior: "Five skincare runs in September, three of them after 9 PM.",
+    signal: "Sabina bought the centella cream at Olive & Aloe on Sept 14.",
+  },
+  {
+    id: "rec-20",
+    productId: "prod-madhav-notebook",
+    forUserId: "kristina",
+    budget: "u25",
+    behavior: "Bought the Sundry pocket notebook on Sept 6. It is nearly full.",
+    signal: "Madhav bought the trio a day earlier, on Sept 5.",
+  },
+  {
+    id: "rec-21",
+    productId: "prod-sabina-tote",
+    forUserId: "kristina",
+    budget: "u50",
+    behavior: "Two bags this month: a $112 camera sling and a vintage leather shoulder bag.",
+    signal: "Esh bought a linen tote there on Sept 13.",
+  },
+  {
+    id: "rec-22",
+    productId: "prod-esh-clip",
+    forUserId: "kristina",
+    budget: "u50",
+    behavior: "Silver three times at Tin & Tulip, plus a brass lamp from Marlowe Vintage.",
+    signal: "Sabina found a brooch at Pearl & Pine on Sept 12.",
+  },
+  {
+    id: "rec-23",
+    productId: "prod-madhav-kettle",
+    forUserId: "kristina",
+    budget: "u100",
+    behavior: "Matcha twice in September and a hand-thrown espresso cup on Sept 26.",
+    signal: "Madhav bought the ceramic dripper at Clay & Cloud on Sept 18.",
+  },
+  {
+    id: "rec-24",
+    productId: "prod-sabina-boots",
+    forUserId: "kristina",
+    budget: "u100",
+    behavior: "Neutral, leather, and she has bought exactly one pair of shoes all month.",
+    signal: "Esh rated these five out of five.",
+  },
+
   // Esh
   {
     id: "rec-1",
@@ -396,7 +454,7 @@ export const recommendations: Recommendation[] = [
     forUserId: "esh",
     budget: "u25",
     behavior: "3 silver pieces this month, all from small shops.",
-    signal: "You bought rings and hoops from Tin & Tulip 3 times in September.",
+    signal: "Kristina bought rings and hoops from Tin & Tulip 3 times in September.",
   },
   {
     id: "rec-2",
@@ -429,7 +487,7 @@ export const recommendations: Recommendation[] = [
     budget: "u100",
     behavior:
       "Neutrals, leather, silver. And they rarely go over $80, so this stays under.",
-    signal: "You saved this bag on Sept 11.",
+    signal: "Kristina bought the same bag at Marlowe on Sept 11.",
   },
   {
     id: "rec-6",
@@ -505,7 +563,7 @@ export const recommendations: Recommendation[] = [
     forUserId: "madhav",
     budget: "u25",
     behavior: "Bought the pocket notebook trio on Sept 5.",
-    signal: "You bought one too on Sept 6. Matching notebooks.",
+    signal: "Kristina bought one too on Sept 6. Matching notebooks.",
   },
   {
     id: "rec-15",
@@ -542,6 +600,14 @@ export const recommendations: Recommendation[] = [
 ];
 
 export const groupGifts: Record<string, GroupGift> = {
+  kristina: {
+    forUserId: "kristina",
+    productId: "prod-sabina-campus",
+    banner: birthdayBanner("kristina"),
+    bannerBg: birthdayIsSoon("kristina") ? "#E8806F" : "#A8DCC2",
+    why: "Gazelles on Sept 17, at 8:30 PM. One pair of shoes all month, and one favourite shop.",
+    splitWays: 3,
+  },
   esh: {
     forUserId: "esh",
     productId: "prod-esh-vanity",
@@ -555,7 +621,7 @@ export const groupGifts: Record<string, GroupGift> = {
     productId: "prod-sabina-camera",
     banner: birthdayBanner("sabina"),
     bannerBg: birthdayIsSoon("sabina") ? "#E8806F" : "#A8DCC2",
-    why: "Sept 12: six stores, eight hours, zero photos. You know Lensmith well.",
+    why: "Sept 12: six stores, eight hours, zero photos. She bought the film on Sept 27 anyway.",
     splitWays: 3,
   },
   madhav: {

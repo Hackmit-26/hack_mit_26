@@ -68,6 +68,17 @@ export const group: Group = {
 };
 
 /**
+ * Everyone in the group except one person, in roster order.
+ *
+ * A function, not a constant: `viewer` is a live binding, so anything computed once at import
+ * time would still name the person who happened to be viewing when the module first loaded.
+ * The gift pickers pass the current viewer; the group-gift split passes the recipient.
+ */
+export function groupMembersExcept(userId: UserId): UserId[] {
+  return group.memberIds.filter((id) => id !== userId);
+}
+
+/**
  * The same four people as the backend seeds them. The demo backend (`DB_MODE=memory`) uses these
  * exact strings as its primary keys, so `UserId` is also the dev bearer token: `Bearer dev:sabina`.
  * Nothing is mapped, which is the point - there is one set of ids, not two.

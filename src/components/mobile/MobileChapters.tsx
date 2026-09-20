@@ -17,11 +17,10 @@ import {
   budgets,
   getProduct,
   giftProfiles,
-  giftableUserIds,
   groupGifts,
   recommendationsFor,
 } from "@/data/products";
-import { backendGroupId, getUser } from "@/data/users";
+import { backendGroupId, getUser, groupMembersExcept } from "@/data/users";
 import {
   chainReaction,
   loreCases,
@@ -54,7 +53,9 @@ const KICKER: React.CSSProperties = {
 /* ------------------------------------------------------------------ 1 */
 
 export function MTaste() {
+  const { viewerId } = useApp();
   const [a, b] = tasteMatch.pair;
+  const inPair = viewerId === a || viewerId === b;
 
   return (
     <MobileFrame
@@ -273,7 +274,7 @@ export function MTaste() {
             color: "#B8412F",
           }}
         >
-          one thing you absolutely disagree on
+          one thing {inPair ? "you" : "they"} absolutely disagree on
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.35, marginTop: 4 }}>
           <b>Esh</b> shops 12 stores in 14 purchases. <b>Kristina</b> is committed to Sephora: 5
@@ -1026,7 +1027,7 @@ export function MGift({
 
       {/* friend switcher */}
       <div style={{ position: "relative", display: "flex", gap: 6, marginTop: 12 }}>
-        {giftableUserIds.map((id) => {
+        {groupMembersExcept(viewerId).map((id) => {
           const on = id === state.who;
           return (
             <button

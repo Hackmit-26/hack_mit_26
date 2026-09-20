@@ -16,11 +16,10 @@ import {
   daysUntilBirthday,
   getProduct,
   giftProfiles,
-  giftableUserIds,
   groupGifts,
   recommendationsFor,
 } from "@/data/products";
-import { backendGroupId, getUser, users } from "@/data/users";
+import { backendGroupId, getUser, groupMembersExcept, users } from "@/data/users";
 import { ApiError, listGroupThreads } from "@/lib/api";
 import type { Contribution, Thread } from "@/lib/apiTypes";
 import { formatPrice, shareOf } from "@/services/commerce";
@@ -390,6 +389,7 @@ function PickScreen({
   state: GiftState;
   setState: (next: GiftState) => void;
 }) {
+  const { viewerId } = useApp();
   const person = getUser(state.who);
 
   return (
@@ -490,7 +490,7 @@ function PickScreen({
           gap: 22,
         }}
       >
-        {giftableUserIds.map((id) => {
+        {groupMembersExcept(viewerId).map((id) => {
           const on = id === state.who;
           const u = getUser(id);
           return (
@@ -1073,7 +1073,7 @@ function GroupGiftPanel({
         name: c.userId === viewerId ? "You" : c.name,
         ...contributionChip(c),
       }))
-    : (["kristina", ...giftableUserIds.filter((w) => w !== who)] as UserId[]).map((w) => {
+    : groupMembersExcept(who).map((w) => {
         const isViewer = w === viewerId;
         return {
           who: w,
