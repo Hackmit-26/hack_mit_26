@@ -147,6 +147,28 @@ describe("pages without structured data", () => {
     expect(result.category).toBe("clothing");
   });
 
+  // Every one of these is a shape a live retailer page actually served; with singular-only
+  // keywords they all fell through to 'other'.
+  it.each([
+    ["Air Force 1 Low Men's Shoes", "shoes"],
+    ["Chelsea Boots", "shoes"],
+    ["AIRism Cotton Oversized T-Shirts", "clothing"],
+    ["Wide Leg Trousers", "clothing"],
+    ["Linen Summer Dresses", "clothing"],
+    ["Polarised Sunglasses", "accessories"],
+    ["Gold Hoop Earrings", "accessories"],
+    ["Automatic Dive Watches", "accessories"],
+    ["Fine Silver Jewellery", "accessories"],
+    ["Hydrating Moisturiser", "beauty"],
+    ["Santoku Knives", "kitchen"],
+    ["Floating Oak Shelves", "home"],
+    ["Noise Cancelling Headphones", "tech"],
+    ["Dot Grid Notebooks", "stationery"],
+  ])("categorises the plural title %s", (title, category) => {
+    const result = extract(`<html><head><title>${title}</title></head><body></body></html>`);
+    expect(result.category).toBe(category);
+  });
+
   it("still returns something usable on a page with nothing on it", () => {
     const result = extract(`<html><head><title>Wool Scarf</title></head><body></body></html>`);
     expect(result).toMatchObject({

@@ -56,6 +56,34 @@ Only `http://localhost/*` and `http://127.0.0.1/*` are in the manifest. Point th
 anything else (a tunnel, a deployed API) and the options page asks Chrome for that host at the
 moment you hit **Test connection**.
 
+## Verifying it
+
+```bash
+npx vitest run extension/test/extract.test.js   # the extractor, against fixed DOM fixtures
+node extension/test/live-api.mjs                # extract.js -> itemBodyFrom -> a running backend
+node extension/test/crawl-live.mjs [url ...]    # a real Chrome, real retailer pages
+```
+
+`live-api.mjs` lifts `itemBodyFrom` verbatim out of `background.js` rather than reimplementing it,
+so it fails if the shipped save body ever stops matching `POST /items`. It needs the fast backend
+on `:8081` and resets the demo world first.
+
+`crawl-live.mjs` launches a headful Chrome on a throwaway profile and evaluates `src/extract.js`
+inside the live page over CDP — the same thing `chrome.scripting.executeScript` does. What it
+found on a real run:
+
+| Site | Result |
+| --- | --- |
+| uniqlo, nike, ikea | complete tile — title, image, price, merchant, category |
+| rei | title, image, merchant, category; **no price** — prices sit in hashed CSS-module classes with no `itemprop`, no Product JSON-LD |
+| stale/404 URLs | the error page's own title and image, `confident: false` where there is no price |
+
+Two things worth knowing. **Headless Chrome is bot-walled** by REI, Patagonia, Best Buy and others —
+their DOM comes back with no product in it at all. That is a property of headless, not of the
+extractor: the extension runs in the user's own signed-in tab, which is why `crawl-live.mjs` is
+headful. And **a site can simply not expose its price**; `confident: false` is the honest signal,
+and the popup leaves the field editable for exactly that case.
+
 ## Layout
 
 ```

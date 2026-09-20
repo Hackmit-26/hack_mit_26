@@ -197,7 +197,7 @@
     return null;
   };
 
-  /** No currency field exists downstream; this is for the popup's own display only. */
+  /** No currency field exists downstream; this rides along for whoever renders the price next. */
   const currencyFromSymbol = (text) => {
     if (!text) return null;
     if (text.includes("£")) return "GBP";
@@ -207,21 +207,25 @@
     return null;
   };
 
+  // Every keyword is singular but real product titles are mostly plural ("Air Force 1 Men's
+  // Shoes"), so each alternative carries an optional `(e)s` — without it `\bshoe\b` misses
+  // "Shoes" and the tile lands in 'other'. That was the single most common miss when these ran
+  // against live retailer pages.
   const CATEGORY_KEYWORDS = [
-    ["shoes", /\b(sneaker|trainer|shoe|boot|loafer|sandal|heel|clog|mule)\b/i],
-    ["clothing", /\b(shirt|tee|t-shirt|jacket|coat|dress|jean|trouser|pant|hoodie|sweater|knit|skirt|blazer|cardigan|parka|vest|short)\b/i],
-    ["accessories", /\b(bag|tote|backpack|wallet|belt|scarf|hat|cap|sunglass|jewel|necklace|earring|ring|bracelet|watch)\b/i],
-    ["beauty", /\b(serum|cleanser|moisturis|moisturiz|lipstick|fragrance|perfume|skincare|shampoo|balm|mascara|spf|sunscreen)\b/i],
-    ["kitchen", /\b(kettle|pan|skillet|knife|mug|grinder|espresso|cookware|blender|whisk|chopping|dutch oven|teapot)\b/i],
-    ["home", /\b(lamp|candle|cushion|rug|vase|duvet|throw|shelf|chair|linen|towel|planter|mirror)\b/i],
-    ["tech", /\b(headphone|earbud|laptop|keyboard|monitor|camera|ssd|charger|cable|iphone|ipad|speaker|mouse|gpu|console)\b/i],
-    ["books", /\b(book|novel|paperback|hardcover|memoir|isbn)\b/i],
-    ["stationery", /\b(notebook|pen |pencil|journal|planner|sticker|washi|fountain pen)\b/i],
-    ["food_drink", /\b(coffee|tea|matcha|hojicha|chocolate|snack|olive oil|honey|wine|beans)\b/i],
-    ["games", /\b(board game|puzzle|lego|nintendo|playstation|xbox|figure|tcg)\b/i],
-    ["music", /\b(vinyl|record|turntable|guitar|synth|headphone amp|album)\b/i],
-    ["sports_outdoors", /\b(yoga|running|bike|cycling|tent|hiking|dumbbell|climbing|ski|racket)\b/i],
-    ["art_crafts", /\b(paint|canvas|yarn|knitting|embroider|sketch|clay|craft)\b/i],
+    ["shoes", /\b(sneaker|trainer|shoe|boot|loafer|sandal|heel|clog|mule)s?\b/i],
+    ["clothing", /\b(shirt|tee|t-shirt|jacket|coat|dress|jean|trouser|pant|hoodie|sweater|knit|skirt|blazer|cardigan|parka|vest|short)(?:e?s)?\b/i],
+    ["accessories", /\b(bag|tote|backpack|wallet|belt|scarf|hat|cap|sunglass|jewel(?:lery|ry)?|necklace|earring|ring|bracelet|watch)(?:e?s)?\b/i],
+    ["beauty", /\b(serum|cleanser|moisturi[sz]er|lipstick|fragrance|perfume|skincare|shampoo|balm|mascara|spf|sunscreen)s?\b/i],
+    ["kitchen", /\b(kettle|pan|skillet|knife|knive|mug|grinder|espresso|cookware|blender|whisk|chopping|dutch oven|teapot)s?\b/i],
+    ["home", /\b(lamp|candle|cushion|rug|vase|duvet|throw|shelf|shelve|chair|linen|towel|planter|mirror)s?\b/i],
+    ["tech", /\b(headphone|earbud|laptop|keyboard|monitor|camera|ssd|charger|cable|iphone|ipad|speaker|mouse|gpu|console)s?\b/i],
+    ["books", /\b(book|novel|paperback|hardcover|memoir|isbn)s?\b/i],
+    ["stationery", /\b(notebook|pen |pencil|journal|planner|sticker|washi|fountain pen)s?\b/i],
+    ["food_drink", /\b(coffee|tea|matcha|hojicha|chocolate|snack|olive oil|honey|wine|beans)s?\b/i],
+    ["games", /\b(board game|puzzle|lego|nintendo|playstation|xbox|figure|tcg)s?\b/i],
+    ["music", /\b(vinyl|record|turntable|guitar|synth|headphone amp|album)s?\b/i],
+    ["sports_outdoors", /\b(yoga|running|bike|cycling|tent|hiking|dumbbell|climbing|ski|racket)s?\b/i],
+    ["art_crafts", /\b(paint|canvas|yarn|knitting|embroider|sketch|clay|craft)s?\b/i],
   ];
 
   /** Matches the vocabulary already in `backend/fixtures`; anything unrecognised is 'other'. */
