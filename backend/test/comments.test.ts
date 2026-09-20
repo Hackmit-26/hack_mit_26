@@ -372,3 +372,87 @@ describe('the gift recipient can never learn a thread exists through comments', 
     expect((await list(mallory.id, 'gift_pick', newId())).statusCode).toBe(404);
   });
 });
+
+describe('comments on a Wrapped card', () => {
+  const CARD = '0a5e7c64-3f2e-4b91-9a77-5b7e1c0d4e22';
+
+  it('lets any member of the group talk about the card', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const groupId = group();
+    member(groupId, alice.id);
+    member(groupId, bob.id);
+
+    const created = await post(alice.id, {
+      targetType: 'wrapped_card',
+      targetId: CARD,
+      groupId,
+      body: 'the matcha slander is unwarranted',
+    });
+    expect(created.statusCode).toBe(200);
+
+    const seen = await app.inject({
+      method: 'GET',
+      url: `/comments?targetType=wrapped_card&targetId=${CARD}&groupId=${groupId}`,
+      headers: auth(bob.id),
+    });
+    expect(seen.json<Comment[]>().map((c) => c.body)).toEqual([
+      'the matcha slander is unwarranted',
+    ]);
+  });
+
+  it('refuses a card with no group, since nothing else can authorise it', async () => {
+    const alice = user('Alice');
+    member(group(), alice.id);
+
+    const res = await post(alice.id, {
+      targetType: 'wrapped_card',
+      targetId: CARD,
+      body: 'no group, no rule',
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<ApiError>().error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('keeps outsiders out', async () => {
+    const alice = user('Alice');
+    const mallory = user('Mallory');
+    const groupId = group();
+    member(groupId, alice.id);
+
+    await post(alice.id, {
+      targetType: 'wrapped_card',
+      targetId: CARD,
+      groupId,
+      body: 'ours',
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/comments?targetType=wrapped_card&targetId=${CARD}&groupId=${groupId}`,
+      headers: auth(mallory.id),
+    });
+    expect(res.statusCode).toBe(403);
+    expect(res.json<ApiError>().error.code).toBe('NOT_MEMBER');
+  });
+
+  it('does not bleed into a different group talking about the same card', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const ours = group('Ours');
+    const theirs = group('Theirs');
+    member(ours, alice.id);
+    member(theirs, bob.id);
+
+    await post(alice.id, { targetType: 'wrapped_card', targetId: CARD, groupId: ours, body: 'ours' });
+
+    // The card id is the thread key, so a shared id would be a shared conversation. Each group
+    // derives its own from its own Wrapped; this proves the read is still gated on membership.
+    const res = await app.inject({
+      method: 'GET',
+      url: `/comments?targetType=wrapped_card&targetId=${CARD}&groupId=${ours}`,
+      headers: auth(bob.id),
+    });
+    expect(res.statusCode).toBe(403);
+  });
+});

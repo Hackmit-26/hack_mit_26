@@ -54,11 +54,12 @@ export type ReactionRow = {
  * The subset of their `target_kind` enum that this backend can authorise a read against.
  * `purchase` and `product` both resolve to an `ItemRow` (postgres.ts turns catalogue saves into
  * synthetic items); `gift_thread` and `gift_pick` resolve to a thread, which is what makes the
- * §5.2 recipient rule apply to comments. The remaining kinds - wrapped_card, lore_case,
- * spotlight, taste_pair - have no row in the working set, so we cannot say who may read them
- * and deliberately refuse to serve them at all.
+ * §5.2 recipient rule apply to comments. `wrapped_card` resolves to nothing - a card is
+ * generated copy the client keys itself - so it is authorised by group membership instead.
+ * `lore_case`, `spotlight` and `taste_pair` are all cards under another name; the frontend sends
+ * them as `wrapped_card` rather than us guessing at three more vocabularies.
  */
-export type CommentTargetType = 'purchase' | 'product' | 'gift_thread' | 'gift_pick';
+export type CommentTargetType = 'purchase' | 'product' | 'wrapped_card' | 'gift_thread' | 'gift_pick';
 
 /**
  * Mirrors their `comments` table one-for-one, including the soft delete: `deleted_at` is how

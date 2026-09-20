@@ -9,7 +9,10 @@ import type {
   ApprovalProof,
   Birthday,
   CardResponse,
+  Comment,
+  CommentTargetType,
   Contribution,
+  CreateCommentBody,
   CreateGroupBody,
   CreateItemBody,
   CreateThreadBody,
@@ -370,4 +373,32 @@ export function verifyPasskeyRegistration(
 
 export function getPasskeyAuthOptions(): Promise<PasskeyAuthOptions> {
   return request<PasskeyAuthOptions>("/passkeys/auth/options", { method: "POST" });
+}
+
+/* ------------------------------------------------------------- comments */
+/* Self-contained block, kept last so it merges without touching its neighbours. */
+
+/**
+ * Oldest first, as the server orders them. A 404 here means the viewer cannot see the target -
+ * for the recipient of a gift thread that is the correct answer, not a failure. Callers render
+ * it as an empty thread.
+ */
+export function listComments(
+  targetType: CommentTargetType,
+  targetId: string,
+  groupId?: string,
+): Promise<Comment[]> {
+  const query = new URLSearchParams({ targetType, targetId });
+  if (groupId) query.set("groupId", groupId);
+  return request<Comment[]>(`/comments?${query.toString()}`);
+}
+
+/** `parentId` must name a live comment on the same target; anything else 404s. */
+export function createComment(body: CreateCommentBody): Promise<Comment> {
+  return request<Comment>("/comments", { method: "POST", body });
+}
+
+/** Author-only. 403 NOT_MEMBER for anyone else, so never offer it on someone else's comment. */
+export function deleteComment(commentId: string): Promise<void> {
+  return request<void>(`/comments/${seg(commentId)}`, { method: "DELETE" });
 }

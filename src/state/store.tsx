@@ -13,7 +13,16 @@ import {
 
 import { purchases as seedPurchases, seededReactions } from "@/data";
 import { productsById } from "@/data/products";
-import { addWishlistLink, listWishlist } from "@/lib/api";
+import { backendGroupId, users } from "@/data/users";
+import {
+  addWishlistLink,
+  createComment,
+  deleteComment as deleteCommentRequest,
+  getViewerId,
+  listComments,
+  listWishlist,
+} from "@/lib/api";
+import type { Comment, CommentTargetType } from "@/lib/apiTypes";
 import type {
   ArtKind,
   PrivacySettings,
@@ -84,6 +93,115 @@ export function setWishlistApi(api: WishlistApi): void {
   wishlistApi = api;
 }
 
+/** Whatever a comment hangs off. The backend treats `purchase` and `product` as one thing. */
+export interface CommentTarget {
+  targetType: CommentTargetType;
+  targetId: string;
+  /** Only `wrapped_card` uses it: with no row to look up, the group carries the permission. */
+  groupId?: string;
+}
+
+/**
+ * Wrapped cards and the seeded purchase tiles are client-side copy - their ids are strings like
+ * `spot-esh`, not rows the server can resolve, and `comments.target_id` is a uuid column. So the
+ * key is folded into a stable uuid here and authorised by group membership instead, which is what
+ * the server's `wrapped_card` kind is for. Same key in, same uuid out, on every device.
+ */
+export function cardTarget(key: string): CommentTarget {
+  return { targetType: "wrapped_card", targetId: keyToUuid(key), groupId: backendGroupId };
+}
+
+/** FNV-1a over four seeds. Synchronous on purpose - `crypto.subtle.digest` is not. */
+function keyToUuid(key: string): string {
+  let hex = "";
+  for (let seed = 0; seed < 4; seed += 1) {
+    let h = (0x811c9dc5 ^ seed) >>> 0;
+    for (let i = 0; i < key.length; i += 1) {
+      h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0;
+    }
+    hex += h.toString(16).padStart(8, "0");
+  }
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    `4${hex.slice(13, 16)}`,
+    `8${hex.slice(17, 20)}`,
+    hex.slice(20, 32),
+  ].join("-");
+}
+
+/**
+ * A comment as the UI holds it: the server's fields, plus the bookkeeping an
+ * optimistic write needs. `mine` is the only thing the delete affordance reads,
+ * so a 403 is never reachable from the interface.
+ */
+export interface StoredComment {
+  id: string;
+  parentId: string | null;
+  authorId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+  /** The viewer wrote this. */
+  mine: boolean;
+  /** In flight. */
+  pending?: boolean;
+  /** Set when the comment never reached the server. */
+  note?: string;
+  /** True until the server has acknowledged it; survives a reload of the thread. */
+  local?: boolean;
+}
+
+export interface CommentsApi {
+  list(target: CommentTarget): Promise<Comment[]>;
+  create(target: CommentTarget, body: string, parentId: string | null): Promise<Comment>;
+  remove(commentId: string): Promise<void>;
+  /** The bearer token's user, so a comment the server sends back is recognised as the viewer's. */
+  viewerId(): string | null;
+}
+
+const backendCommentsApi: CommentsApi = {
+  list: ({ targetType, targetId, groupId }) => listComments(targetType, targetId, groupId),
+  create: ({ targetType, targetId, groupId }, body, parentId) =>
+    createComment({ targetType, targetId, groupId, parentId, body }),
+  remove: deleteCommentRequest,
+  viewerId: getViewerId,
+};
+
+let commentsApi: CommentsApi = backendCommentsApi;
+
+/** THE API SEAM. Nothing else in the app talks to /comments. Tests inject here. */
+export function setCommentsApi(api: CommentsApi): void {
+  commentsApi = api;
+}
+
+export function commentKey(target: CommentTarget): string {
+  return `${target.targetType}:${target.targetId}`;
+}
+
+export interface CommentThreadState {
+  items: StoredComment[];
+  status: "idle" | "loading" | "ready";
+}
+
+const EMPTY_THREAD: CommentThreadState = { items: [], status: "idle" };
+
+function storedFrom(comment: Comment, viewerId: string | null): StoredComment {
+  return {
+    id: comment.id,
+    parentId: comment.parentId,
+    authorId: comment.authorId,
+    authorName: comment.authorName,
+    body: comment.body,
+    createdAt: comment.createdAt,
+    mine: viewerId !== null && comment.authorId === viewerId,
+  };
+}
+
+function byCreatedAt(a: StoredComment, b: StoredComment): number {
+  return a.createdAt.localeCompare(b.createdAt);
+}
+
 /**
  * All demo state in one place: reactions, per-item privacy, the wishlist, and
  * the purchases made from inside the Wrapped. Everything a backend would own
@@ -96,6 +214,8 @@ interface AppState {
   orders: PurchaseOutcome[];
   /** Group-gift invites the viewer has sent, keyed by recipient. */
   groupGiftStarted: UserId[];
+  /** Comment threads keyed by `commentKey(target)`. */
+  comments: Record<string, CommentThreadState>;
 }
 
 type Action =
@@ -109,6 +229,11 @@ type Action =
   | { type: "wishlist-resolve"; id: string; patch: Partial<WishlistItem> }
   | { type: "wishlist-remove"; id: string }
   | { type: "wishlist-merge"; items: WishlistItem[] }
+  | { type: "comments-loading"; key: string }
+  | { type: "comments-loaded"; key: string; items: StoredComment[] }
+  | { type: "comment-add"; key: string; comment: StoredComment }
+  | { type: "comment-patch"; key: string; id: string; patch: Partial<StoredComment> }
+  | { type: "comment-remove"; key: string; id: string }
   | { type: "record-order"; outcome: PurchaseOutcome }
   | { type: "start-group-gift"; userId: UserId }
   | { type: "hydrate"; state: AppState }
@@ -218,7 +343,17 @@ function initialState(): AppState {
     wishlist: [],
     orders: [],
     groupGiftStarted: [],
+    comments: {},
   };
+}
+
+function patchThread(
+  state: AppState,
+  key: string,
+  change: (thread: CommentThreadState) => CommentThreadState,
+): AppState {
+  const thread = state.comments[key] ?? EMPTY_THREAD;
+  return { ...state, comments: { ...state.comments, [key]: change(thread) } };
 }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -331,6 +466,37 @@ function reducer(state: AppState, action: Action): AppState {
         : { ...state, wishlist: [...state.wishlist, ...fresh] };
     }
 
+    case "comments-loading":
+      return patchThread(state, action.key, (t) => ({ ...t, status: "loading" }));
+
+    case "comments-loaded":
+      // Anything the server has never acknowledged is kept: a failed write is not a lost one.
+      return patchThread(state, action.key, (t) => ({
+        status: "ready",
+        items: [...t.items.filter((c) => c.local), ...action.items].sort(byCreatedAt),
+      }));
+
+    case "comment-add":
+      return patchThread(state, action.key, (t) => ({
+        ...t,
+        items: [...t.items, action.comment].sort(byCreatedAt),
+      }));
+
+    case "comment-patch":
+      return patchThread(state, action.key, (t) => ({
+        ...t,
+        items: t.items
+          .map((c) => (c.id === action.id ? { ...c, ...action.patch } : c))
+          .sort(byCreatedAt),
+      }));
+
+    case "comment-remove":
+      // Replies are left standing, exactly as the server's soft delete leaves them.
+      return patchThread(state, action.key, (t) => ({
+        ...t,
+        items: t.items.filter((c) => c.id !== action.id),
+      }));
+
     case "record-order":
       return { ...state, orders: [...state.orders, action.outcome] };
 
@@ -376,6 +542,20 @@ interface AppContextValue extends AppState {
   removeWishlistItem: (id: string) => void;
   /** Pulls the server's list in, if there is a server. Never throws. */
   refreshWishlist: () => Promise<void>;
+  /** Oldest first, replies included — the UI does the grouping. */
+  commentsFor: (target: CommentTarget) => StoredComment[];
+  commentCount: (target: CommentTarget) => number;
+  commentsStatus: (target: CommentTarget) => CommentThreadState["status"];
+  /** A 404 means "you cannot see this target": an empty thread, never an error. Never throws. */
+  loadComments: (target: CommentTarget) => Promise<void>;
+  /** Optimistic: the comment appears immediately and is never rolled back. Never throws. */
+  postComment: (
+    target: CommentTarget,
+    body: string,
+    parentId?: string | null,
+  ) => Promise<void>;
+  /** Author-only; the UI must not offer it on anyone else's comment. Never throws. */
+  deleteComment: (target: CommentTarget, commentId: string) => Promise<void>;
   recordOrder: (outcome: PurchaseOutcome) => void;
   startGroupGift: (userId: UserId) => void;
   hasStartedGroupGift: (userId: UserId) => boolean;
@@ -407,6 +587,7 @@ function loadState(): AppState {
       ...base,
       ...saved,
       wishlist: migrated,
+      comments: saved.comments ?? base.comments,
       privacy: { ...base.privacy, ...(saved.privacy ?? {}) },
     };
   } catch {
@@ -492,6 +673,90 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * A 404 from the list is the recipient of a gift thread being told nothing,
+   * which is the point. It reads the same as an unreachable server here: keep
+   * whatever is local, show an empty thread, never an error.
+   */
+  const loadComments = useCallback(async (target: CommentTarget) => {
+    const key = commentKey(target);
+    dispatch({ type: "comments-loading", key });
+    try {
+      const remote = await commentsApi.list(target);
+      const viewerId = commentsApi.viewerId();
+      dispatch({
+        type: "comments-loaded",
+        key,
+        items: remote.map((c) => storedFrom(c, viewerId)),
+      });
+    } catch {
+      dispatch({ type: "comments-loaded", key, items: [] });
+    }
+  }, []);
+
+  const postComment = useCallback(
+    async (target: CommentTarget, body: string, parentId: string | null = null) => {
+      const text = body.trim();
+      if (!text) return;
+      const key = commentKey(target);
+      const draft: StoredComment = {
+        id: `c-local-${nextId()}`,
+        parentId,
+        authorId: VIEWER,
+        authorName: users[VIEWER].name,
+        body: text,
+        createdAt: new Date().toISOString(),
+        mine: true,
+        pending: true,
+        local: true,
+      };
+      dispatch({ type: "comment-add", key, comment: draft });
+      try {
+        const saved = await commentsApi.create(target, text, parentId);
+        dispatch({
+          type: "comment-patch",
+          key,
+          id: draft.id,
+          patch: {
+            id: saved.id,
+            parentId: saved.parentId,
+            authorId: saved.authorId,
+            authorName: saved.authorName,
+            body: saved.body,
+            createdAt: saved.createdAt,
+            pending: false,
+            local: false,
+            note: undefined,
+          },
+        });
+      } catch {
+        dispatch({
+          type: "comment-patch",
+          key,
+          id: draft.id,
+          patch: { pending: false, note: "Only on this device — we couldn’t reach the server." },
+        });
+      }
+    },
+    [],
+  );
+
+  const deleteComment = useCallback(async (target: CommentTarget, commentId: string) => {
+    dispatch({ type: "comment-remove", key: commentKey(target), id: commentId });
+    // A comment that never reached the server has no id there to delete.
+    if (commentId.startsWith("c-local-")) return;
+    try {
+      await commentsApi.remove(commentId);
+    } catch {
+      // It is gone from this device either way; a dead server must not resurrect it.
+    }
+  }, []);
+
+  const commentsFor = useCallback(
+    (target: CommentTarget) => state.comments[commentKey(target)]?.items ?? [],
+    [state.comments],
+  );
+
   const savedProductIds = useMemo(
     () =>
       state.wishlist
@@ -519,6 +784,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addWishlistLink,
       removeWishlistItem: (id) => dispatch({ type: "wishlist-remove", id }),
       refreshWishlist,
+      commentsFor,
+      commentCount: (target) => (state.comments[commentKey(target)]?.items ?? []).length,
+      commentsStatus: (target) => state.comments[commentKey(target)]?.status ?? "idle",
+      loadComments,
+      postComment,
+      deleteComment,
       recordOrder: (outcome) => dispatch({ type: "record-order", outcome }),
       startGroupGift: (userId) => dispatch({ type: "start-group-gift", userId }),
       hasStartedGroupGift: (userId) => state.groupGiftStarted.includes(userId),
@@ -532,6 +803,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       viewerReacted,
       addWishlistLink,
       refreshWishlist,
+      commentsFor,
+      loadComments,
+      postComment,
+      deleteComment,
     ],
   );
 

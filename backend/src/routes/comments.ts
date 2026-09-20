@@ -4,16 +4,18 @@ import { requireAuth } from '../auth/verifyUser.js';
 import { mirrorComment, unmirrorComment } from '../db/mirror.js';
 import { db, newId, now } from '../db/index.js';
 import type { CommentRow, CommentTargetType } from '../db/types.js';
-import { assertItemVisibleTo, loadVisibleThread } from '../domain/permissions.js';
+import { assertItemVisibleTo, assertMember, loadVisibleThread } from '../domain/permissions.js';
 import { AppError, notFound } from '../lib/errors.js';
 import type { Comment } from '../types/api.js';
 
-const TARGET_TYPES = ['purchase', 'product', 'gift_thread', 'gift_pick'] as const;
+const TARGET_TYPES = ['purchase', 'product', 'wrapped_card', 'gift_thread', 'gift_pick'] as const;
 
 // Their CHECK is `char_length(body) between 1 and 1000`; trimming first rejects whitespace-only.
 const createBody = z.object({
   targetType: z.enum(TARGET_TYPES),
   targetId: z.string().min(1),
+  /** Required for `wrapped_card`, ignored otherwise - see assertTargetVisibleTo. */
+  groupId: z.string().min(1).optional(),
   parentId: z.string().min(1).nullable().optional(),
   body: z.string().trim().min(1).max(1000),
 });
@@ -21,6 +23,7 @@ const createBody = z.object({
 const listQuery = z.object({
   targetType: z.enum(TARGET_TYPES),
   targetId: z.string().min(1),
+  groupId: z.string().min(1).optional(),
 });
 
 const idParams = z.object({ id: z.string().min(1) });
@@ -41,16 +44,28 @@ const ITEM_KINDS: ReadonlySet<CommentTargetType> = new Set<CommentTargetType>([
  *
  * Every branch therefore fails as NOT_FOUND/404 and an unknown target is indistinguishable from
  * a forbidden one. Returns the group the comment belongs to, for the mirror's NOT NULL column.
+ *
+ * `wrapped_card` is the one target that is not a row we own - a card is generated copy, keyed by
+ * the client. There is nothing to look up, so the group carries the authorisation and the rule is
+ * the same one `GET /groups/:id/finds` uses: you can talk about a Wrapped you are a member of.
  */
 function assertTargetVisibleTo(
   targetType: CommentTargetType,
   targetId: string,
   userId: string,
+  groupId: string | undefined,
 ): string | null {
   switch (targetType) {
     case 'purchase':
     case 'product':
       return assertItemVisibleTo(targetId, userId).groupId;
+    case 'wrapped_card': {
+      if (!groupId) throw new AppError('VALIDATION_ERROR', 400, 'groupId is required');
+      const group = db.groups.find((g) => g.id === groupId);
+      if (!group) throw notFound('Group not found');
+      assertMember(group.id, userId);
+      return group.id;
+    }
     case 'gift_thread':
       return loadVisibleThread(targetId, userId).groupId;
     case 'gift_pick': {
@@ -93,7 +108,7 @@ export default async function commentsRoutes(app: FastifyInstance): Promise<void
     const { userId } = requireAuth(request);
     const input = createBody.parse(request.body);
 
-    const groupId = assertTargetVisibleTo(input.targetType, input.targetId, userId);
+    const groupId = assertTargetVisibleTo(input.targetType, input.targetId, userId, input.groupId);
 
     const parentId = input.parentId ?? null;
     if (parentId) {
@@ -126,9 +141,9 @@ export default async function commentsRoutes(app: FastifyInstance): Promise<void
 
   app.get('/comments', async (request) => {
     const { userId } = requireAuth(request);
-    const { targetType, targetId } = listQuery.parse(request.query);
+    const { targetType, targetId, groupId } = listQuery.parse(request.query);
 
-    assertTargetVisibleTo(targetType, targetId, userId);
+    assertTargetVisibleTo(targetType, targetId, userId, groupId);
 
     const onSameTarget = onTarget(targetType, targetId);
     return db.comments
@@ -148,7 +163,7 @@ export default async function commentsRoutes(app: FastifyInstance): Promise<void
     // has to 404 here exactly as they would on the list, or the status code alone tells them a
     // thread exists. Only once the caller is known to see the target is a 403 safe - by then
     // they can already read the comment and its author, so it reveals nothing new.
-    assertTargetVisibleTo(row.targetType, row.targetId, userId);
+    assertTargetVisibleTo(row.targetType, row.targetId, userId, row.groupId ?? undefined);
 
     if (row.userId !== userId) {
       throw new AppError('NOT_MEMBER', 403, 'Only the author can delete this comment');

@@ -5,6 +5,12 @@
 
 export type Visibility = "private" | "shared" | "anonymous";
 export type ReactionType = "heart" | "wishlist";
+export type CommentTargetType =
+  | "purchase"
+  | "product"
+  | "wrapped_card"
+  | "gift_thread"
+  | "gift_pick";
 export type PickSource = "ai" | "member";
 export type PushStatus = "pending" | "succeeded" | "failed";
 
@@ -183,6 +189,19 @@ export type Thread = {
   contributions: Contribution[];
 };
 
+/** A comment is exactly as visible as the thing it hangs off; a hidden target 404s. */
+export type Comment = {
+  id: string;
+  targetType: CommentTargetType;
+  targetId: string;
+  parentId: string | null;
+  authorId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+};
+
 export type Reveal = {
   giftName: string;
   imageUrl: string | null;
@@ -280,6 +299,16 @@ export type ReactionBody = { itemId: string; type: ReactionType };
 export type WishlistLinkBody = { url: string; priceCents?: number };
 
 export type VetoWrappedCardBody = { cardKey: WrappedCardKey };
+
+/** The server trims `body` and refuses an empty one, or one over 1000 characters. */
+export type CreateCommentBody = {
+  targetType: CommentTargetType;
+  targetId: string;
+  /** Required for `wrapped_card`, which has no row to look up: the group carries the permission. */
+  groupId?: string;
+  parentId?: string | null;
+  body: string;
+};
 
 export type CreateThreadBody = {
   groupId: string;
