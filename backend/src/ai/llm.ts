@@ -28,6 +28,11 @@ const envOr = (key: string, fallback: string): string => process.env[key]?.trim(
 export type LlmConfig = {
   provider: string;
   apiKey: string;
+  /**
+   * Only needed for an org-level key. Anthropic rejects those with a 400 unless the request names
+   * a workspace; a key created inside a workspace carries it already and leaves this empty.
+   */
+  workspaceId: string;
   baseUrl: string;
   textModel: string;
   visionModel: string;
@@ -39,6 +44,7 @@ export function llmConfig(): LlmConfig {
   return {
     provider: envOr('LLM_PROVIDER', 'anthropic'),
     apiKey: process.env.LLM_API_KEY?.trim() ?? '',
+    workspaceId: process.env.LLM_WORKSPACE_ID?.trim() ?? '',
     baseUrl: envOr('LLM_BASE_URL', 'https://api.anthropic.com'),
     textModel: envOr('LLM_MODEL_TEXT', 'claude-sonnet-4-6'),
     visionModel: envOr('LLM_MODEL_VISION', 'claude-sonnet-4-6'),
@@ -143,6 +149,7 @@ async function callAnthropic(
         'content-type': 'application/json',
         'x-api-key': cfg.apiKey,
         'anthropic-version': '2023-06-01',
+        ...(cfg.workspaceId ? { 'anthropic-workspace-id': cfg.workspaceId } : {}),
       },
       body: JSON.stringify({
         model: opts.model,

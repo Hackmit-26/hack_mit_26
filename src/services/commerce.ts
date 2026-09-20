@@ -94,6 +94,17 @@ export async function findRecommendations(
   return recommendationsFor(forUserId, budget);
 }
 
+/**
+ * Where a tile links out to when the item is one of ours rather than one the
+ * backend resolved. The seeded catalogue and the September receipts are shops
+ * without a product page, so this is the same search URL the backend's gift
+ * picker falls back to.
+ */
+export function searchUrl(name: string, merchant: string | null): string {
+  const query = merchant ? `${name} ${merchant}` : name;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
 export function formatPrice(cents: number): string {
   return cents % 100 === 0
     ? `$${cents / 100}`

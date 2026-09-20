@@ -214,6 +214,38 @@ describe("wishlist store", () => {
     expect(api.wishlist.filter((w) => w.title === "Hojicha tin")).toHaveLength(1);
   });
 
+  it("keeps a server item with no product page on the list, without a url", async () => {
+    setWishlistApi({
+      addLink: async () => result(),
+      list: async () => [result({ id: "srv-9", name: "Hojicha tin", url: null })],
+    });
+    mount();
+
+    await act(async () => {
+      await api.refreshWishlist();
+    });
+
+    const item = api.wishlist.find((w) => w.title === "Hojicha tin");
+    expect(item).toBeDefined();
+    expect(item?.url).toBeUndefined();
+  });
+
+  it("carries the server's product page onto the item", async () => {
+    setWishlistApi({
+      addLink: async () => result(),
+      list: async () => [result({ id: "srv-9", url: "https://tinandtulip.com/rings" })],
+    });
+    mount();
+
+    await act(async () => {
+      await api.refreshWishlist();
+    });
+
+    expect(api.wishlist.find((w) => w.id === "srv-9")?.url).toBe(
+      "https://tinandtulip.com/rings",
+    );
+  });
+
   it("survives a list() that never answers", async () => {
     setWishlistApi(offlineApi);
     mount();

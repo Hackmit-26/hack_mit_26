@@ -288,7 +288,13 @@ describe('gift picks end to end (mock)', () => {
     seedUser('u1', 'Priya');
     seedUser('u2', 'Sam');
 
-    const wishlisted = seedItem({ ownerId: 'u2', name: 'Hasami Porcelain Mug', category: 'kitchen', priceCents: 3200 });
+    const wishlisted = seedItem({
+      ownerId: 'u2',
+      name: 'Hasami Porcelain Mug',
+      category: 'kitchen',
+      priceCents: 3200,
+      productUrl: 'https://hasamiporcelain.com/products/mug',
+    });
     const hearted = seedItem({ ownerId: 'u2', name: 'Cast Iron Skillet', category: 'kitchen', priceCents: 4500 });
     seedItem({ ownerId: 'u1', name: 'Chemex Filters', category: 'kitchen', priceCents: 1200 });
 
@@ -316,6 +322,9 @@ describe('gift picks end to end (mock)', () => {
     const picks = await generatePicks(threadId);
     expect(picks.length).toBeGreaterThan(0);
     expect(picks[0]?.productName).toBe('Hasami Porcelain Mug');
+    // The wishlisted item knows its own page, so the pick must not degrade to a search link.
+    expect(picks[0]?.productUrl).toBe('https://hasamiporcelain.com/products/mug');
+    for (const pick of picks) expect(pick.productUrl).toMatch(/^https:\/\//);
 
     const signalRefs = signalItems('u1', GROUP).map((s) => ({ id: s.item.id, name: s.item.name }));
     for (const pick of picks) {

@@ -1,10 +1,17 @@
 import type { FastifyInstance } from 'fastify';
+import { config } from '../config.js';
 import { resetDb } from '../db/index.js';
 import { seedDemoData, seedDemoThreads } from '../db/seed.js';
 import { notFound } from '../lib/errors.js';
 
+/**
+ * The reset seeds §15 fixtures, so it only makes sense when fixtures are the source of truth.
+ * Against postgres it would throw away everything `hydrateFromPostgres` just loaded and leave
+ * the server serving stage props - and the route is unauthenticated, so anything that can reach
+ * the port could trigger it.
+ */
 export function demoModeEnabled(): boolean {
-  return process.env.DEMO_MODE === 'true';
+  return process.env.DEMO_MODE === 'true' && config.DB_MODE !== 'postgres';
 }
 
 /**

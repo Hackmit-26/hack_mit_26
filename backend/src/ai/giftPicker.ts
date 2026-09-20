@@ -2,6 +2,7 @@ import { db, newId, now } from '../db/index.js';
 import type { GiftPickRow, GiftThreadRow, ItemRow } from '../db/types.js';
 import { AppError, notFound } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
+import { productLink } from '../domain/productLinks.js';
 import { searchCatalogue } from '../products/catalogue.js';
 import type { Product } from '../types/api.js';
 import { embedText } from './embed.js';
@@ -89,7 +90,7 @@ export function checkGrounding(
 type Candidate = {
   id: string;
   name: string;
-  url: string;
+  url: string | null;
   imageUrl: string | null;
   priceCents: number;
   merchant: string;
@@ -100,15 +101,13 @@ type Candidate = {
   signal: SignalKind | null;
 };
 
-const searchUrl = (name: string): string =>
-  `https://www.google.com/search?q=${encodeURIComponent(name)}`;
-
 function fromItem(signal: SignalItem, midCents: number): Candidate {
   const { item } = signal;
   return {
     id: `item:${item.id}`,
     name: item.name,
-    url: searchUrl(item.name),
+    // A wishlist save off the catalogue already knows its own page; only guess when it does not.
+    url: productLink(item.name, item.merchant, item.productUrl),
     imageUrl: item.imageUrl,
     priceCents: item.priceCents ?? midCents,
     merchant: item.merchant ?? '',
@@ -123,7 +122,7 @@ const fromProduct = (product: Product): Candidate => ({
   id: `product:${product.id}`,
   name: product.name,
   // The merchant feed has no product pages, so fall back to the same search link items use.
-  url: product.url ?? searchUrl(product.name),
+  url: productLink(product.name, product.merchant, product.url),
   imageUrl: product.imageUrl,
   priceCents: product.priceCents,
   merchant: product.merchant,

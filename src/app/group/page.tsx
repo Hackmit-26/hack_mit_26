@@ -7,13 +7,14 @@ import { useState } from "react";
 import { CommentDock } from "@/components/comments/CommentDock";
 import { Avatar } from "@/components/primitives/Avatar";
 import { ArrowRight, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { getProduct } from "@/data/products";
 import { purchases } from "@/data/purchases";
 import { group, getUser, userList } from "@/data/users";
 import type { Purchase } from "@/lib/types";
-import { formatPrice } from "@/services/commerce";
+import { formatPrice, searchUrl } from "@/services/commerce";
 import { cardTarget, useApp } from "@/state/store";
 
 const pill: React.CSSProperties = {
@@ -283,8 +284,10 @@ export default function GroupPage() {
           <SectionLabel style={{ marginTop: 40 }}>From your Wrapped</SectionLabel>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 14 }}>
             {orders.map((o) => (
-              <div
+              <ItemLink
                 key={o.id}
+                url={searchUrl(getProduct(o.productId).title, o.merchant)}
+                label={`${getProduct(o.productId).title} at ${o.merchant}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -320,11 +323,13 @@ export default function GroupPage() {
                       ` · credited to ${getUser(o.inspiredByUserId).name}`}
                   </div>
                 </div>
-              </div>
+              </ItemLink>
             ))}
             {savedProductIds.map((id) => (
-              <div
+              <ItemLink
                 key={id}
+                url={searchUrl(getProduct(id).title, getProduct(id).merchant)}
+                label={`${getProduct(id).title} at ${getProduct(id).merchant}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -340,7 +345,7 @@ export default function GroupPage() {
                 }}
               >
                 Saved · {getProduct(id).title}
-              </div>
+              </ItemLink>
             ))}
           </div>
         </>
@@ -396,23 +401,30 @@ function SharedFindTile({
         boxShadow: "4px 4px 0 #141A47",
       }}
     >
-      <div
-        style={{
-          height: 92,
-          maxWidth: talking ? 260 : "none",
-          borderRadius: 14,
-          background: anon ? "#F5ECD9" : getUser(purchase.userId).color,
-          border: "2px solid #141A47",
-          padding: 6,
-          boxSizing: "border-box",
-        }}
+      <ItemLink
+        url={searchUrl(purchase.item, purchase.merchant)}
+        label={`${purchase.item} at ${purchase.merchant}`}
       >
-        <ProductArt kind={purchase.art} src={purchase.image} />
-      </div>
-      <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>
-        {purchase.item}
-      </div>
-      <div style={{ fontSize: 13, opacity: 0.75 }}>{purchase.merchant}</div>
+        <div
+          style={{
+            height: 92,
+            maxWidth: talking ? 260 : "none",
+            borderRadius: 14,
+            background: anon ? "#F5ECD9" : getUser(purchase.userId).color,
+            border: "2px solid #141A47",
+            padding: 6,
+            boxSizing: "border-box",
+          }}
+        >
+          <ProductArt kind={purchase.art} src={purchase.image} />
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>
+          {purchase.item}
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.75, textDecoration: "underline" }}>
+          {purchase.merchant}
+        </div>
+      </ItemLink>
       <div
         style={{
           display: "flex",

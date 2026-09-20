@@ -142,7 +142,8 @@ export async function hydrateFromPostgres(): Promise<void> {
       query(`select * from groups`),
       query(`select * from memberships`),
       query(
-        `select p.*, m.name as merchant_name, pr.product_url
+        `select p.*, m.name as merchant_name,
+                pr.product_url as catalogue_url, pr.image_url as catalogue_image
            from purchases p
            left join merchants m on m.id = p.merchant_id
            left join products pr on pr.id = p.product_id
@@ -199,7 +200,9 @@ export async function hydrateFromPostgres(): Promise<void> {
         name: String(r.title),
         category: String(r.category ?? 'other'),
         merchant: text(r.merchant_name),
-        imageUrl: httpUrl(r.image_url),
+        // A purchase that joins to a catalogue row inherits its art and its page: `purchases`
+        // stores neither for a seeded row, and the catalogue is the same product.
+        imageUrl: httpUrl(r.image_url) ?? httpUrl(r.catalogue_image),
         // `purchases` has no description column; the title carries the whole signal.
         description: null,
         priceCents: r.price_cents == null ? null : Number(r.price_cents),
@@ -207,7 +210,8 @@ export async function hydrateFromPostgres(): Promise<void> {
         visibility: visibility(r.visibility),
         embedding: vector(r.embedding),
         createdAt: iso(r.created_at),
-        productUrl: text(r.product_url),
+        // `external_ref` is where a pasted link lands; the catalogue page is the next best thing.
+        productUrl: httpUrl(r.external_ref) ?? httpUrl(r.catalogue_url),
       }),
     ),
   );
@@ -418,7 +422,7 @@ async function hydrateReactions(reactions: Row[]): Promise<void> {
         visibility: 'shared',
         embedding: vector(product.embedding),
         createdAt: iso(product.created_at),
-        productUrl: text(product.product_url),
+        productUrl: httpUrl(product.product_url),
       });
     }
   }

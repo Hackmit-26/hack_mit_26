@@ -4,6 +4,7 @@ import { requireAuth } from '../auth/verifyUser.js';
 import { db } from '../db/index.js';
 import type { ItemRow } from '../db/types.js';
 import { assertMember, visibleOwnerId } from '../domain/permissions.js';
+import { productLink } from '../domain/productLinks.js';
 import { marksPickTaken } from '../domain/threadStateMachine.js';
 import { notFound } from '../lib/errors.js';
 import type { FindItem } from '../types/api.js';
@@ -54,6 +55,7 @@ export default async function findsRoutes(app: FastifyInstance): Promise<void> {
           category: item.category,
           merchant: item.merchant,
           imageUrl: item.imageUrl,
+          productUrl: productLink(item.name, item.merchant, item.productUrl),
           description: item.description,
           // Anonymous aggregate only: §1 rule 4 forbids ever naming who hearted an item.
           heartCount: reactions.filter((r) => r.itemId === item.id && r.type === 'heart').length,

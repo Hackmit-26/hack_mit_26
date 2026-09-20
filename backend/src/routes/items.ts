@@ -5,6 +5,7 @@ import { db, newId, now } from '../db/index.js';
 import { mirrorItem } from '../db/mirror.js';
 import type { ItemRow } from '../db/types.js';
 import { assertMember } from '../domain/permissions.js';
+import { productLink } from '../domain/productLinks.js';
 import { AppError, notFound } from '../lib/errors.js';
 import type { Item } from '../types/api.js';
 
@@ -15,6 +16,7 @@ const createBody = z.object({
   category: z.string().trim().min(1).max(60),
   merchant: z.string().trim().min(1).max(120).nullable().optional(),
   imageUrl: z.url().nullable().optional(),
+  productUrl: z.url().nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
   priceCents: z.int().nonnegative().nullable().optional(),
   purchasedAt: z
@@ -41,6 +43,7 @@ export function toItem(item: ItemRow, ownerId: string | null = item.ownerId): It
     priceCents: item.priceCents,
     purchasedAt: item.purchasedAt,
     visibility: item.visibility,
+    productUrl: productLink(item.name, item.merchant, item.productUrl),
   };
 }
 
@@ -77,6 +80,7 @@ export default async function itemsRoutes(app: FastifyInstance): Promise<void> {
       visibility: body.visibility,
       embedding: null,
       createdAt: now(),
+      productUrl: body.productUrl ?? null,
     });
 
     void mirrorItem(item.id);

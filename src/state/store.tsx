@@ -31,6 +31,7 @@ import type {
   SharingState,
   UserId,
 } from "@/lib/types";
+import { searchUrl } from "@/services/commerce";
 import type { PurchaseOutcome } from "@/services/checkout";
 
 /**
@@ -83,7 +84,11 @@ const backendWishlistApi: WishlistApi = {
     const item = await addWishlistLink(priceCents === undefined ? { url } : { url, priceCents });
     return { ...item, url };
   },
-  list: listWishlist,
+  // The pasted link is not echoed back on a list, so `productUrl` is the only page there is.
+  async list() {
+    const items = await listWishlist();
+    return items.map((item) => ({ ...item, url: item.productUrl }));
+  },
 };
 
 let wishlistApi: WishlistApi = backendWishlistApi;
@@ -278,6 +283,7 @@ function itemFromProduct(productId: string): WishlistItem {
     image: p?.image,
     art: p?.art ?? "tote",
     bg: p?.bg ?? "#BBA9E8",
+    url: p ? searchUrl(p.title, p.merchant) : undefined,
     addedAt: new Date().toISOString(),
   };
 }

@@ -8,7 +8,8 @@ import { linkPreview, type LinkPreview } from '../products/linkPreview.js';
 import { toItem } from './items.js';
 
 const body = z.object({
-  url: z.url(),
+  // `z.url()` alone accepts any scheme, and the tile it produces is an unopenable link.
+  url: z.url().refine((u) => /^https?:$/.test(new URL(u).protocol), 'expected an http(s) URL'),
   priceCents: z.int().nonnegative().optional(),
   groupId: z.string().min(1).optional(),
 });
@@ -76,6 +77,8 @@ export default async function wishlistRoutes(app: FastifyInstance): Promise<void
       visibility: 'private',
       embedding: null,
       createdAt: now(),
+      // The pasted link is the one genuinely canonical product page in the whole dataset.
+      productUrl: parsed.url,
     });
 
     db.reactions.insert({ userId, itemId: item.id, type: 'wishlist', createdAt: now() });

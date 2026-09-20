@@ -4,10 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AddLinkForm } from "@/components/wishlist/AddLinkForm";
 import { SaveButton } from "@/components/wishlist/SaveButton";
-import { WishlistGrid } from "@/components/wishlist/WishlistGrid";
+import { WishlistGrid, WishlistTile } from "@/components/wishlist/WishlistGrid";
 import {
   AppProvider,
   setWishlistApi,
+  type WishlistItem,
   type WishlistLinkResult,
 } from "@/state/store";
 
@@ -20,6 +21,20 @@ function serverItem(over: Partial<WishlistLinkResult> = {}): WishlistLinkResult 
     merchant: "threadbare.com",
     imageUrl: null,
     priceCents: 6400,
+    ...over,
+  };
+}
+
+function localItem(over: Partial<WishlistItem> = {}): WishlistItem {
+  return {
+    id: "w-1",
+    source: "link",
+    title: "Oat cashmere scarf",
+    merchant: "threadbare.com",
+    priceCents: 6400,
+    art: "knit",
+    bg: "#EBB5BD",
+    addedAt: "2026-09-19T00:00:00.000Z",
     ...over,
   };
 }
@@ -71,6 +86,69 @@ describe("WishlistGrid", () => {
       }),
     );
     expect(screen.getByText(/Nothing on the list yet/)).toBeTruthy();
+  });
+});
+
+describe("WishlistTile links", () => {
+  it("links the photo and the title out to the product page", () => {
+    ui(
+      <WishlistTile
+        item={localItem({ url: "https://threadbare.com/scarf" })}
+        onRemove={() => {}}
+      />,
+    );
+
+    const link = screen.getByRole("link", {
+      name: /Oat cashmere scarf at threadbare.com — open the product page/,
+    });
+    expect(link.getAttribute("href")).toBe("https://threadbare.com/scarf");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("renders a plain tile when the item has no product page", () => {
+    const { container } = ui(<WishlistTile item={localItem()} onRemove={() => {}} />);
+
+    expect(container.querySelector("a")).toBeNull();
+    expect(screen.getByText("Oat cashmere scarf")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Remove Oat cashmere scarf from your list" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps a row that is still being read non-interactive", () => {
+    const { container } = ui(
+      <WishlistTile
+        item={localItem({ url: "https://threadbare.com/scarf", pending: true })}
+        onRemove={() => {}}
+      />,
+    );
+
+    expect(container.querySelector("a")).toBeNull();
+    expect(screen.getByText("Reading the page")).toBeTruthy();
+  });
+
+  it("carries the backend's productUrl onto the tile", async () => {
+    setWishlistApi({
+      addLink: async () => serverItem({ url: "https://threadbare.com/scarf" }),
+      list: async () => [],
+    });
+
+    ui(
+      <>
+        <AddLinkForm />
+        <WishlistGrid />
+      </>,
+    );
+
+    paste("https://threadbare.com/scarf");
+
+    await waitFor(() => expect(screen.getByText("Oat cashmere scarf")).toBeTruthy());
+    expect(
+      screen
+        .getAllByRole("link")
+        .some((a) => a.getAttribute("href") === "https://threadbare.com/scarf"),
+    ).toBe(true);
   });
 });
 

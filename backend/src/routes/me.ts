@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { db } from '../db/index.js';
+import { mirrorUserCard } from '../db/mirror.js';
 import type { GroupRow, UserRow } from '../db/types.js';
 import { AppError, notFound } from '../lib/errors.js';
 import type { Group, User } from '../types/api.js';
@@ -78,6 +79,8 @@ export default async function meRoutes(app: FastifyInstance): Promise<void> {
       cardLast4: last4,
     });
     if (!user) throw notFound('User not found');
+
+    void mirrorUserCard(user.id);
 
     return { cardLast4: last4 };
   });

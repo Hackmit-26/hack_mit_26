@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { formatPrice } from "@/services/commerce";
 import { useApp, type WishlistItem } from "@/state/store";
@@ -56,28 +57,33 @@ export function WishlistTile({
         boxShadow: "4px 4px 0 #141A47",
       }}
     >
-      <div
-        style={{
-          height: 108,
-          borderRadius: 14,
-          background: item.bg,
-          border: "2px solid #141A47",
-          padding: 6,
-          boxSizing: "border-box",
-          opacity: item.pending ? 0.5 : 1,
-          transition: "opacity .3s",
-        }}
+      <ItemLink
+        url={item.pending ? null : item.url}
+        label={`${item.title} at ${item.merchant}`}
       >
-        <ProductArt kind={item.art} src={item.image} />
-      </div>
+        <div
+          style={{
+            height: 108,
+            borderRadius: 14,
+            background: item.bg,
+            border: "2px solid #141A47",
+            padding: 6,
+            boxSizing: "border-box",
+            opacity: item.pending ? 0.5 : 1,
+            transition: "opacity .3s",
+          }}
+        >
+          <ProductArt kind={item.art} src={item.image} />
+        </div>
 
-      <div style={{ fontSize: 15, fontWeight: 700, marginTop: 9, lineHeight: 1.2 }}>
-        {item.title}
-      </div>
-      <div style={{ fontSize: 13, opacity: 0.75, marginTop: 2 }}>
-        {item.merchant}
-        {item.priceCents !== null && ` · ${formatPrice(item.priceCents)}`}
-      </div>
+        <div style={{ fontSize: 15, fontWeight: 700, marginTop: 9, lineHeight: 1.2 }}>
+          {item.title}
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.75, marginTop: 2 }}>
+          {item.merchant}
+          {item.priceCents !== null && ` · ${formatPrice(item.priceCents)}`}
+        </div>
+      </ItemLink>
 
       {item.pending && (
         <div
@@ -111,7 +117,7 @@ export function WishlistTile({
         <Link
           href={item.url}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           style={{
             display: "inline-block",
             fontSize: 12.5,

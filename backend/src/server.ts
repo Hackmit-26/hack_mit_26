@@ -34,12 +34,29 @@ export async function buildServer(): Promise<FastifyInstance> {
         error: { code: 'VALIDATION_ERROR', message: err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') },
       });
     }
+    // Fastify raises its own 4xx before any handler runs - an empty or malformed JSON body is the
+    // common one, and `POST /threads/:id/contributions/me/approve` is documented to accept no body
+    // at all. That is the caller's mistake, not a crash, and a 500 would tell them to retry.
+    const status = (err as { statusCode?: number }).statusCode ?? 500;
+    if (err instanceof Error && status >= 400 && status < 500) {
+      return reply
+        .status(status)
+        .send({ error: { code: 'VALIDATION_ERROR', message: err.message } });
+    }
+
     logger.error('unhandled error', {
       path: request.url,
       message: err instanceof Error ? err.message : String(err),
     });
     return reply.status(500).send({ error: { code: 'INTERNAL', message: 'Something went wrong' } });
   });
+
+  // Fastify's own 404 body is `{ message, error, statusCode }`; the client only reads `error.code`.
+  app.setNotFoundHandler(async (request, reply) =>
+    reply.status(404).send({
+      error: { code: 'NOT_FOUND', message: `Route ${request.method}:${request.url} not found` },
+    }),
+  );
 
   app.get('/health', async () => ({
     ok: true,

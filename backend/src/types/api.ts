@@ -35,6 +35,8 @@ export type Item = {
   priceCents: number | null;
   purchasedAt: string | null;
   visibility: Visibility;
+  /** Where the tile links to: its own product page when known, else a search - see productLinks. */
+  productUrl: string | null;
 };
 
 /** Finds never carry prices - §1 rule 2 applies to anything the group browses together. */
@@ -46,6 +48,8 @@ export type FindItem = {
   merchant: string | null;
   imageUrl: string | null;
   description: string | null;
+  /** Where the tile links to: its own product page when known, else a search - see productLinks. */
+  productUrl: string | null;
   heartCount: number;
   iHearted: boolean;
   iWishlisted: boolean;

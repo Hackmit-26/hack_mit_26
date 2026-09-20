@@ -271,10 +271,13 @@ export function listGroupThreads(groupId: string): Promise<Thread[]> {
  * There is no push channel, so the gift screen waits here. Resolves on the first non-`picking`
  * state, or on the last thread it read once `timeoutMs` is up - the caller decides what an empty
  * shortlist means.
+ *
+ * The default budget is generous because a real (non-mock) LLM takes 25-30s here once schema
+ * retries on the pick reasons are counted; timing out mid-generation shows an empty shortlist.
  */
 export async function waitForPicks(
   threadId: string,
-  { intervalMs = 700, timeoutMs = 25_000, signal }: PollOptions = {},
+  { intervalMs = 700, timeoutMs = 90_000, signal }: PollOptions = {},
 ): Promise<Thread> {
   const deadline = Date.now() + timeoutMs;
   let thread = await getThread(threadId);

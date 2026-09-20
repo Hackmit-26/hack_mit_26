@@ -1,9 +1,11 @@
 "use client";
 
 import { Avatar } from "@/components/primitives/Avatar";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { getUser } from "@/data/users";
 import { loreCases, skincareAbstainer, skincareSync } from "@/data/wrapped";
+import { searchUrl } from "@/services/commerce";
 import { LoreFrame, LoreHeader, LoreStamp } from "./LoreFrame";
 
 /** Case 02 — three purchases inside one 72-hour window. */
@@ -161,30 +163,41 @@ export function LoreSkin() {
                 {getUser(s.userId).name}
               </div>
             </div>
-            <div
-              style={{
-                width: 104,
-                height: 104,
-                margin: "8px auto 6px",
-                boxSizing: "border-box",
-                border: "2px solid #141A47",
-                borderRadius: "50%",
-                background: "#F5ECD9",
-                padding: 10,
-              }}
-            >
-              <ProductArt kind={s.art} />
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display), Georgia, serif",
-                fontSize: 25,
-                lineHeight: 1,
-              }}
-            >
-              {s.item}
-            </div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, marginTop: 4 }}>{s.merchant}</div>
+            <ItemLink url={searchUrl(s.item, s.merchant)} label={`${s.item} at ${s.merchant}`}>
+              <div
+                style={{
+                  width: 104,
+                  height: 104,
+                  margin: "8px auto 6px",
+                  boxSizing: "border-box",
+                  border: "2px solid #141A47",
+                  borderRadius: "50%",
+                  background: "#F5ECD9",
+                  padding: 10,
+                }}
+              >
+                <ProductArt kind={s.art} />
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display), Georgia, serif",
+                  fontSize: 25,
+                  lineHeight: 1,
+                }}
+              >
+                {s.item}
+              </div>
+              <div
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  marginTop: 4,
+                  textDecoration: "underline",
+                }}
+              >
+                {s.merchant}
+              </div>
+            </ItemLink>
             <div
               style={{
                 fontFamily: "var(--font-hand), cursive",

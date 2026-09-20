@@ -86,6 +86,8 @@ export type Item = {
   category: string;
   merchant: string | null;
   imageUrl: string | null;
+  /** Null when there is no page to open: the tile renders as a plain tile. */
+  productUrl: string | null;
   description: string | null;
   priceCents: number | null;
   purchasedAt: string | null;
@@ -100,6 +102,8 @@ export type FindItem = {
   category: string;
   merchant: string | null;
   imageUrl: string | null;
+  /** Null when there is no page to open: the tile renders as a plain tile. */
+  productUrl: string | null;
   description: string | null;
   heartCount: number;
   iHearted: boolean;

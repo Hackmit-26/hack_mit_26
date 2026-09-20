@@ -4,7 +4,7 @@ import { ingestReceipt } from '../ai/ingest.js';
 import { requireAuth } from '../auth/verifyUser.js';
 import { mirrorItems } from '../db/mirror.js';
 import { assertMember } from '../domain/permissions.js';
-import type { Item } from '../types/api.js';
+import { toItem } from './items.js';
 
 /**
  * JSON only: @fastify/multipart is not registered on the server, so the frontend uploads the
@@ -38,19 +38,6 @@ export default async function ingestRoutes(app: FastifyInstance): Promise<void> 
     // Embeddings land after the response and are not mirrored, so one push here is enough.
     void mirrorItems(rows.map((row) => row.id));
 
-    const items: Item[] = rows.map((row) => ({
-      id: row.id,
-      ownerId: row.ownerId,
-      name: row.name,
-      category: row.category,
-      merchant: row.merchant,
-      imageUrl: row.imageUrl,
-      description: row.description,
-      priceCents: row.priceCents,
-      purchasedAt: row.purchasedAt,
-      visibility: row.visibility,
-    }));
-
-    return items;
+    return rows.map((row) => toItem(row));
   });
 }

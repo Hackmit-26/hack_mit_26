@@ -437,12 +437,16 @@ export const PURCHASE_SQL = `
  * `purchased_at` is NOT NULL on their side but genuinely unknown for a wishlist link - nobody
  * bought it. The day it was saved is the only honest stand-in, and hydration reads it straight
  * back, so the round trip is stable.
+ *
+ * `group_id` is NOT NULL on their side too, but ours is nullable: a private item or a wishlist
+ * link need not belong to a group. Falling back to a group the owner is in keeps the row
+ * writable, and it leaks nothing - `visibility` is what every read path filters on.
  */
 export function purchaseParams(item: ItemRow, merchant: string | null): unknown[] {
   return [
     item.id,
     item.ownerId,
-    item.groupId,
+    item.groupId ?? db.memberships.find((m) => m.userId === item.ownerId)?.groupId ?? null,
     item.name,
     item.category,
     merchant,
@@ -483,6 +487,23 @@ export function reactionParams(
   groupId: string | null,
 ): unknown[] {
   return [id, row.userId, targetType, row.itemId, REACTION_KIND[row.type], groupId, row.createdAt];
+}
+
+/**
+ * Mirrors the card a user picked. Only these two columns: the rest of `app_users` is the DB
+ * owner's, and a card chosen in-app is otherwise lost on restart, which kills every contribution
+ * approval with "Add a card before chipping in".
+ */
+export function mirrorUserCard(userId: string): Promise<void> {
+  return mirror('userCard', { userId }, async (client) => {
+    const user = db.users.find((u) => u.id === userId);
+    if (!user) return;
+    await client.query(`update app_users set visa_card_ref = $2, card_last4 = $3 where id = $1`, [
+      user.id,
+      user.visaCardRef,
+      user.cardLast4,
+    ]);
+  });
 }
 
 /** Mirrors one item into `purchases`, creating the row if it is new to them. */
