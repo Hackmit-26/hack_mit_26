@@ -196,9 +196,10 @@ export type Reveal = { giftName: string; imageUrl: string | null; contributors: 
 export type Product = {
   id: string;
   name: string;
-  /** Null for catalogue products: the merchant feed carries images but no product page. */
+  /** Null for catalogue products: the merchant feed carries no product page. */
   url: string | null;
-  imageUrl: string;
+  /** Null across the whole seeded catalogue: the web app draws these from the category. */
+  imageUrl: string | null;
   priceCents: number;
   merchant: string;
   category: string;

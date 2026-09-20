@@ -196,7 +196,10 @@ export function seedDemoData(today = new Date()): void {
       name: item.name,
       category: item.category,
       merchant: item.merchant,
-      imageUrl: `https://picsum.photos/seed/${item.id}/600/600`,
+      // No photo, on purpose. picsum served a *random* image per item, so a semi-modular
+      // synth came back as a landscape — worse than no photo, and a live network
+      // dependency on venue wifi. The web app draws the item from its category instead.
+      imageUrl: null,
       description: item.description,
       priceCents: item.priceCents,
       purchasedAt: item.purchasedAt,
@@ -299,7 +302,7 @@ export function seedDemoThreads(today = new Date()): void {
     threadId: DEMO_REVERSAL_THREAD_ID,
     productName: 'Dual Wavefolder Oscillator Module',
     productUrl: 'https://www.signalforge.com/products/dual-wavefolder-oscillator',
-    imageUrl: 'https://picsum.photos/seed/p214/600/600',
+    imageUrl: null,
     priceCents: DEMO_SHARE_CENTS * 3,
     merchant: 'Signal Forge',
     reason:
