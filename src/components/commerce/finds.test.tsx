@@ -183,6 +183,47 @@ describe("find presentation", () => {
     expect(artForFind({ id: "item-2", category: "wormholes" })).toBeTruthy();
   });
 
+  it("reads the item's name before its category, so one tech shelf is not all cameras", () => {
+    const tech = (name: string) => artForFind({ id: "item-1", category: "tech", name });
+
+    expect(tech("Canon AE-1 Program 35mm SLR Body")).toBe("camera");
+    expect(tech("Temperature-Controlled Soldering Station")).toBe("solder");
+    expect(tech("65% Mechanical Keyboard Kit")).toBe("keyboard");
+    expect(tech("Coiled Aviator USB-C Cable")).toBe("cable");
+
+    expect(artForFind({ id: "item-2", category: "music", name: "Mother-25 Semi-Modular Synth" })).toBe(
+      "synth",
+    );
+    expect(
+      artForFind({ id: "item-3", category: "music", name: "Closed-Back Studio Monitor Headphones" }),
+    ).toBe("headphones");
+    expect(artForFind({ id: "item-4", category: "kitchen", name: "Carbon Steel Gyuto 210mm" })).toBe(
+      "knife",
+    );
+  });
+
+  it("takes the first keyword that matches, so a camera bag is a bag", () => {
+    expect(artForFind({ id: "item-1", category: "accessories", name: "Waxed Canvas Camera Bag" })).toBe(
+      "bag",
+    );
+    expect(
+      artForFind({ id: "item-2", category: "accessories", name: "Whiskey Leather Camera Strap" }),
+    ).toBe("necklace");
+  });
+
+  it("keeps book titles away from the keywords, since they read as prose", () => {
+    // "Salt Fat Acid Heat" is not a tin of sea salt.
+    const salt = artForFind({ id: "item-1", category: "books", name: "Salt Fat Acid Heat" });
+    expect(["book", "notebook", "planner"]).toContain(salt);
+    expect(artForFind({ id: "item-1", category: "books", name: "Salt Fat Acid Heat" })).toBe(salt);
+  });
+
+  it("still draws the same thing every time for a name it has never seen", () => {
+    const unknown = { id: "item-9", category: "wormholes", name: "Quantum Foam Dispenser" };
+    expect(artForFind(unknown)).toBe(artForFind(unknown));
+    expect(artForFind({ ...unknown, id: "item-10" })).toBeTruthy();
+  });
+
   it("colours a tile by its owner, and an anonymous one in cream", () => {
     expect(bgForFind({ ownerId: "esh" })).toBe("#BBA9E8");
     expect(bgForFind({ ownerId: null })).toBe("#F5ECD9");

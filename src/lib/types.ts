@@ -8,7 +8,7 @@
 
 export type UserId = "kristina" | "esh" | "sabina" | "madhav";
 
-/** The 25 flat illustrations in the `Art` component. */
+/** The flat illustrations in the `Art` component. */
 export type ArtKind =
   | "bag"
   | "matcha"
@@ -34,7 +34,46 @@ export type ArtKind =
   | "tube"
   | "film"
   | "mug"
-  | "necklace";
+  | "necklace"
+  | "filmroll"
+  | "frame"
+  | "book"
+  | "denim"
+  | "perfume"
+  | "synth"
+  | "eurorack"
+  | "cable"
+  | "pedal"
+  | "keyboard"
+  | "solder"
+  | "headphones"
+  | "turntable"
+  | "arcade"
+  | "watch"
+  | "socks"
+  | "flask"
+  | "sunglasses"
+  | "tent"
+  | "yogamat"
+  | "headlamp"
+  | "skillet"
+  | "pot"
+  | "knife"
+  | "bottle"
+  | "plant"
+  | "bread"
+  | "mokapot"
+  | "jeans"
+  | "tee"
+  | "groovebox"
+  | "keycap"
+  | "switch"
+  | "roller"
+  | "massager"
+  | "sandal"
+  | "poles"
+  | "plate"
+  | "grinder";
 
 export interface User {
   id: UserId;

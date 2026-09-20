@@ -239,35 +239,151 @@ export function useCachedFind(itemId: string | null): FindItem | null {
 
 /**
  * Real data has no illustration key, and on real Postgres only 15 of 217 items
- * carry a photo — so the fallback is the normal case, not the edge. The
- * category picks it, which keeps a tin of tea looking like a tin of tea.
+ * carry a photo — so the fallback is the normal case, not the edge. The name
+ * picks it first, because a category only knows that something is `tech` and
+ * would draw a camera for a soldering iron.
+ *
+ * Ordered, first match wins: a "Waxed Canvas Camera Bag" is a bag, not a camera.
  */
+const ART_BY_KEYWORD: [string, ArtKind][] = [
+  ["enamel pin", "charm"],
+  ["camera strap", "necklace"],
+  ["camera bag", "bag"],
+  ["developing tank", "flask"],
+  ["negative sleeves", "film"],
+  ["photo album", "planner"],
+  ["multigrade", "notebook"],
+  ["darkroom", "lamp"],
+  ["safelight", "lamp"],
+  ["picture frame", "frame"],
+  ["portra", "filmroll"],
+  ["hp5", "filmroll"],
+  ["instant colour film", "filmroll"],
+  ["polaroid", "film"],
+  ["slr", "camera"],
+  ["contax", "camera"],
+  ["camera", "camera"],
+  ["repair kit", "tin"],
+  ["indigo", "pot"],
+  ["trucker", "denim"],
+  ["chore coat", "denim"],
+  ["rain shell", "denim"],
+  ["jeans", "jeans"],
+  ["levi", "jeans"],
+  ["fleece", "knit"],
+  ["half-zip", "knit"],
+  ["apron", "knit"],
+  ["loopwheel", "tee"],
+  ["t-shirt", "tee"],
+  ["pocket operator", "groovebox"],
+  ["eurorack", "eurorack"],
+  ["midi", "synth"],
+  ["synth", "synth"],
+  ["volca", "synth"],
+  ["audio interface", "pedal"],
+  ["pedal", "pedal"],
+  ["keycap", "keycap"],
+  ["switch", "switch"],
+  ["keyboard", "keyboard"],
+  ["desolder", "solder"],
+  ["solder", "solder"],
+  ["headphones", "headphones"],
+  ["record cleaning", "tube"],
+  ["turntable", "turntable"],
+  ["record storage", "tote"],
+  ["desk pad", "cardcase"],
+  ["arcade", "arcade"],
+  ["cable", "cable"],
+  ["razor", "knife"],
+  ["flask", "flask"],
+  ["headlamp", "headlamp"],
+  ["sunglasses", "sunglasses"],
+  ["massage gun", "massager"],
+  ["foam roller", "roller"],
+  ["sleeping bag", "cabin"],
+  ["trekking", "poles"],
+  ["yoga mat", "yogamat"],
+  ["tent", "tent"],
+  ["socks", "socks"],
+  ["vest", "bag"],
+  ["watch", "watch"],
+  ["electrolyte", "tube"],
+  ["energy gel", "tin"],
+  ["balm", "serum"],
+  ["clay mask", "tin"],
+  ["slide", "sandal"],
+  ["slipper", "sandal"],
+  ["trail running", "boots"],
+  ["boot", "boots"],
+  ["racing shoe", "sneaker"],
+  ["trainer", "sneaker2"],
+  ["moka", "mokapot"],
+  ["grinder", "grinder"],
+  ["dutch oven", "pot"],
+  ["donabe", "pot"],
+  ["skillet", "skillet"],
+  ["wok", "skillet"],
+  ["whetstone", "cardcase"],
+  ["gyuto", "knife"],
+  ["knife", "knife"],
+  ["banneton", "whisk"],
+  ["sourdough", "flask"],
+  ["flour", "bread"],
+  ["kitchen scale", "planner"],
+  ["dinner plate", "plate"],
+  ["planter", "plant"],
+  ["air-dry clay", "tin"],
+  ["miso", "tin"],
+  ["olive oil", "bottle"],
+  ["wine", "bottle"],
+  ["sea salt", "matcha"],
+  ["mug", "mug"],
+  ["tea", "matcha"],
+  ["facial oil", "serum"],
+  ["parfum", "perfume"],
+  ["keyring", "ring"],
+];
+
 const ART_BY_CATEGORY: Record<string, ArtKind> = {
   accessories: "bag",
   art_crafts: "tin",
   beauty: "serum",
-  books: "notebook",
+  books: "book",
   clothing: "knit",
   food_drink: "mug",
-  games: "charm",
+  games: "arcade",
   home: "lamp",
   kitchen: "whisk",
-  music: "film",
+  music: "headphones",
   shoes: "sneaker",
   sports_outdoors: "cabin",
   stationery: "planner",
   tech: "camera",
 };
 
+/** Titles are prose, not product nouns, so the keywords have to stay off them. */
+const ART_BOOKS: ArtKind[] = ["book", "notebook", "planner"];
+
 /** Anything the seed has not seen yet still gets the same illustration every time. */
 const ART_FALLBACK: ArtKind[] = ["tote", "cardcase", "tin", "planner", "mug", "charm"];
 
-export function artForFind(find: Pick<FindItem, "id" | "category">): ArtKind {
-  const known = ART_BY_CATEGORY[find.category];
-  if (known) return known;
+function pick(id: string, kinds: ArtKind[]): ArtKind {
   let hash = 0;
-  for (let i = 0; i < find.id.length; i += 1) hash = (hash * 31 + find.id.charCodeAt(i)) >>> 0;
-  return ART_FALLBACK[hash % ART_FALLBACK.length];
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return kinds[hash % kinds.length];
+}
+
+export function artForFind(
+  find: Pick<FindItem, "id" | "category"> & Partial<Pick<FindItem, "name">>,
+): ArtKind {
+  if (find.category === "books") return pick(find.id, ART_BOOKS);
+
+  const name = find.name?.toLowerCase() ?? "";
+  for (const [word, kind] of ART_BY_KEYWORD) {
+    if (name.includes(word)) return kind;
+  }
+
+  return ART_BY_CATEGORY[find.category] ?? pick(find.id, ART_FALLBACK);
 }
 
 function isUserId(value: string | null): value is UserId {
