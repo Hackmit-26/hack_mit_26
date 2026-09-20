@@ -11,6 +11,7 @@ import {
   getThread,
   health,
   listGroupFinds,
+  listGroupWishlists,
   removeReaction,
   setAuthToken,
   setViewer,
@@ -77,6 +78,16 @@ describe("request", () => {
 
     await listGroupFinds("a/b c");
     expect(lastCall().url).toBe(`${API_BASE_URL}/groups/a%2Fb%20c/finds`);
+  });
+
+  it("reads the group's wishlist rosters", async () => {
+    const rosters = [
+      { itemId: "item-esh-02", users: [{ id: "kristina", name: "Kristina", avatarUrl: null }] },
+    ];
+    fetchMock.mockResolvedValue(jsonResponse(rosters));
+
+    await expect(listGroupWishlists("tea-party")).resolves.toEqual(rosters);
+    expect(lastCall().url).toBe(`${API_BASE_URL}/groups/tea-party/wishlists`);
   });
 
   it("sends the bearer token from the runtime viewer override", async () => {

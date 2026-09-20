@@ -5,13 +5,17 @@ import { Grain } from "@/components/primitives/Glyphs";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { getUser } from "@/data/users";
 import { tasteMatch, tasteStats, tasteVennNotes } from "@/data/wrapped";
+import { useApp } from "@/state/store";
 
 const CARD_W = 720;
 const CARD_H = 900;
 
 /** Chapter 1 · Taste match — the Venn reveal. */
 export function TasteCard() {
+  const { viewerId } = useApp();
   const [a, b] = tasteMatch.pair;
+  // The AI picked the group's closest pair, which is not always a pair the viewer is in.
+  const inPair = viewerId === a || viewerId === b;
 
   return (
     <div
@@ -19,7 +23,7 @@ export function TasteCard() {
       style={{
         position: "absolute",
         left: 360,
-        top: 50,
+        top: 70,
         width: CARD_W,
         height: CARD_H,
         boxSizing: "border-box",
@@ -298,7 +302,8 @@ export function TasteCard() {
           textWrap: "pretty",
         }}
       >
-        You both gravitate toward{" "}
+        {inPair ? "You both" : `${getUser(a).name} and ${getUser(b).name} both`} gravitate
+        toward{" "}
         <strong style={{ fontWeight: 700 }}>
           silver jewelry, neutral basics, skincare,
         </strong>{" "}
@@ -329,7 +334,7 @@ export function TasteCard() {
             color: "#B8412F",
           }}
         >
-          one thing you absolutely disagree on
+          one thing {inPair ? "you" : "they"} absolutely disagree on
         </div>
         <div style={{ display: "flex", gap: 18 }}>
           {tasteMatch.disagreement.map((d) => (

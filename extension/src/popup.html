@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>Save to Shop Wrapped</title>
+  </head>
+  <body>
+    <header class="bar">
+      <span class="wordmark">Shop <em>Wrapped</em></span>
+      <button id="open-options" class="icon-button" type="button" title="Settings">⚙</button>
+    </header>
+
+    <section id="state-loading" class="pane">
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+    </section>
+
+    <section id="state-setup" class="pane" hidden>
+      <h1 class="headline">Nearly there</h1>
+      <p id="setup-detail" class="muted"></p>
+      <button id="setup-cta" class="button primary" type="button">Open settings</button>
+    </section>
+
+    <section id="state-form" class="pane" hidden>
+      <div id="duplicate" class="notice" hidden>
+        Already on your wishlist — saving again makes a second copy.
+      </div>
+
+      <div class="product">
+        <div class="thumb">
+          <img id="thumb-img" alt="" hidden />
+          <span id="thumb-fallback" class="thumb-fallback"></span>
+        </div>
+        <div class="product-fields">
+          <label class="field">
+            <span class="label">Item</span>
+            <input id="title" type="text" maxlength="200" autocomplete="off" />
+          </label>
+          <div class="row">
+            <label class="field grow">
+              <span class="label">Merchant</span>
+              <input id="merchant" type="text" maxlength="120" autocomplete="off" />
+            </label>
+            <label class="field price">
+              <span class="label">Price</span>
+              <input id="price" type="text" inputmode="decimal" placeholder="—" autocomplete="off" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <label class="field">
+        <span class="label">Category</span>
+        <select id="category"></select>
+      </label>
+
+      <fieldset class="field">
+        <span class="label">Who sees it</span>
+        <div class="segmented" id="visibility" role="radiogroup" aria-label="Who sees it">
+          <button type="button" role="radio" data-value="private" title="Only on your own wishlist">Just me</button>
+          <button type="button" role="radio" data-value="shared" title="Shows up in your group's finds, with your name">Group</button>
+          <button type="button" role="radio" data-value="anonymous" title="Shows up in your group's finds without your name">Anon</button>
+        </div>
+      </fieldset>
+
+      <label class="field" id="group-field" hidden>
+        <span class="label">Group</span>
+        <select id="group"></select>
+      </label>
+
+      <p id="form-error" class="error" hidden></p>
+
+      <button id="save" class="button primary" type="button">Save to wishlist</button>
+      <p class="muted tiny" id="viewer-line"></p>
+    </section>
+
+    <section id="state-saved" class="pane" hidden>
+      <div class="tick">✓</div>
+      <h1 class="headline" id="saved-headline">Saved</h1>
+      <p class="muted" id="saved-detail"></p>
+      <button id="open-app" class="button ghost" type="button">Open my wishlist</button>
+      <button id="save-another" class="button link" type="button">Save this page again</button>
+    </section>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

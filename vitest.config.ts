@@ -11,7 +11,8 @@ export default defineConfig({
   esbuild: { jsx: "automatic" },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    // The extension is plain JS with no build step; its tests drive jsdom themselves.
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "extension/test/*.test.js"],
     environmentMatchGlobs: [["src/**/*.test.tsx", "jsdom"]],
     coverage: {
       provider: "v8",

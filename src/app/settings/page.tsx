@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 
+import { useItemDetail } from "@/components/commerce/ItemDetailModal";
+import { artForFind, clearFindsCache, getCachedFind } from "@/components/commerce/findsStore";
+import { listMyItems, updateItemVisibility } from "@/lib/api";
+import type { Item, Visibility } from "@/lib/apiTypes";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Lock } from "@/components/primitives/Glyphs";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
-import { purchasesFor } from "@/data/purchases";
 import { viewer } from "@/data/users";
 import { wrappedCards } from "@/data/wrapped";
 import { getChapter } from "@/data/chapters";
-import { formatPrice, searchUrl } from "@/services/commerce";
+import { formatPrice } from "@/services/commerce";
 import { useApp } from "@/state/store";
 import type { SharingState } from "@/lib/types";
 
@@ -32,24 +36,70 @@ const SHARING_OPTIONS: { value: SharingState; label: string }[] = [
 ];
 
 /**
+ * The screen says "hide", the server says "private". Same state, two vocabularies,
+ * so the seam is these two functions and nothing else.
+ */
+const toSharing = (v: Visibility): SharingState => (v === "private" ? "hidden" : v);
+const toVisibility = (s: SharingState): Visibility => (s === "hidden" ? "private" : s);
+
+/** Items arrive as `food_drink`; the excluded-category chips above are written for people. */
+function categoryLabel(category: string): string {
+  if (category === "food_drink") return "Food & drink";
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
+/**
  * Privacy and consent, shown rather than described: per-item sharing,
  * amounts off by default, excluded categories, and a veto before publishing.
  */
 export default function SettingsPage() {
   const {
     privacy,
-    setSharing,
     toggleAmounts,
     toggleCategory,
     toggleVeto,
     isVetoed,
     resetDemo,
   } = useApp();
+  const { openItem } = useItemDetail();
 
-  const mine = purchasesFor(viewer.id);
-  const sharedCount = mine.filter(
-    (p) => (privacy.sharing[p.id] ?? p.sharing) === "shared",
-  ).length;
+  // The viewer's real rows, not a fixture: this is the same `item-*` space the group feed
+  // reads, so the count here and "24 shared this month" on the feed can no longer disagree.
+  // The page remounts when the demo viewer changes, so a plain effect is correctly scoped.
+  const [mine, setMine] = useState<Item[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void listMyItems()
+      .then((rows) => alive && setMine(rows))
+      .catch(() => alive && setMine([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const setSharing = useCallback(async (itemId: string, next: SharingState) => {
+    let rollback: Item[] | null = null;
+    setMine((rows) => {
+      rollback = rows;
+      return rows?.map((r) => (r.id === itemId ? { ...r, visibility: toVisibility(next) } : r)) ?? rows;
+    });
+    try {
+      await updateItemVisibility(itemId, { visibility: toVisibility(next) });
+      // The group feed caches finds per viewer; without this, hiding an item here leaves it
+      // on the home feed until a reload and the privacy story falls over mid-demo.
+      clearFindsCache();
+    } catch (err) {
+      // Loudly: a swallowed failure here is indistinguishable from a toggle that does nothing,
+      // which is how a CORS block on PATCH went unnoticed.
+      console.error("visibility change failed", err);
+      setMine(rollback);
+    }
+  }, []);
+
+  const rows = mine ?? [];
+  // Anonymous rows are on the feed too, just unattributed. Counting only "shared" left this
+  // one behind the "N shared" tile on the home page for anyone who had anonymised an item.
+  const sharedCount = rows.filter((r) => r.visibility !== "private").length;
 
   return (
     <PageShell>
@@ -76,7 +126,9 @@ export default function SettingsPage() {
           transform: "rotate(-1deg)",
         }}
       >
-        {sharedCount} of your {mine.length} September items are visible to the group.
+        {mine === null
+          ? "Counting what the group can see…"
+          : `${sharedCount} of your ${rows.length} September items are visible to the group.`}
       </div>
 
       {/* amounts */}
@@ -172,9 +224,10 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
-            {mine.slice(0, 8).map((p) => {
-              const state = privacy.sharing[p.id] ?? p.sharing;
-              const excluded = privacy.excludedCategories.includes(p.category);
+            {rows.slice(0, 8).map((p) => {
+              const state = toSharing(p.visibility);
+              const label = categoryLabel(p.category);
+              const excluded = privacy.excludedCategories.includes(label);
               return (
                 <div
                   key={p.id}
@@ -197,8 +250,13 @@ export default function SettingsPage() {
                   }}
                 >
                   <ItemLink
-                    url={searchUrl(p.item, p.merchant)}
-                    label={`${p.item} at ${p.merchant}`}
+                    url={p.productUrl ?? undefined}
+                    label={`${p.name} at ${p.merchant ?? "an unrecorded shop"}`}
+                    // A hidden item is not in the group feed, so the modal — which reads the
+                    // finds cache — would open empty. Those fall through to the plain link.
+                    onActivate={
+                      getCachedFind(p.id) ? () => openItem({ kind: "find", id: p.id }) : undefined
+                    }
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -219,16 +277,17 @@ export default function SettingsPage() {
                         boxSizing: "border-box",
                       }}
                     >
-                      <ProductArt kind={p.art} src={p.image} />
+                      <ProductArt kind={artForFind(p)} src={p.imageUrl ?? undefined} />
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
-                        {p.item}
+                        {p.name}
                       </div>
                       <div style={{ fontSize: 13, opacity: 0.78 }}>
-                        <span style={{ textDecoration: "underline" }}>{p.merchant}</span> ·{" "}
-                        {p.category}
-                        {privacy.showAmounts && ` · ${formatPrice(p.amountCents)}`}
+                        {p.merchant ?? "No shop recorded"} · {label}
+                        {privacy.showAmounts &&
+                          p.priceCents !== null &&
+                          ` · ${formatPrice(p.priceCents)}`}
                         {excluded && " · excluded category"}
                       </div>
                     </div>

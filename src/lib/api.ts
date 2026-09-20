@@ -16,6 +16,7 @@ import type {
   CreateGroupBody,
   CreateItemBody,
   CreateThreadBody,
+  Debate,
   DuplicateThreadEnvelope,
   FindItem,
   GiftPick,
@@ -39,6 +40,7 @@ import type {
   VetoWrappedCardBody,
   VoteBody,
   WishlistLinkBody,
+  WishlistRoster,
   WrappedResponse,
 } from "@/lib/apiTypes";
 
@@ -232,10 +234,26 @@ export function listWishlist(): Promise<Item[]> {
   return request<Item[]>("/wishlist");
 }
 
+/**
+ * The group-wide companion to `listWishlist`: who else in the group has starred each shared item.
+ * Reads over exactly the slice `listGroupFinds` returns, so every roster has a tile to attach to.
+ */
+export function listGroupWishlists(groupId: string): Promise<WishlistRoster[]> {
+  return request<WishlistRoster[]>(`/groups/${seg(groupId)}/wishlists`);
+}
+
 /* ---------------------------------------------------------------- finds */
 
 export function listGroupFinds(groupId: string): Promise<FindItem[]> {
   return request<FindItem[]>(`/groups/${seg(groupId)}/finds`);
+}
+
+/**
+ * The month's most argued-about shared item, with its real comment thread attached. 404s with
+ * NOT_ENOUGH_DATA when nothing in the group has been discussed yet, which is a legitimate answer.
+ */
+export function getGroupDebate(groupId: string): Promise<Debate> {
+  return request<Debate>(`/groups/${seg(groupId)}/debate`);
 }
 
 /* -------------------------------------------------------------- wrapped */

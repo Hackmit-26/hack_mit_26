@@ -10,6 +10,7 @@
  */
 
 import { getProduct, products, recommendationsFor } from "@/data/products";
+import { purchases } from "@/data/purchases";
 import type { Product, Recommendation, UserId } from "@/lib/types";
 
 export type MatchKind = "same" | "close" | "budget";
@@ -94,13 +95,28 @@ export async function findRecommendations(
   return recommendationsFor(forUserId, budget);
 }
 
+const itemKey = (name: string, merchant: string | null) =>
+  `${name}|${merchant ?? ""}`.toLowerCase();
+
+/** Every seeded page, so a tile holding only the two strings still finds one. */
+const seededPages = new Map<string, string>();
+for (const product of products) {
+  if (product.url) seededPages.set(itemKey(product.title, product.merchant), product.url);
+}
+for (const purchase of purchases) {
+  if (purchase.url) seededPages.set(itemKey(purchase.item, purchase.merchant), purchase.url);
+}
+
 /**
- * Where a tile links out to when the item is one of ours rather than one the
- * backend resolved. The seeded catalogue and the September receipts are shops
- * without a product page, so this is the same search URL the backend's gift
- * picker falls back to.
+ * Where a tile links out to. The catalogue and the September receipts carry a
+ * real product page for everything that has one, so that is what opens. A café
+ * round, or a row the backend resolved with `product_url` null, has no page to
+ * open: those fall back to a search for the item and the shop.
  */
 export function searchUrl(name: string, merchant: string | null): string {
+  const page = seededPages.get(itemKey(name, merchant));
+  if (page) return page;
+
   const query = merchant ? `${name} ${merchant}` : name;
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }

@@ -18,7 +18,7 @@ export function ClosingCard({ onReplay }: { onReplay: () => void }) {
       style={{
         position: "absolute",
         left: 360,
-        top: 50,
+        top: 70,
         width: 720,
         height: 900,
         boxSizing: "border-box",
@@ -27,7 +27,7 @@ export function ClosingCard({ onReplay }: { onReplay: () => void }) {
         color: "#141A47",
         overflow: "hidden",
         boxShadow: "0 40px 90px rgba(0,0,0,0.5)",
-        padding: "44px 44px 36px",
+        padding: "38px 44px 36px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -136,7 +136,7 @@ export function ClosingCard({ onReplay }: { onReplay: () => void }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gridTemplateColumns: `repeat(${closingTiles.length}, minmax(0, 1fr))`,
             gap: 10,
           }}
         >

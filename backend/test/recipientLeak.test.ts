@@ -217,6 +217,75 @@ describe('the recipient can never see their own gift thread', () => {
     }
   });
 
+  it('does not answer the recipient probing POST /threads for their own birthday', async () => {
+    // The duplicate-thread 409 names the thread id so the organiser's UI can jump to it. If that
+    // check runs before authorisation, the recipient can ask "does my gift exist?" and be told.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/threads',
+      headers: as(RECIPIENT),
+      payload: {
+        groupId: GROUP,
+        recipientId: RECIPIENT,
+        budgetMinCents: 2_000,
+        budgetMaxCents: 12_000,
+      },
+    });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json<{ threadId?: string }>().threadId).toBeUndefined();
+    expect(res.body).not.toContain(threadId);
+  });
+
+  it('gives the recipient the same answer whether or not a thread exists', async () => {
+    const probe = async () =>
+      app.inject({
+        method: 'POST',
+        url: '/threads',
+        headers: as(RECIPIENT),
+        payload: {
+          groupId: GROUP,
+          recipientId: RECIPIENT,
+          budgetMinCents: 2_000,
+          budgetMaxCents: 12_000,
+        },
+      });
+
+    const withThread = await probe();
+    db.giftThreads.remove((t) => t.id === threadId);
+    const withoutThread = await probe();
+
+    expect(withThread.statusCode).toBe(withoutThread.statusCode);
+    expect(withThread.body).toEqual(withoutThread.body);
+  });
+
+  it('does not let a non-member probe POST /threads for the group', async () => {
+    db.users.insert({
+      id: 'user-snoop',
+      name: 'Snoop',
+      avatarUrl: null,
+      birthday: '1999-06-15',
+      cardLast4: null,
+      visaCardRef: null,
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/threads',
+      headers: as('user-snoop'),
+      payload: {
+        groupId: GROUP,
+        recipientId: RECIPIENT,
+        budgetMinCents: 2_000,
+        budgetMaxCents: 12_000,
+      },
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json<{ threadId?: string }>().threadId).toBeUndefined();
+    expect(res.body).not.toContain(threadId);
+  });
+
   it('hides the thread from the group listing but shows it to everyone else', async () => {
     const theirs = await app.inject({
       method: 'GET',

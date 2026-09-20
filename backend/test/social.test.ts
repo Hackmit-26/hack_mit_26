@@ -3,7 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db, newId, now, resetDb } from '../src/db/index.js';
 import type { ItemRow, UserRow, Visibility } from '../src/db/types.js';
 import { buildServer } from '../src/server.js';
-import type { Birthday, FindItem, Group, Item, User } from '../src/types/api.js';
+import type {
+  ApiError,
+  Birthday,
+  FindItem,
+  Group,
+  Item,
+  User,
+  WishlistRoster,
+} from '../src/types/api.js';
 
 let app: FastifyInstance;
 
@@ -517,6 +525,164 @@ describe('wishlist', () => {
 
     const theirs = await app.inject({ method: 'GET', url: '/wishlist', headers: auth(bob.id) });
     expect(theirs.json<Item[]>()).toEqual([]);
+  });
+});
+
+describe('group wishlists', () => {
+  const star = (userId: string, itemId: string): void => {
+    db.reactions.insert({ userId, itemId, type: 'wishlist', createdAt: now() });
+  };
+
+  it('names everyone in the group who wants a shared item, with enough to draw an avatar', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const cleo = user('Cleo');
+    db.users.update((u) => u.id === bob.id, { avatarUrl: 'https://img.example.com/bob.png' });
+
+    const crew = group();
+    for (const u of [alice, bob, cleo]) member(crew, u.id);
+
+    const wanted = item(alice.id, crew, 'shared', 'Selvedge Denim Trucker Jacket');
+    const ignored = item(alice.id, crew, 'shared', 'Nobody wants this');
+    star(bob.id, wanted.id);
+    star(cleo.id, wanted.id);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(alice.id),
+    });
+
+    expect(res.statusCode).toBe(200);
+    const rosters = res.json<WishlistRoster[]>();
+    expect(rosters.map((r) => r.itemId)).not.toContain(ignored.id);
+
+    const roster = rosters.find((r) => r.itemId === wanted.id);
+    expect(roster?.users.map((u) => u.id).sort()).toEqual([bob.id, cleo.id].sort());
+    expect(roster?.users.find((u) => u.id === bob.id)).toEqual({
+      id: bob.id,
+      name: 'Bob',
+      avatarUrl: 'https://img.example.com/bob.png',
+    });
+  });
+
+  it('deduplicates a reaction the store already holds', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const crew = group();
+    member(crew, alice.id);
+    member(crew, bob.id);
+
+    const wanted = item(alice.id, crew, 'shared', 'Contax T2');
+    star(bob.id, wanted.id);
+    star(bob.id, wanted.id);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(alice.id),
+    });
+    expect(res.json<WishlistRoster[]>()[0]?.users).toHaveLength(1);
+  });
+
+  it('never surfaces a private item, not even to the owner who starred it', async () => {
+    const alice = user('Alice');
+    const crew = group();
+    member(crew, alice.id);
+
+    const secret = item(alice.id, crew, 'private', 'Suede Desert Boot');
+    star(alice.id, secret.id);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(alice.id),
+    });
+    expect(res.json<WishlistRoster[]>()).toEqual([]);
+  });
+
+  it('keeps an anonymous item\u2019s owner off its own roster, but still names the others', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const crew = group();
+    member(crew, alice.id);
+    member(crew, bob.id);
+
+    const masked = item(alice.id, crew, 'anonymous', 'Loose Leaf Tea Sampler');
+    star(alice.id, masked.id);
+    star(bob.id, masked.id);
+
+    const theirs = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(bob.id),
+    });
+    expect(theirs.json<WishlistRoster[]>()[0]?.users.map((u) => u.id)).toEqual([bob.id]);
+
+    // The owner is not hiding from themselves.
+    const mine = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(alice.id),
+    });
+    expect(mine.json<WishlistRoster[]>()[0]?.users.map((u) => u.id).sort()).toEqual(
+      [alice.id, bob.id].sort(),
+    );
+  });
+
+  it('ignores items in another group and wishlists from outside the group', async () => {
+    const alice = user('Alice');
+    const outsider = user('Outsider');
+    const crew = group('Crew');
+    const other = group('Other');
+    member(crew, alice.id);
+    member(other, alice.id);
+    member(other, outsider.id);
+
+    const ours = item(alice.id, crew, 'shared', 'Ours');
+    const elsewhere = item(alice.id, other, 'shared', 'Elsewhere');
+    star(outsider.id, ours.id);
+    star(alice.id, elsewhere.id);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(alice.id),
+    });
+    expect(res.json<WishlistRoster[]>()).toEqual([]);
+  });
+
+  it('refuses a caller who is not in the group, and 404s an unknown one', async () => {
+    const alice = user('Alice');
+    const stranger = user('Stranger');
+    const crew = group();
+    member(crew, alice.id);
+    star(alice.id, item(alice.id, crew, 'shared', 'Contax T2').id);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/groups/${crew}/wishlists`,
+      headers: auth(stranger.id),
+    });
+    expect(res.statusCode).toBe(403);
+    expect(res.json<ApiError>().error.code).toBe('NOT_MEMBER');
+
+    const missing = await app.inject({
+      method: 'GET',
+      url: '/groups/nope/wishlists',
+      headers: auth(alice.id),
+    });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json<ApiError>().error.code).toBe('NOT_FOUND');
+  });
+
+  it('requires a token', async () => {
+    const alice = user('Alice');
+    const crew = group();
+    member(crew, alice.id);
+
+    const res = await app.inject({ method: 'GET', url: `/groups/${crew}/wishlists` });
+    expect(res.statusCode).toBe(401);
   });
 });
 

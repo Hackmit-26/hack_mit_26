@@ -51,7 +51,7 @@ export default function WishlistPage() {
           </h1>
         </div>
         <Link
-          href="/group"
+          href="/"
           style={{
             display: "inline-flex",
             alignItems: "center",

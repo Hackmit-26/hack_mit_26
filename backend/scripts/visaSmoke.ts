@@ -24,6 +24,8 @@ const reverse = await sandboxVisaDirect.reverseFunds({
     txnId: pull.txnId,
     amountCents: 2500,
     cardRef: 'test-card-1',
+    approvalCode: pull.approvalCode,
+    transmissionDateTime: pull.transmissionDateTime,
   },
   idempotencyKey: 'smoke:reverse',
 });

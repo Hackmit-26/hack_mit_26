@@ -130,7 +130,7 @@ export function SpotMadhav() {
         style={{
           position: "absolute",
           left: 44,
-          top: 310,
+          top: 296,
           width: 336,
           boxSizing: "border-box",
           padding: "18px 22px 16px",
@@ -236,7 +236,7 @@ export function SpotMadhav() {
         style={{
           position: "absolute",
           left: 408,
-          top: 318,
+          top: 304,
           width: 268,
           display: "flex",
           flexDirection: "column",
@@ -306,7 +306,7 @@ export function SpotMadhav() {
         style={{
           position: "absolute",
           left: 44,
-          top: 812,
+          top: 802,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,
