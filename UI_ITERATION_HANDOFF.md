@@ -1,6 +1,6 @@
 # Handoff: UI design/critique/build loops
 
-You are picking up **Shop Wrapped** — a private monthly shopping recap for a close friend group, plus
+You are picking up **Unwrap** — a private monthly shopping recap for a close friend group, plus
 AI group-gifting funded by real Visa Direct calls. The backend and all three Visa legs (pull / push /
 reverse) work against the live sandbox. **Nothing in this loop should require touching Visa code.**
 

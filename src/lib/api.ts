@@ -1,5 +1,5 @@
 /**
- * Typed client for the Shop Wrapped backend (`backend/src/routes/`).
+ * Typed client for the Unwrap backend (`backend/src/routes/`).
  * Plain functions over `fetch` - no caching, no retries, safe to import on server or client.
  */
 

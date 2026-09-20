@@ -563,7 +563,7 @@ export function MLore({
         }}
       >
         <div style={{ fontFamily: "var(--font-display), Georgia, serif", fontSize: 24 }}>
-          Shop <em style={{ color: "#EBB5BD" }}>Wrapped</em>
+          Un<em style={{ color: "#EBB5BD" }}>wrap</em>
         </div>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.14em" }}>3 / 4</div>
       </div>

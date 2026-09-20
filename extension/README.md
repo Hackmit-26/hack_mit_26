@@ -1,4 +1,4 @@
-# Shop Wrapped — Chrome extension
+# Unwrap — Chrome extension
 
 Save any product page to your wishlist, or share it with your group as a find, without leaving the
 page you found it on.
@@ -24,7 +24,7 @@ Manifest V3, no build step. The files in `src/` are what Chrome loads.
 | --- | --- |
 | Toolbar icon | Reads the page, shows an editable card, you pick the destination and save |
 | `⌘⇧U` / `Ctrl+Shift+U` | Saves the page immediately with your default destination, confirms with an in-page toast |
-| Right-click → *Save to my Shop Wrapped wishlist* | Same, private |
+| Right-click → *Save to my Unwrap wishlist* | Same, private |
 | Right-click → *Share with &lt;group&gt;* | Same, as a group find |
 | Right-click **a link** → either item | Saves the link's target, previewed server-side |
 

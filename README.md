@@ -1,7 +1,24 @@
-# Shop Wrapped
+<h1 align="center">Un<em>wrap</em></h1>
 
-A private monthly recap for a close friend group. Social first, commerce second:
-every recommendation arrives as something a friend already found.
+<p align="center">
+  A private monthly recap for a close friend group.<br />
+  Social first, commerce second: every recommendation arrives as something a friend already found.
+</p>
+
+<p align="center">
+  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-0B0F2A?style=flat-square&logo=nextdotjs&logoColor=white" />
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-BBA9E8?style=flat-square&logo=react&logoColor=141A47" />
+  <img alt="Fastify" src="https://img.shields.io/badge/Fastify-TypeScript-A8DCC2?style=flat-square&logo=fastify&logoColor=141A47" />
+  <img alt="Claude" src="https://img.shields.io/badge/Claude-grounded%20copy-E8806F?style=flat-square&logo=anthropic&logoColor=white" />
+  <img alt="Visa Direct" src="https://img.shields.io/badge/Visa%20Direct-live%20sandbox-F5E39B?style=flat-square&logo=visa&logoColor=141A47" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-433%20passing-A8DCC2?style=flat-square" />
+</p>
+
+<p align="center">
+  <img src="docs/img/taste.png" alt="Chapter 1 — the taste match card, showing a 71% taste match between Kristina and Madhav" width="880" />
+</p>
+
+<p align="center"><em>Every number on that card was computed from the group's real items. Only the words around them were written by a model.</em></p>
 
 Three pieces. A Next.js app, a Fastify API with Anthropic doing the reasoning and
 Visa Direct moving the money, and a Chrome extension that saves a product from the
@@ -39,12 +56,46 @@ curl -X POST localhost:8081/demo/reset          # 204 — back to the seeded mon
 `/wishlist` is your own saves, `/settings` the privacy controls, `/join` the
 invite flow.
 
+<p align="center">
+  <img src="docs/img/group.png" alt="The group page: the month's gifting leads, the four members, and everything shared this month" width="880" />
+</p>
+
 In the Wrapped: **← →** navigate, **space** advances, **R** replays. On a phone,
 swipe or tap (right 60% forward, left 40% back).
 
-Six chapters, in order: **taste** (the closest pair), **spotlights** (one cover
-per member), **lore** (three case files), **gift** (the live group pool),
-**debate** (the month's most argued-about buy), **closing**.
+## The six cards
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/taste.png" alt="Taste match" /></td>
+    <td width="50%"><img src="docs/img/spotlights.png" alt="Spotlights" /></td>
+  </tr>
+  <tr>
+    <td><b>1 · Taste match.</b> The closest pair in the group, and the three
+    scores that say why. Computed from their rows, not written by the model.</td>
+    <td><b>2 · Spotlights.</b> One cover per member — the same system, four
+    different layouts, built from what each person actually bought.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/lore.png" alt="Group lore" /></td>
+    <td><img src="docs/img/gift.png" alt="Gift mode" /></td>
+  </tr>
+  <tr>
+    <td><b>3 · Group lore.</b> Three case files. The Matcha Incident is seven
+    cafés across four friends, evidenced purchase by purchase.</td>
+    <td><b>4 · Gift mode.</b> The live group pool. Claude reads the recipient's
+    September and must cite their real items to justify a pick.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/debate.png" alt="The group chat" /></td>
+    <td><img src="docs/img/closing.png" alt="Closing" /></td>
+  </tr>
+  <tr>
+    <td><b>5 · The group chat.</b> The month's most argued-about buy, with the
+    real thread under it — and you can still reply from the card.</td>
+    <td><b>6 · Closing.</b> The month in one frame, and the way back in.</td>
+  </tr>
+</table>
 
 ## Layout model
 
@@ -192,7 +243,7 @@ its scraped image and price, and that a `private` save never reached the group.
 
 ## Design source
 
-Ported from the Shop Wrapped design canvas: colours, type scale, card grounds,
+Ported from the Unwrap design canvas: colours, type scale, card grounds,
 copy and animations come from those artboards. The landing, group, join and
 settings screens are not in the canvas — they are built from the same system
 (midnight ground, cream paper, ink outlines, hard offset shadows, Instrument

@@ -1,5 +1,5 @@
 /**
- * Domain types for Shop Wrapped.
+ * Domain types for Unwrap.
  *
  * Everything the UI renders comes through these shapes. The `src/data`
  * modules are the only place mock values live, so swapping in real API or
