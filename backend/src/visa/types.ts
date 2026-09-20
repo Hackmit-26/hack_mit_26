@@ -22,6 +22,11 @@ export type VisaTxnResult = {
   /** Both echoed back on an approval, and both required to reverse it later. */
   approvalCode?: string;
   transmissionDateTime?: string;
+  /**
+   * Visa's `X-Correlation-Id`. The sandbox keeps no ledger a developer can browse, so this is the
+   * only handle Visa support can trace a call by - worth storing on every row, not just failures.
+   */
+  correlationId?: string;
   raw: unknown;
   error?: string;
 };

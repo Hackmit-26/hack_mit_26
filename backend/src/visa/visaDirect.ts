@@ -75,6 +75,7 @@ function interpret(
     statusIdentifier: parsed.statusIdentifier,
     approvalCode: parsed.approvalCode,
     transmissionDateTime: parsed.transmissionDateTime,
+    correlationId,
     raw: body,
     error: ok
       ? undefined

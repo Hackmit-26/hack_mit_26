@@ -53,7 +53,9 @@ function recordVisaTxn(
     visaTxnId: result.txnId ?? null,
     idempotencyKey,
     errorCode: result.ok ? null : result.actionCode ?? result.error ?? null,
-    raw: result.raw,
+    // The sandbox has no ledger to reconcile against, so the audit row is the record of the call.
+    // Keeping Visa's correlation id beside the response makes it traceable from their side too.
+    raw: { correlationId: result.correlationId ?? null, response: result.raw },
   });
 }
 
@@ -392,6 +394,12 @@ export function lockThread(threadId: string, userId: string): GiftThreadRow {
   const winner = pickWinner(threadId, thread.organiserId);
   const contributors = groupMemberIds(thread.groupId).filter((id) => id !== thread.recipientId);
   if (contributors.length === 0) throw invalidState('Nobody is left to chip in');
+
+  // A thread can carry contributions before it locks - a seeded one does. Inserting the split on
+  // top would leave each contributor two rows, and since approving only ever settles one of them
+  // the thread stays `collecting` for ever and never pushes. Nothing here can have moved money
+  // yet: lock is only reachable from `voting`, and only a locked thread can be pulled against.
+  db.contributions.remove((c) => c.threadId === threadId);
 
   for (const share of evenSplit(winner.priceCents, contributors)) {
     const id = newId();

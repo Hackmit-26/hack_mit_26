@@ -3,7 +3,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { verifyUser } from './auth/verifyUser.js';
 import { config } from './config.js';
-import { catalogueFromPostgres, hydrateFromPostgres } from './db/postgres.js';
+import { catalogueFromPostgres, closePool, hydrateFromPostgres } from './db/postgres.js';
 import { startJobs } from './jobs/scheduler.js';
 import { setCatalogue } from './products/catalogue.js';
 import { AppError } from './lib/errors.js';
@@ -81,6 +81,14 @@ if (isEntrypoint) {
   } else if (demoModeEnabled()) {
     resetDemoState();
   }
+  // Hand the pooler its connections back on the way out. Without this a `tsx watch` restart leaves
+  // the old process's clients held open long enough for the new one to fail hydration.
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      void app.close().then(closePool).then(() => process.exit(0));
+    });
+  }
+
   await app.listen({ port: config.PORT, host: '0.0.0.0' });
   startJobs();
   logger.info('listening', { port: config.PORT, visaMode: config.VISA_MODE });
