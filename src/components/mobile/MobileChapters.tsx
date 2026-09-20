@@ -951,6 +951,17 @@ export function MGift({
   const canApprove = thread?.state === "collecting" && mine?.status === "pending";
   const myShare = mine?.amountCents ?? each;
 
+  // Same rule as the desktop card: a live thread's locked pick and remaining contributors win
+  // over the catalogue product, so the headline cannot disagree with the chips.
+  const potCents =
+    thread?.picks.find((p) => p.id === thread.winningPickId)?.priceCents ??
+    groupProduct.priceCents;
+  // A thread that is still `picking` has no contributions yet, so it cannot say how the pot
+  // divides; fall back to the catalogue estimate until the shares are actually written.
+  const stillIn =
+    thread?.contributions.filter((c) => c.status !== "opted_out" && c.status !== "removed") ?? [];
+  const splitWays = stillIn.length > 0 ? stillIn.length : gift.splitWays;
+
   return (
     <MobileFrame
       step={4}
@@ -1311,7 +1322,7 @@ export function MGift({
                 {groupProduct.title}
               </ItemLink>
               <div style={{ fontSize: 12.5, marginTop: 4 }}>
-                {formatPrice(groupProduct.priceCents)} total, split {gift.splitWays} ways
+                {formatPrice(potCents)} total, split {splitWays} ways
               </div>
               <div
                 style={{
@@ -1321,7 +1332,10 @@ export function MGift({
                   color: "#B8412F",
                 }}
               >
-                {formatPrice(each)} <span style={{ fontSize: 18, color: "#141A47" }}>each</span>
+                {formatPrice(myShare)}{" "}
+                <span style={{ fontSize: 18, color: "#141A47" }}>
+                  {thread ? "yours" : "each"}
+                </span>
               </div>
             </div>
           </div>

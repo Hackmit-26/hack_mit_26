@@ -679,7 +679,7 @@ function ShareResult({
         {share.ok
           ? funded
             ? "The pot is full"
-            : `Your ${formatPrice(amountCents)} is in`
+            : `Your ${formatPrice(share.contribution.amountCents ?? amountCents)} is in`
           : "Your share didn’t go through"}
       </div>
 
@@ -694,7 +694,12 @@ function ShareResult({
                     ?.name ?? "the organiser"
                 }.`
               : `Waiting on ${
-                  share.thread.contributions.filter((c) => c.status === "pending").length
+                  share.thread.contributions.filter(
+                    (c) =>
+                      c.status !== "pulled" &&
+                      c.status !== "opted_out" &&
+                      c.status !== "removed",
+                  ).length
                 } more to approve. Nobody sees what anyone put in.`}
           </div>
           <div

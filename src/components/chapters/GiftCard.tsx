@@ -1058,6 +1058,17 @@ function GroupGiftPanel({
   const mine = thread?.contributions.find((c) => c.userId === viewerId) ?? null;
   const canApprove = thread?.state === "collecting" && mine?.status === "pending";
   const myShare = mine?.amountCents ?? each;
+
+  // Once a thread exists the locked pick and the people still in it are the truth, not the
+  // catalogue product the card was drawn around: an opt-out re-splits the pot and the headline
+  // has to move with the chips underneath it.
+  const potCents =
+    thread?.picks.find((p) => p.id === thread.winningPickId)?.priceCents ?? product.priceCents;
+  // A thread that is still `picking` has no contributions yet, so it cannot say how the pot
+  // divides; fall back to the catalogue estimate until the shares are actually written.
+  const stillIn =
+    thread?.contributions.filter((c) => c.status !== "opted_out" && c.status !== "removed") ?? [];
+  const splitWays = stillIn.length > 0 ? stillIn.length : gift.splitWays;
   const pulledTotal =
     thread?.contributions
       .filter((c) => c.status === "pulled")
@@ -1246,7 +1257,7 @@ function GroupGiftPanel({
             <VisaTag />
           </div>
           <div style={{ fontSize: 14.5, marginTop: 4 }}>
-            {formatPrice(product.priceCents)} total, split {gift.splitWays} ways
+            {formatPrice(potCents)} total, split {splitWays} ways
           </div>
           <div
             style={{
@@ -1256,8 +1267,10 @@ function GroupGiftPanel({
               color: "#B8412F",
             }}
           >
-            {formatPrice(each)}{" "}
-            <span style={{ fontSize: 24, color: "#141A47" }}>each</span>
+            {formatPrice(myShare)}{" "}
+            <span style={{ fontSize: 24, color: "#141A47" }}>
+              {thread ? "yours" : "each"}
+            </span>
           </div>
         </div>
       </div>
