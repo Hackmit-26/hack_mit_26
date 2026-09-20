@@ -56,6 +56,18 @@ export type FindItem = {
   taken?: boolean;
 };
 
+/**
+ * Who else in the group wants a find, keyed by the same item id `/groups/:id/finds` returns so
+ * the client can join the two without a second lookup. Hearts stay an anonymous count (§1 rule
+ * 4), but a wishlist is the gifting signal the whole app exists for, so it names names - with one
+ * exception: the owner of an anonymous item is never listed on their own roster, because that
+ * would unmask them (§1 rule 3).
+ */
+export type WishlistRoster = {
+  itemId: string;
+  users: { id: string; name: string; avatarUrl: string | null }[];
+};
+
 export type ExtractedItem = {
   name: string;
   category: string;
@@ -149,6 +161,34 @@ export type Comment = {
   body: string;
   createdAt: string;
   editedAt: string | null;
+};
+
+/**
+ * The "Group Chat" Wrapped card: the single most-commented item the viewer can see, with its whole
+ * thread. Computed on every request from the live comments - nothing about it is stored.
+ */
+export type GroupDebate = {
+  itemId: string;
+  name: string;
+  merchant: string | null;
+  category: string;
+  imageUrl: string | null;
+  priceCents: number | null;
+  /** Null for an anonymously shared item (§1 rule 3), exactly as on a find. */
+  ownerId: string | null;
+  commentCount: number;
+  participants: { id: string; name: string; avatarUrl: string | null }[];
+  /** Whole days between the first and last message, floored, never below 1. */
+  spanDays: number;
+  verdict: string;
+  thread: {
+    id: string;
+    userId: string;
+    userName: string;
+    body: string;
+    createdAt: string;
+    parentId: string | null;
+  }[];
 };
 
 export type Reveal = { giftName: string; imageUrl: string | null; contributors: string[] };

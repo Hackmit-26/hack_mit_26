@@ -18,7 +18,14 @@ const PUBLIC_ROUTES = new Set(['/health', '/demo/reset']);
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
 
-  await app.register(cors, { origin: config.FRONTEND_ORIGIN, credentials: true });
+  // `methods` has to be spelled out: @fastify/cors defaults to GET,HEAD,POST, which silently
+  // blocked every PATCH (item visibility) and DELETE (comments) from the browser. The preflight
+  // still answered 204, so the request simply never happened and the UI rolled back with no error.
+  await app.register(cors, {
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
 
   app.addHook('onRequest', async (request) => {
     if (PUBLIC_ROUTES.has(request.routeOptions.url ?? request.url)) return;
