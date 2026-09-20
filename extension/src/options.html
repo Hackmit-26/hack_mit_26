@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="options.css" />
+    <title>Shop Wrapped extension settings</title>
+  </head>
+  <body class="options">
+    <header class="bar">
+      <span class="wordmark">Shop <em>Wrapped</em></span>
+      <span class="bar-note">Extension settings</span>
+    </header>
+
+    <main class="sheet">
+      <section class="block">
+        <h2 class="headline">Backend</h2>
+        <p class="muted">
+          Port 8080 in real mode, 8081 in the fast demo mode. Anything that isn't localhost needs a
+          one-off Chrome permission, which this page will ask for.
+        </p>
+        <label class="field">
+          <span class="label">API base URL</span>
+          <input id="apiBaseUrl" type="url" spellcheck="false" placeholder="http://localhost:8080" />
+        </label>
+        <label class="field">
+          <span class="label">App base URL</span>
+          <input id="appBaseUrl" type="url" spellcheck="false" placeholder="http://localhost:3000" />
+        </label>
+        <div class="actions">
+          <button id="test" class="button ghost" type="button">Test connection</button>
+          <span id="health" class="status"></span>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 class="headline">Sign in as</h2>
+        <p class="muted">
+          The backend's dev auth takes a user id and sends it as <code>Bearer dev:&lt;id&gt;</code>.
+        </p>
+        <label class="field">
+          <span class="label">User id</span>
+          <input id="userId" type="text" spellcheck="false" placeholder="user-sam" />
+        </label>
+        <div class="chips" id="demo-users"></div>
+        <div class="actions">
+          <button id="verify" class="button ghost" type="button">Verify</button>
+          <span id="viewer" class="status"></span>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 class="headline">Defaults</h2>
+        <label class="field">
+          <span class="label">Group</span>
+          <select id="defaultGroupId"></select>
+        </label>
+        <label class="field">
+          <span class="label">Who sees a quick save</span>
+          <select id="defaultVisibility">
+            <option value="private">Just me — wishlist only</option>
+            <option value="shared">Group — a find with my name on it</option>
+            <option value="anonymous">Group — a find with no name on it</option>
+          </select>
+        </label>
+        <p class="muted tiny">
+          Quick save is <kbd>⌘⇧U</kbd> (<kbd>Ctrl+Shift+U</kbd> elsewhere). Rebind it at
+          <code>chrome://extensions/shortcuts</code>.
+        </p>
+      </section>
+
+      <div class="footer">
+        <button id="save" class="button primary" type="button">Save settings</button>
+        <span id="saved-note" class="status"></span>
+      </div>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
