@@ -12,6 +12,7 @@ import meRoutes from './me.js';
 import passkeysRoutes from './passkeys.js';
 import reactionsRoutes from './reactions.js';
 import revealsRoutes from './reveals.js';
+import tasteMatchRoutes from './tasteMatch.js';
 import threadsRoutes from './threads.js';
 import wishlistRoutes from './wishlist.js';
 import wrappedRoutes from './wrapped.js';
@@ -29,6 +30,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     wishlistRoutes,
     birthdaysRoutes,
     wrappedRoutes,
+    tasteMatchRoutes,
     threadsRoutes,
     contributionsRoutes,
     revealsRoutes,
