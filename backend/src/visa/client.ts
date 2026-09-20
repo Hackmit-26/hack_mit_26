@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import https from 'node:https';
 import { URL } from 'node:url';
 import { config } from '../config.js';
+import { encryptPayload, mleEnabled, unwrapResponse } from './mle.js';
 
 export type VisaResponse = {
   status: number;
@@ -42,10 +43,11 @@ function authHeader(): string {
   return `Basic ${Buffer.from(raw).toString('base64')}`;
 }
 
-export function visaRequest(
+function send(
   method: 'GET' | 'POST',
   path: string,
-  body?: unknown,
+  body: unknown,
+  extraHeaders: Record<string, string>,
 ): Promise<VisaResponse> {
   const url = new URL(path, config.VISA_BASE_URL);
   const payload = body === undefined ? undefined : JSON.stringify(body);
@@ -62,6 +64,7 @@ export function visaRequest(
         headers: {
           Authorization: authHeader(),
           Accept: 'application/json',
+          ...extraHeaders,
           ...(payload
             ? {
                 'Content-Type': 'application/json',
@@ -96,4 +99,27 @@ export function visaRequest(
     if (payload) req.write(payload);
     req.end();
   });
+}
+
+export async function visaRequest(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+): Promise<VisaResponse> {
+  if (!mleEnabled) return send(method, path, body, {});
+
+  const headers = { keyId: config.VISA_MLE_KEY_ID as string };
+  const res = await send(
+    method,
+    path,
+    body === undefined ? undefined : await encryptPayload(body),
+    headers,
+  );
+
+  try {
+    return { ...res, body: await unwrapResponse(res.body) };
+  } catch {
+    // Gateway-level rejections come back in the clear; keep them readable.
+    return res;
+  }
 }

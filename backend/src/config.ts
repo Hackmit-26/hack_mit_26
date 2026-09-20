@@ -18,6 +18,13 @@ const schema = z
     VISA_ACQUIRER_COUNTRY_CODE: z.string().default('840'),
     VISA_TEST_CARDS_JSON: z.string().default('./secrets/test-cards.json'),
 
+    /** Set when the Visa project has Message Level Encryption on. Without it the gateway answers 9125. */
+    VISA_MLE_KEY_ID: z.string().optional(),
+    /** Visa's MLE certificate, downloaded from the project dashboard. Encrypts our requests. */
+    VISA_MLE_SERVER_CERT_PATH: z.string().default('./secrets/mle-server-cert.pem'),
+    /** Our private key. Visa encrypts responses to our client certificate, so this defaults to it. */
+    VISA_MLE_PRIVATE_KEY_PATH: z.string().optional(),
+
     DATABASE_URL: z.string().optional(),
     DB_MODE: z.enum(['memory', 'postgres']).default('memory'),
 
