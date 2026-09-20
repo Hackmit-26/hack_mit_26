@@ -448,7 +448,7 @@ export default function JoinPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => router.push("/group")}
+                    onClick={() => router.push("/")}
                     style={{
                       flex: "0 1 180px",
                       height: 60,
