@@ -1,3 +1,4 @@
+import { createPrivateKey } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { CompactEncrypt, compactDecrypt, importPKCS8, importX509 } from 'jose';
 import type { CryptoKey } from 'jose';
@@ -36,9 +37,22 @@ function serverCert(): Promise<CryptoKey> {
 }
 
 function privateKey(): Promise<CryptoKey> {
-  const path = config.VISA_MLE_PRIVATE_KEY_PATH ?? config.VISA_KEY_PATH;
-  decryptionKey ??= importPKCS8(read(path, 'the MLE private key'), ALG);
+  // The Visa dashboard hands out PKCS#1 (`BEGIN RSA PRIVATE KEY`) and `importPKCS8` only takes
+  // PKCS#8. Node reads both, so re-export through it rather than asking anyone to convert a file.
+  decryptionKey ??= importPKCS8(
+    createPrivateKey(read(config.VISA_MLE_PRIVATE_KEY_PATH, 'the MLE private key')).export({
+      type: 'pkcs8',
+      format: 'pem',
+    }) as string,
+    ALG,
+  );
   return decryptionKey;
+}
+
+/** Loads both keys so a bad path or format surfaces at startup rather than as a Visa error code. */
+export async function assertMleKeys(): Promise<void> {
+  if (!mleEnabled) return;
+  await Promise.all([serverCert(), privateKey()]);
 }
 
 /** Wraps a request body as `{ encData }`. `iat` is milliseconds and Visa only honours it for two minutes. */
@@ -56,7 +70,15 @@ export async function encryptPayload(body: unknown): Promise<{ encData: string }
 }
 
 export async function decryptPayload(encData: string): Promise<unknown> {
-  const { plaintext } = await compactDecrypt(encData, await privateKey());
+  let plaintext: Uint8Array;
+  try {
+    ({ plaintext } = await compactDecrypt(encData, await privateKey()));
+  } catch (err) {
+    throw new Error(
+      `Visa encrypted its response to a key we do not hold (${(err as Error).message}). ` +
+        'VISA_MLE_PRIVATE_KEY_PATH must be the key minted alongside VISA_MLE_KEY_ID, not the two-way-SSL key.',
+    );
+  }
   return JSON.parse(new TextDecoder().decode(plaintext));
 }
 

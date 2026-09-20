@@ -22,8 +22,12 @@ const schema = z
     VISA_MLE_KEY_ID: z.string().optional(),
     /** Visa's MLE certificate, downloaded from the project dashboard. Encrypts our requests. */
     VISA_MLE_SERVER_CERT_PATH: z.string().default('./secrets/mle-server-cert.pem'),
-    /** Our private key. Visa encrypts responses to our client certificate, so this defaults to it. */
-    VISA_MLE_PRIVATE_KEY_PATH: z.string().optional(),
+    /**
+     * Our MLE private key, which decrypts Visa's responses. Enabling MLE mints its own key pair,
+     * so this is normally NOT the two-way-SSL key in VISA_KEY_PATH - that is only the right file
+     * if the project took a CSR we generated from it.
+     */
+    VISA_MLE_PRIVATE_KEY_PATH: z.string().default('./secrets/mle-key.pem'),
 
     DATABASE_URL: z.string().optional(),
     DB_MODE: z.enum(['memory', 'postgres']).default('memory'),

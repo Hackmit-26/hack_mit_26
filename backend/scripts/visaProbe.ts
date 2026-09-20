@@ -1,6 +1,6 @@
 import { config } from '../src/config.js';
 import { visaRequest } from '../src/visa/client.js';
-import { mleEnabled } from '../src/visa/mle.js';
+import { assertMleKeys, mleEnabled } from '../src/visa/mle.js';
 import { VISA_ENDPOINTS } from '../src/visa/types.js';
 
 /**
@@ -23,7 +23,16 @@ const probes: Array<[string, 'GET' | 'POST', string, unknown?]> = [
   ['unrouted control', 'POST', '/visadirect/v1/multipushfundstransactions', {}],
 ];
 
-console.log(`base ${config.VISA_BASE_URL}  mle ${mleEnabled ? `on (${config.VISA_MLE_KEY_ID})` : 'off'}\n`);
+console.log(`base ${config.VISA_BASE_URL}  mle ${mleEnabled ? `on (${config.VISA_MLE_KEY_ID})` : 'off'}`);
+
+// Checked before any socket opens: a missing or unreadable key is our mistake, and finding it
+// here rather than inside a 9125 is the difference between a one-line fix and a re-diagnosis.
+try {
+  await assertMleKeys();
+  console.log(mleEnabled ? 'mle keys   loaded\n' : 'mle keys   skipped (VISA_MLE_KEY_ID is blank)\n');
+} catch (err) {
+  console.log(`mle keys   BROKEN - ${(err as Error).message}\n`);
+}
 
 for (const [label, method, path, body] of probes) {
   try {

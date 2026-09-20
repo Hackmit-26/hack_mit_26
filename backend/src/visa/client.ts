@@ -116,10 +116,8 @@ export async function visaRequest(
     headers,
   );
 
-  try {
-    return { ...res, body: await unwrapResponse(res.body) };
-  } catch {
-    // Gateway-level rejections come back in the clear; keep them readable.
-    return res;
-  }
+  // Gateway-level rejections come back in the clear, so `unwrapResponse` passing the body through
+  // untouched is normal. A body that does carry `encData` and still will not decrypt is not: that
+  // is our key or the keyId being wrong, and swallowing it would read as a Visa-side error.
+  return { ...res, body: await unwrapResponse(res.body) };
 }
