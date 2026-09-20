@@ -62,7 +62,12 @@ moment you hit **Test connection**.
 npx vitest run extension/test/extract.test.js   # the extractor, against fixed DOM fixtures
 node extension/test/live-api.mjs                # extract.js -> itemBodyFrom -> a running backend
 node extension/test/crawl-live.mjs [url ...]    # a real Chrome, real retailer pages
+node extension/test/integration.mjs             # ...and out the other side, into the web app
 ```
+
+`integration.mjs` is the end-to-end one: it saves through the shipped extension path, then drives
+a browser to `/wishlist` and `/wrapped` and checks the item is actually on the page with its
+scraped image, price and product link — and that the `private` save never reaches the group.
 
 `live-api.mjs` lifts `itemBodyFrom` verbatim out of `background.js` rather than reimplementing it,
 so it fails if the shipped save body ever stops matching `POST /items`. It needs the fast backend
