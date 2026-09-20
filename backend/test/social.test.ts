@@ -142,6 +142,45 @@ describe('groups', () => {
 });
 
 describe('me', () => {
+  it('returns the caller from the bearer token alone', async () => {
+    const alice = user('Alice', '1998-03-04');
+    user('Bob');
+
+    const res = await app.inject({ method: 'GET', url: '/me', headers: auth(alice.id) });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json<User>()).toEqual({
+      id: alice.id,
+      name: 'Alice',
+      avatarUrl: null,
+      birthday: '1998-03-04',
+      cardLast4: null,
+    });
+  });
+
+  it('rejects an unauthenticated read', async () => {
+    const res = await app.inject({ method: 'GET', url: '/me' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('lists only the groups the caller belongs to', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const shared = group('Tea Party');
+    const theirs = group('Book Club');
+    member(shared, alice.id);
+    member(shared, bob.id);
+    member(theirs, bob.id);
+
+    const mine = await app.inject({ method: 'GET', url: '/me/groups', headers: auth(alice.id) });
+    expect(mine.statusCode).toBe(200);
+    expect(mine.json<Group[]>().map((g) => g.id)).toEqual([shared]);
+    expect(mine.json<Group[]>()[0]?.members.map((m) => m.name)).toEqual(['Alice', 'Bob']);
+
+    const theirsRes = await app.inject({ method: 'GET', url: '/me/groups', headers: auth(bob.id) });
+    expect(theirsRes.json<Group[]>().map((g) => g.name)).toEqual(['Book Club', 'Tea Party']);
+  });
+
   it('patches the caller and only the caller', async () => {
     const alice = user('Alice');
     const bob = user('Bob');

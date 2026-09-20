@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { db, newId, now } from '../db/index.js';
+import { mirrorItem } from '../db/mirror.js';
 import type { ItemRow } from '../db/types.js';
 import { assertMember } from '../domain/permissions.js';
 import { AppError, notFound } from '../lib/errors.js';
@@ -78,6 +79,8 @@ export default async function itemsRoutes(app: FastifyInstance): Promise<void> {
       createdAt: now(),
     });
 
+    void mirrorItem(item.id);
+
     return toItem(item);
   });
 
@@ -96,6 +99,9 @@ export default async function itemsRoutes(app: FastifyInstance): Promise<void> {
 
     const updated = db.items.update((i) => i.id === item.id, { visibility });
     if (!updated) throw notFound('Item not found');
+
+    void mirrorItem(updated.id);
+
     return toItem(updated);
   });
 }

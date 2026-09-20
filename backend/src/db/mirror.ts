@@ -19,14 +19,16 @@
  *  - our single `GiftPickRow.reason` goes into `behavior_reason`; `social_reason` is NOT NULL
  *    and gets an empty string;
  *  - our `citedItemIds` becomes their `evidence` jsonb;
- *  - their `gift_picks.rank` is the pick's index within the thread (our insertion order).
+ *  - their `gift_picks.rank` is the pick's index within the thread (our insertion order);
+ *  - our items are their `purchases`, and our free-text `merchant` is their `merchant_id` FK;
+ *  - our `{userId, itemId, type}` reaction is their polymorphic `(target_type, target_id, kind)`.
  */
 import type { PoolClient } from 'pg';
 import { config } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { getPool } from './postgres.js';
 import { db, newId, now } from './store.js';
-import type { ContributionRow, GiftThreadRow } from './types.js';
+import type { ContributionRow, GiftThreadRow, ItemRow, ReactionRow, ReactionType } from './types.js';
 import type { ContributionStatus } from '../domain/splits.js';
 import type { ThreadState } from '../domain/threadStateMachine.js';
 import type { TxnKind } from '../visa/types.js';
@@ -349,6 +351,194 @@ export function mirrorVisaTxn(input: VisaTxnMirror): Promise<void> {
         input.errorCode,
         safeJson(input.raw),
       ],
+    );
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Social layer - items and reactions                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Where a `reactions.target_id` points. Their table is polymorphic and carries no discriminator
+ * we can derive offline, so the id's presence in each table is the only honest answer.
+ */
+export type ReactionTarget = 'purchase' | 'product';
+
+/**
+ * Pure half of the target resolution. `purchases` wins a tie: a real purchase is the richer
+ * row, and hydration only manufactures a synthetic item when the id is *not* already an item.
+ */
+export function resolveTargetType(inPurchases: boolean, inProducts: boolean): ReactionTarget | null {
+  if (inPurchases) return 'purchase';
+  if (inProducts) return 'product';
+  return null;
+}
+
+/** Asks Postgres which table owns the id. Null means neither, so there is no FK to point at. */
+async function locateTarget(client: PoolClient, id: string): Promise<ReactionTarget | null> {
+  const { rows } = await client.query<{ purchase: boolean; product: boolean }>(
+    `select exists(select 1 from purchases where id = $1) as purchase,
+            exists(select 1 from products  where id = $1) as product`,
+    [id],
+  );
+  const row = rows[0];
+  return resolveTargetType(row?.purchase ?? false, row?.product ?? false);
+}
+
+/**
+ * Their `merchants` is a shared dimension table that the 3k-row product catalogue joins against,
+ * and we do not know its full column set or its unique constraints. Inserting into it could
+ * either trip a NOT NULL we cannot see (which would lose the purchase behind it) or duplicate a
+ * brand and split the catalogue's join. So: look the name up, and leave the FK null when it is
+ * not there. The cost is one lossy field - an unknown merchant reads back as null after a
+ * restart - and the in-memory store, which is authoritative during the demo, still has the name.
+ */
+async function merchantId(client: PoolClient, name: string | null): Promise<string | null> {
+  if (!name) return null;
+  const { rows } = await client.query<{ id: string }>(
+    `select id from merchants where lower(name) = lower($1) limit 1`,
+    [name],
+  );
+  return rows[0]?.id ?? null;
+}
+
+export const PURCHASE_SQL = `
+  insert into purchases
+    (id, owner_id, group_id, title, category, merchant_id, image_url, price_cents,
+     purchased_at, visibility, excluded, created_at)
+  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,false,$11)
+  on conflict (id) do update set
+    group_id     = excluded.group_id,
+    title        = excluded.title,
+    category     = excluded.category,
+    merchant_id  = coalesce(excluded.merchant_id, purchases.merchant_id),
+    image_url    = coalesce(excluded.image_url, purchases.image_url),
+    price_cents  = coalesce(excluded.price_cents, purchases.price_cents),
+    purchased_at = coalesce(excluded.purchased_at, purchases.purchased_at),
+    visibility   = excluded.visibility`;
+
+/**
+ * Bind parameters for PURCHASE_SQL. Split out so the mapping is testable without a socket.
+ *
+ * Deliberately absent: `owner_id` is never updated on conflict (we do not reassign someone
+ * else's row), `excluded` is only ever written as false on insert (un-hiding a row a teammate
+ * hid is not ours to do), and `embedding` is not written at all - our vectors are 512-dim from
+ * EMBED_DIM while their pgvector column is sized by their own pipeline, and a dimension
+ * mismatch would fail the whole statement to save a column nothing renders.
+ */
+export function purchaseParams(item: ItemRow, merchant: string | null): unknown[] {
+  return [
+    item.id,
+    item.ownerId,
+    item.groupId,
+    item.name,
+    item.category,
+    merchant,
+    item.imageUrl,
+    item.priceCents,
+    item.purchasedAt,
+    item.visibility,
+    item.createdAt,
+  ];
+}
+
+async function pushItem(client: PoolClient, item: ItemRow): Promise<void> {
+  await client.query(PURCHASE_SQL, purchaseParams(item, await merchantId(client, item.merchant)));
+}
+
+/**
+ * Their `kind` is free-form across every target type; hydration reads `heart` on purchases and
+ * `heart`/`wishlist`/`save` on products, so writing our two types verbatim round-trips.
+ */
+const REACTION_KIND: Record<ReactionType, string> = {
+  heart: 'heart',
+  wishlist: 'wishlist',
+};
+
+export const REACTION_SQL = `
+  insert into reactions (id, user_id, target_type, target_id, kind, group_id, created_at)
+  values ($1,$2,$3,$4,$5,$6,$7)
+  on conflict do nothing`;
+
+/**
+ * Bind parameters for REACTION_SQL. `on conflict do nothing` with no target because we do not
+ * know which unique constraint they put on the tuple, and a reaction has nothing to update.
+ */
+export function reactionParams(
+  id: string,
+  row: ReactionRow,
+  targetType: ReactionTarget,
+  groupId: string | null,
+): unknown[] {
+  return [id, row.userId, targetType, row.itemId, REACTION_KIND[row.type], groupId, row.createdAt];
+}
+
+/** Mirrors one item into `purchases`, creating the row if it is new to them. */
+export function mirrorItem(itemId: string): Promise<void> {
+  return mirror('item', { itemId }, async (client) => {
+    const item = db.items.find((i) => i.id === itemId);
+    if (!item) return;
+    // A synthetic wishlist item carries a `products` id, not a `purchases` id. Writing it into
+    // `purchases` would invent a purchase that never happened.
+    if ((await locateTarget(client, item.id)) === 'product') return;
+    await pushItem(client, item);
+  });
+}
+
+/** Bulk form for receipt ingest, which lands several rows behind one response. */
+export function mirrorItems(itemIds: readonly string[]): Promise<void> {
+  return mirror('items', { count: itemIds.length }, async (client) => {
+    for (const id of itemIds) {
+      const item = db.items.find((i) => i.id === id);
+      if (!item) continue;
+      if ((await locateTarget(client, item.id)) === 'product') continue;
+      await pushItem(client, item);
+    }
+  });
+}
+
+/**
+ * Mirrors one reaction, resolving `target_type` against the live tables first. If the id is in
+ * neither table it is an item we created this session and have not pushed yet, so the purchase
+ * goes in ahead of the reaction - the FK has to exist before the row that references it. This is
+ * why `POST /wishlist/link` mirrors through here rather than firing an item and a reaction in
+ * parallel: two `void`ed mirrors would race and the reaction could lose.
+ */
+export function mirrorReaction(userId: string, itemId: string, type: ReactionType): Promise<void> {
+  return mirror('reaction', { userId, itemId, type }, async (client) => {
+    const row = db.reactions.find(
+      (r) => r.userId === userId && r.itemId === itemId && r.type === type,
+    );
+    if (!row) return;
+
+    const item = db.items.find((i) => i.id === itemId);
+    let target = await locateTarget(client, itemId);
+    if (!target) {
+      if (!item) return;
+      await pushItem(client, item);
+      target = 'purchase';
+    }
+
+    await client.query(REACTION_SQL, reactionParams(newId(), row, target, item?.groupId ?? null));
+  });
+}
+
+/**
+ * The only DELETE in this file. Un-hearting your own thing is the one case where removing a row
+ * is the correct projection, so the predicate is pinned to exactly that row: the acting user,
+ * that one target id, that one kind. Never widen it - every teammate's reactions, on every
+ * target type they own, live in this same table.
+ */
+export function unmirrorReaction(
+  userId: string,
+  itemId: string,
+  type: ReactionType,
+): Promise<void> {
+  return mirror('reaction.delete', { userId, itemId, type }, async (client) => {
+    await client.query(
+      `delete from reactions where user_id = $1 and target_id = $2 and kind = $3`,
+      [userId, itemId, REACTION_KIND[type]],
     );
   });
 }

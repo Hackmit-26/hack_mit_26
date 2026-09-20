@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { db, now } from '../db/index.js';
+import { mirrorReaction, unmirrorReaction } from '../db/mirror.js';
 import { assertItemVisibleTo } from '../domain/permissions.js';
 
 const body = z.object({
@@ -19,7 +20,10 @@ export default async function reactionsRoutes(app: FastifyInstance): Promise<voi
     const existing = db.reactions.find(
       (r) => r.userId === userId && r.itemId === itemId && r.type === type,
     );
-    if (!existing) db.reactions.insert({ userId, itemId, type, createdAt: now() });
+    if (!existing) {
+      db.reactions.insert({ userId, itemId, type, createdAt: now() });
+      void mirrorReaction(userId, itemId, type);
+    }
 
     return reply.status(204).send();
   });
@@ -28,7 +32,10 @@ export default async function reactionsRoutes(app: FastifyInstance): Promise<voi
     const { userId } = requireAuth(request);
     const { itemId, type } = body.parse(request.body);
 
-    db.reactions.remove((r) => r.userId === userId && r.itemId === itemId && r.type === type);
+    const removed = db.reactions.remove(
+      (r) => r.userId === userId && r.itemId === itemId && r.type === type,
+    );
+    if (removed > 0) void unmirrorReaction(userId, itemId, type);
 
     return reply.status(204).send();
   });

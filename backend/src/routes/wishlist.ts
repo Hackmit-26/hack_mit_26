@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { db, newId, now } from '../db/index.js';
+import { mirrorReaction } from '../db/mirror.js';
 import { linkPreview, type LinkPreview } from '../products/linkPreview.js';
 import { toItem } from './items.js';
 
@@ -48,6 +49,9 @@ export default async function wishlistRoutes(app: FastifyInstance): Promise<void
     });
 
     db.reactions.insert({ userId, itemId: item.id, type: 'wishlist', createdAt: now() });
+
+    // One mirror, not two: it pushes the purchase ahead of the reaction that references it.
+    void mirrorReaction(userId, item.id, 'wishlist');
 
     return toItem(item);
   });

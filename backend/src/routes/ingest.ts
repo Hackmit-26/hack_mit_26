@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { ingestReceipt } from '../ai/ingest.js';
 import { requireAuth } from '../auth/verifyUser.js';
+import { mirrorItems } from '../db/mirror.js';
 import { assertMember } from '../domain/permissions.js';
 import type { Item } from '../types/api.js';
 
@@ -33,6 +34,9 @@ export default async function ingestRoutes(app: FastifyInstance): Promise<void> 
       ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
       ...(input.imageBase64 ? { imageBase64: input.imageBase64 } : {}),
     });
+
+    // Embeddings land after the response and are not mirrored, so one push here is enough.
+    void mirrorItems(rows.map((row) => row.id));
 
     const items: Item[] = rows.map((row) => ({
       id: row.id,
