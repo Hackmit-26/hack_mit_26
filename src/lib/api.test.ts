@@ -15,6 +15,7 @@ import {
   setAuthToken,
   setViewer,
   updateItemVisibility,
+  waitForPicks,
 } from "@/lib/api";
 import type { Group } from "@/lib/apiTypes";
 
@@ -206,5 +207,37 @@ describe("duplicateThreadId", () => {
   it("returns null for anything else", () => {
     expect(duplicateThreadId(new Error("nope"))).toBeNull();
     expect(duplicateThreadId(new ApiError("NOT_FOUND", "gone", 404))).toBeNull();
+  });
+});
+
+describe("waitForPicks", () => {
+  it("polls until the thread leaves `picking`", async () => {
+    const states = ["picking", "picking", "voting"];
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(jsonResponse({ id: "t1", state: states.shift() ?? "voting", picks: [] })),
+    );
+
+    const thread = await waitForPicks("t1", { intervalMs: 0 });
+
+    expect(thread.state).toBe("voting");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("gives up on the last thread it read once the deadline passes", async () => {
+    respondWith({ id: "t1", state: "picking", picks: [] });
+
+    const thread = await waitForPicks("t1", { intervalMs: 0, timeoutMs: 0 });
+
+    expect(thread.state).toBe("picking");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects when the caller aborts", async () => {
+    respondWith({ id: "t1", state: "picking", picks: [] });
+    const controller = new AbortController();
+    const pending = waitForPicks("t1", { intervalMs: 50, signal: controller.signal });
+    controller.abort();
+
+    await expect(pending).rejects.toThrow(ApiError);
   });
 });

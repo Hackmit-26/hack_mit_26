@@ -72,6 +72,8 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+export type PollOptions = { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal };
+
 function decode(text: string): unknown {
   try {
     return JSON.parse(text) as unknown;
@@ -259,6 +261,43 @@ export function getThread(threadId: string): Promise<Thread> {
 
 export function listGroupThreads(groupId: string): Promise<Thread[]> {
   return request<Thread[]>(`/groups/${seg(groupId)}/threads`);
+}
+
+/**
+ * `POST /threads` returns immediately in `picking` with no picks and generates in the background.
+ * There is no push channel, so the gift screen waits here. Resolves on the first non-`picking`
+ * state, or on the last thread it read once `timeoutMs` is up - the caller decides what an empty
+ * shortlist means.
+ */
+export async function waitForPicks(
+  threadId: string,
+  { intervalMs = 700, timeoutMs = 25_000, signal }: PollOptions = {},
+): Promise<Thread> {
+  const deadline = Date.now() + timeoutMs;
+  let thread = await getThread(threadId);
+  while (thread.state === "picking" && Date.now() < deadline) {
+    await sleep(intervalMs, signal);
+    thread = await getThread(threadId);
+  }
+  return thread;
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new ApiError("NETWORK_ERROR", "Aborted", 0));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    function onAbort(): void {
+      clearTimeout(timer);
+      reject(new ApiError("NETWORK_ERROR", "Aborted", 0));
+    }
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 export function generateThreadPicks(threadId: string): Promise<GiftPick[]> {
