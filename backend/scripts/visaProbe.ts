@@ -1,6 +1,6 @@
 import { config } from '../src/config.js';
 import { visaRequest } from '../src/visa/client.js';
-import { assertMleKeys, mleEnabled } from '../src/visa/mle.js';
+import { assertMleKeys, describeServerCert, mleEnabled } from '../src/visa/mle.js';
 import { VISA_ENDPOINTS } from '../src/visa/types.js';
 
 /**
@@ -29,7 +29,23 @@ console.log(`base ${config.VISA_BASE_URL}  mle ${mleEnabled ? `on (${config.VISA
 // here rather than inside a 9125 is the difference between a one-line fix and a re-diagnosis.
 try {
   await assertMleKeys();
-  console.log(mleEnabled ? 'mle keys   loaded\n' : 'mle keys   skipped (VISA_MLE_KEY_ID is blank)\n');
+  if (!mleEnabled) {
+    console.log('mle keys   skipped (VISA_MLE_KEY_ID is blank)\n');
+  } else {
+    const cert = describeServerCert();
+    console.log(`mle keys   loaded, both parse`);
+    console.log(`  encrypting to  ${cert.subject}`);
+    console.log(`  issued by      ${cert.issuer}`);
+    console.log(`  expires        ${cert.validTo}`);
+    if (cert.isOurs) {
+      console.log(
+        '  WRONG FILE     this is our own client certificate, not Visa\'s server encryption\n' +
+          '                 certificate. Visa cannot decrypt a payload sealed to our own key,\n' +
+          '                 so this still answers 9125. Re-download the server certificate.',
+      );
+    }
+    console.log();
+  }
 } catch (err) {
   console.log(`mle keys   BROKEN - ${(err as Error).message}\n`);
 }

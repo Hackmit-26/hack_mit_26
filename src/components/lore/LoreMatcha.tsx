@@ -166,7 +166,7 @@ export function LoreMatcha() {
         style={{
           position: "absolute",
           left: 44,
-          top: 806,
+          top: 802,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,

@@ -13,7 +13,8 @@ export const wrappedCards: WrappedCard[] = [
   { id: "card-spotlights", chapter: "spotlights", index: 1 },
   { id: "card-lore", chapter: "lore", index: 2 },
   { id: "card-gift", chapter: "gift", index: 3 },
-  { id: "card-closing", chapter: "closing", index: 4 },
+  { id: "card-debate", chapter: "debate", index: 4 },
+  { id: "card-closing", chapter: "closing", index: 5 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -350,4 +351,5 @@ export const closingTiles = [
   { n: "2 · Spotlights", title: "Four covers", bg: "#E8806F", fg: "#141A47", label: "The Midnight Researcher and friends" },
   { n: "3 · Group lore", title: "The Matcha Incident", bg: "#141A47", fg: "#F5ECD9", label: "The Matcha Incident" },
   { n: "4 · Gift mode", title: "Gift mode", bg: "#F5E39B", fg: "#141A47", label: "Gift mode for Esh" },
+  { n: "5 · The group chat", title: "The group chat", bg: "#BBA9E8", fg: "#141A47", label: "The month's most debated buy" },
 ];

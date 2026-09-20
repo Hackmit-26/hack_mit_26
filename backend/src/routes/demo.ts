@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { resetDb } from '../db/index.js';
-import { seedDemoData, seedDemoThreads } from '../db/seed.js';
+import { seedDemoComments, seedDemoData, seedDemoThreads } from '../db/seed.js';
 import { notFound } from '../lib/errors.js';
 
 /**
@@ -16,13 +16,15 @@ export function demoModeEnabled(): boolean {
 
 /**
  * Restores the §15 stage state: the group, personas, items and reactions, a fresh `picking`
- * thread for the birthday recipient, and a pre-made `collecting` thread with two shares already
- * pulled for the reversal moment.
+ * thread for the birthday recipient, a pre-made `collecting` thread with two shares already
+ * pulled for the reversal moment, and the comment threads the "most argued about" card computes
+ * over.
  */
 export function resetDemoState(): void {
   resetDb();
   seedDemoData();
   seedDemoThreads();
+  seedDemoComments();
 }
 
 export default async function demoRoutes(app: FastifyInstance): Promise<void> {

@@ -1,0 +1,369 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  ItemDetailProvider,
+  useItemDetail,
+} from "@/components/commerce/ItemDetailModal";
+import {
+  artForFind,
+  bgForFind,
+  clearFindsCache,
+  feedOrder,
+  findCommentTarget,
+  getCachedFind,
+  ownerOf,
+  setFindsApi,
+  useGroupFinds,
+} from "@/components/commerce/findsStore";
+import { setViewer } from "@/lib/api";
+import type { FindItem, WishlistRoster } from "@/lib/apiTypes";
+import { AppProvider, setCommentsApi, setWishlistApi } from "@/state/store";
+
+function find(over: Partial<FindItem> & { id: string }): FindItem {
+  return {
+    ownerId: "esh",
+    name: "A thing",
+    category: "tech",
+    merchant: "A shop",
+    imageUrl: null,
+    productUrl: null,
+    description: null,
+    heartCount: 0,
+    iHearted: false,
+    iWishlisted: false,
+    ...over,
+  };
+}
+
+const HERO = find({
+  id: "item-esh-02",
+  ownerId: "esh",
+  name: "Marshall Stanmore III",
+  category: "music",
+  merchant: "Sound & Vision",
+  productUrl: "https://example.com/stanmore",
+  description: "the one that lives on the kitchen counter.",
+  heartCount: 2,
+  iWishlisted: true,
+});
+
+/** Shared anonymously: the server strips the owner before it ever leaves. */
+const ANON = find({
+  id: "item-sabina-24",
+  ownerId: null,
+  name: "Loose Leaf Tea Sampler",
+  category: "food_drink",
+  merchant: "Ember & Grind",
+});
+
+const ROSTERS: WishlistRoster[] = [
+  {
+    itemId: "item-esh-02",
+    users: [
+      { id: "kristina", name: "Kristina", avatarUrl: null },
+      { id: "madhav", name: "Madhav", avatarUrl: null },
+      { id: "sabina", name: "Sabina", avatarUrl: null },
+    ],
+  },
+];
+
+const heart = vi.fn<(itemId: string, on: boolean) => Promise<void>>();
+const wishlist = vi.fn<(itemId: string, on: boolean) => Promise<void>>();
+
+function stubApi(finds: FindItem[] = [HERO, ANON]): void {
+  setFindsApi({
+    finds: async () => finds,
+    wishlists: async () => ROSTERS,
+    heart,
+    wishlist,
+  });
+}
+
+/** The group feed and the modal, as the group page wires them together. */
+function Harness() {
+  const feed = useGroupFinds("tea-party");
+  const { openItem } = useItemDetail();
+
+  if (feed.status !== "ready") return <div>feed:{feed.status}</div>;
+
+  return (
+    <div>
+      <div>feed:ready</div>
+      {feed.finds.map((f) => (
+        <button
+          key={f.id}
+          type="button"
+          onClick={() => openItem({ kind: "find", id: f.id })}
+        >
+          open {f.id}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function mount() {
+  return render(
+    <AppProvider>
+      <ItemDetailProvider>
+        <Harness />
+      </ItemDetailProvider>
+    </AppProvider>,
+  );
+}
+
+async function openFind(id: string) {
+  await screen.findByText("feed:ready");
+  fireEvent.click(screen.getByRole("button", { name: `open ${id}` }));
+  return screen.getByRole("dialog");
+}
+
+beforeEach(() => {
+  window.sessionStorage.clear();
+  clearFindsCache();
+  heart.mockReset();
+  heart.mockResolvedValue(undefined);
+  wishlist.mockReset();
+  wishlist.mockResolvedValue(undefined);
+  setViewer("kristina");
+  stubApi();
+  setCommentsApi({
+    list: async () => [],
+    create: async () => {
+      throw new Error("not used");
+    },
+    remove: async () => undefined,
+    viewerId: () => "kristina",
+  });
+  setWishlistApi({
+    addLink: async () => ({ id: "x", name: "x", merchant: null, imageUrl: null, priceCents: null }),
+    list: async () => [],
+    remove: async () => {},
+  });
+});
+
+afterEach(cleanup);
+
+describe("feedOrder", () => {
+  it("takes the group in turn rather than one person at a time", () => {
+    const rows = [
+      find({ id: "k1", ownerId: "kristina" }),
+      find({ id: "k2", ownerId: "kristina" }),
+      find({ id: "k3", ownerId: "kristina" }),
+      find({ id: "e1", ownerId: "esh" }),
+      find({ id: "e2", ownerId: "esh" }),
+      find({ id: "a1", ownerId: null }),
+    ];
+
+    expect(feedOrder(rows, 6).map((f) => f.id)).toEqual(["k1", "e1", "a1", "k2", "e2", "k3"]);
+  });
+
+  it("stops at the limit and never repeats a row", () => {
+    const rows = [
+      find({ id: "k1", ownerId: "kristina" }),
+      find({ id: "e1", ownerId: "esh" }),
+      find({ id: "e2", ownerId: "esh" }),
+    ];
+
+    expect(feedOrder(rows, 2).map((f) => f.id)).toEqual(["k1", "e1"]);
+    expect(feedOrder(rows, 99).map((f) => f.id)).toEqual(["k1", "e1", "e2"]);
+    expect(feedOrder([], 8)).toEqual([]);
+  });
+});
+
+describe("find presentation", () => {
+  it("picks an illustration from the category, and the same one every time", () => {
+    expect(artForFind({ id: "item-1", category: "food_drink" })).toBe("mug");
+    expect(artForFind({ id: "item-1", category: "tech" })).toBe("camera");
+    // A category the seed has never produced still has to draw something stable.
+    expect(artForFind({ id: "item-1", category: "wormholes" })).toBe(
+      artForFind({ id: "item-1", category: "wormholes" }),
+    );
+    expect(artForFind({ id: "item-2", category: "wormholes" })).toBeTruthy();
+  });
+
+  it("colours a tile by its owner, and an anonymous one in cream", () => {
+    expect(bgForFind({ ownerId: "esh" })).toBe("#BBA9E8");
+    expect(bgForFind({ ownerId: null })).toBe("#F5ECD9");
+    // A uuid from real Postgres is not one of the four demo people.
+    expect(bgForFind({ ownerId: "b7f1-not-a-member" })).toBe("#F5ECD9");
+    expect(ownerOf({ ownerId: "b7f1-not-a-member" })).toBeNull();
+  });
+
+  it("hangs comments off the real item row, not a hashed client key", () => {
+    // `purchase` is the backend's item-ish kind: it authorises via assertItemVisibleTo.
+    expect(findCommentTarget("item-esh-02")).toEqual({
+      targetType: "purchase",
+      targetId: "item-esh-02",
+    });
+  });
+});
+
+describe("the live group feed", () => {
+  it("loads the finds and the wishlist rosters together", async () => {
+    mount();
+
+    expect(screen.getByText("feed:loading")).toBeTruthy();
+    await screen.findByText("feed:ready");
+    expect(screen.getByRole("button", { name: "open item-esh-02" })).toBeTruthy();
+  });
+
+  it("says so rather than showing an empty grid when the server is unreachable", async () => {
+    setFindsApi({
+      finds: async () => {
+        throw new Error("down");
+      },
+      wishlists: async () => [],
+      heart,
+      wishlist,
+    });
+    mount();
+
+    await screen.findByText("feed:error");
+  });
+
+  it("will not serve one person's feed to the next person", async () => {
+    mount();
+    await screen.findByText("feed:ready");
+    expect(getCachedFind("item-esh-02")).toBeTruthy();
+
+    // `iHearted`, `iWishlisted` and a stripped `ownerId` are all viewer-relative.
+    setViewer("sabina");
+    expect(getCachedFind("item-esh-02")).toBeNull();
+  });
+});
+
+describe("the find modal", () => {
+  it("shows the item, who shared it and who else wants it", async () => {
+    mount();
+    await openFind("item-esh-02");
+
+    expect(screen.getByText("Marshall Stanmore III")).toBeTruthy();
+    expect(screen.getByText("Sound & Vision")).toBeTruthy();
+    expect(screen.getByText("the one that lives on the kitchen counter.")).toBeTruthy();
+    expect(screen.getByText("Shared with the group")).toBeTruthy();
+
+    expect(screen.getByText("Bought by")).toBeTruthy();
+    expect(screen.getByText("Esh")).toBeTruthy();
+
+    expect(screen.getByText("On a wishlist")).toBeTruthy();
+    expect(screen.getByText("Kristina")).toBeTruthy();
+    expect(screen.getByText("Madhav")).toBeTruthy();
+    expect(screen.getByText("Sabina")).toBeTruthy();
+    // The viewer reads as themselves on their own list.
+    expect(screen.getByText("on your list")).toBeTruthy();
+    expect(screen.getAllByText("on their list")).toHaveLength(2);
+  });
+
+  it("never names the owner of an anonymous find", async () => {
+    mount();
+    await openFind("item-sabina-24");
+
+    expect(screen.getByText("Shared anonymously")).toBeTruthy();
+    expect(screen.getByText("Someone in the group")).toBeTruthy();
+    expect(screen.queryByText("Sabina")).toBeNull();
+    // Nobody has starred it in this fixture, so the roster is absent rather than empty.
+    expect(screen.queryByText("On a wishlist")).toBeNull();
+  });
+
+  it("is honest that a find carries no amount", async () => {
+    mount();
+    await openFind("item-esh-02");
+
+    expect(screen.getByText("The group feed doesn’t carry amounts")).toBeTruthy();
+  });
+
+  it("degrades to no button at all when the item has no page", async () => {
+    mount();
+    await openFind("item-sabina-24");
+
+    const out = screen
+      .queryAllByRole("link")
+      .find((a) => /Open the product page/.test(a.textContent ?? ""));
+    expect(out).toBeUndefined();
+    expect(screen.getByText(/no product page for this one/)).toBeTruthy();
+  });
+
+  it("counts hearts without naming anybody", async () => {
+    mount();
+    await openFind("item-esh-02");
+
+    expect(screen.getByText("Hearts")).toBeTruthy();
+    expect(screen.getByText("2 in the group. names stay private.")).toBeTruthy();
+    expect(screen.queryByText("Liked by")).toBeNull();
+  });
+
+  it("hearts an item for real, and moves the count before the server answers", async () => {
+    mount();
+    await openFind("item-esh-02");
+
+    fireEvent.click(screen.getByRole("button", { name: "Heart this · 2 in the group" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Remove your heart · 3 in the group" })).toBeTruthy(),
+    );
+    expect(heart).toHaveBeenCalledWith("item-esh-02", true);
+    expect(screen.getByText("you and 2 others.")).toBeTruthy();
+    expect(getCachedFind("item-esh-02")?.iHearted).toBe(true);
+  });
+
+  it("puts the heart back when the server refuses it", async () => {
+    heart.mockRejectedValue(new Error("nope"));
+    mount();
+    await openFind("item-esh-02");
+
+    fireEvent.click(screen.getByRole("button", { name: "Heart this · 2 in the group" }));
+
+    await waitFor(() => expect(getCachedFind("item-esh-02")?.iHearted).toBe(false));
+    expect(screen.getByRole("button", { name: "Heart this · 2 in the group" })).toBeTruthy();
+  });
+
+  it("stars a find for real, and puts the viewer on the roster straight away", async () => {
+    mount();
+    await openFind("item-sabina-24");
+    // Nobody is on this one's roster in the fixture, so the section is absent to begin with.
+    expect(screen.queryByText("On a wishlist")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to your list" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Remove from your list" })).toBeTruthy(),
+    );
+    expect(wishlist).toHaveBeenCalledWith("item-sabina-24", true);
+    expect(screen.getByText("On a wishlist")).toBeTruthy();
+    expect(screen.getByText("Kristina")).toBeTruthy();
+    expect(getCachedFind("item-sabina-24")?.iWishlisted).toBe(true);
+  });
+
+  it("takes the viewer back off the roster when they unstar it", async () => {
+    mount();
+    await openFind("item-esh-02");
+    expect(screen.getByText("on your list")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove from your list" }));
+
+    await waitFor(() => expect(getCachedFind("item-esh-02")?.iWishlisted).toBe(false));
+    expect(wishlist).toHaveBeenCalledWith("item-esh-02", false);
+    expect(screen.queryByText("on your list")).toBeNull();
+    expect(screen.getAllByText("on their list")).toHaveLength(2);
+  });
+
+  it("puts the star and the roster back together when the server refuses", async () => {
+    wishlist.mockRejectedValue(new Error("nope"));
+    mount();
+    await openFind("item-sabina-24");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to your list" }));
+
+    await waitFor(() => expect(getCachedFind("item-sabina-24")?.iWishlisted).toBe(false));
+    expect(screen.queryByText("On a wishlist")).toBeNull();
+  });
+
+  it("shows nothing for a find the feed has never loaded", async () => {
+    mount();
+    await screen.findByText("feed:ready");
+    // Only the ids the feed handed out can be opened; anything else resolves to nothing.
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});

@@ -41,7 +41,11 @@ export function getPool(): Pool {
       connectionString: config.DATABASE_URL,
       // Supabase's pooler terminates TLS with a cert we do not pin locally.
       ssl: { rejectUnauthorized: false },
-      max: 8,
+      // Supabase's session pooler (port 5432) allows 15 clients for the whole project, and a
+      // `tsx watch` restart briefly runs two of us at once. At 8 that overlap alone exhausted the
+      // pool and the reloaded process died on hydration with EMAXCONNSESSION; 4 leaves room for
+      // the overlap plus a script or a teammate connected at the same time.
+      max: 4,
     });
   }
   return pool;
@@ -279,6 +283,8 @@ export async function hydrateFromPostgres(): Promise<void> {
         pullTxnId: text(r.pull_txn_id),
         pullStan: null,
         pullRrn: null,
+        pullApprovalCode: null,
+        pullTransmissionDateTime: null,
         statusIdentifier: null,
         reversalTxnId: text(r.reversal_txn_id),
         idempotencyKey: `contribution:${String(r.id)}`,

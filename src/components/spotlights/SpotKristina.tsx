@@ -228,7 +228,7 @@ export function SpotKristina() {
         style={{
           position: "absolute",
           left: 44,
-          top: 812,
+          top: 802,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,

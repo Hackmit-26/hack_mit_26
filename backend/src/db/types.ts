@@ -131,6 +131,9 @@ export type ContributionRow = {
   pullTxnId: string | null;
   pullStan: string | null;
   pullRrn: string | null;
+  /** Echoed back by the pull. Visa will not accept a reversal that cannot quote both. */
+  pullApprovalCode: string | null;
+  pullTransmissionDateTime: string | null;
   statusIdentifier: string | null;
   reversalTxnId: string | null;
   idempotencyKey: string;

@@ -42,7 +42,22 @@ export const userList: User[] = [
   users.madhav,
 ];
 
-export const viewer: User = users.kristina;
+/**
+ * Who the app is currently being used as. `let`, not `const`: ESM live bindings mean every module
+ * that did `import { viewer } from "@/data/users"` follows the reassignment, so the demo switcher
+ * does not need every call site to be rewritten.
+ */
+export let viewer: User = users.kristina;
+
+/**
+ * Points the whole app at another member of the group. Only the demo viewer switcher calls this;
+ * it must be followed by a React re-render (see `setViewerId` in `@/state/store`), because module
+ * state on its own tells React nothing.
+ */
+export function setActiveViewer(id: UserId): void {
+  viewer = users[id];
+  for (const user of userList) user.isViewer = user.id === id;
+}
 
 export const group: Group = {
   id: "tea-party",
@@ -53,23 +68,24 @@ export const group: Group = {
 };
 
 /**
- * The same four people as they exist in Supabase. The cards are keyed by first name because the
- * copy is written by hand; anything that talks to the API needs the uuid instead.
+ * The same four people as the backend seeds them. The demo backend (`DB_MODE=memory`) uses these
+ * exact strings as its primary keys, so `UserId` is also the dev bearer token: `Bearer dev:sabina`.
+ * Nothing is mapped, which is the point - there is one set of ids, not two.
  */
 export const backendUserIds: Record<UserId, string> = {
-  kristina: "11111111-1111-1111-1111-111111111111",
-  esh: "22222222-2222-2222-2222-222222222222",
-  sabina: "33333333-3333-3333-3333-333333333333",
-  madhav: "44444444-4444-4444-4444-444444444444",
+  kristina: "kristina",
+  esh: "esh",
+  sabina: "sabina",
+  madhav: "madhav",
 };
 
-export const backendGroupId = "99999999-9999-9999-9999-999999999999";
+export const backendGroupId = "tea-party";
 
 export function getUser(id: UserId): User {
   return users[id];
 }
 
-/** "You" for the viewer, first name for everyone else. */
+/** "You" for whoever the app is currently being used as, first name for everyone else. */
 export function displayName(id: UserId): string {
-  return users[id].isViewer ? "You" : users[id].name;
+  return id === viewer.id ? "You" : users[id].name;
 }

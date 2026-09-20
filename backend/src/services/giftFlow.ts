@@ -53,7 +53,9 @@ function recordVisaTxn(
     visaTxnId: result.txnId ?? null,
     idempotencyKey,
     errorCode: result.ok ? null : result.actionCode ?? result.error ?? null,
-    raw: result.raw,
+    // The sandbox has no ledger to reconcile against, so the audit row is the record of the call.
+    // Keeping Visa's correlation id beside the response makes it traceable from their side too.
+    raw: { correlationId: result.correlationId ?? null, response: result.raw },
   });
 }
 
@@ -393,6 +395,12 @@ export function lockThread(threadId: string, userId: string): GiftThreadRow {
   const contributors = groupMemberIds(thread.groupId).filter((id) => id !== thread.recipientId);
   if (contributors.length === 0) throw invalidState('Nobody is left to chip in');
 
+  // A thread can carry contributions before it locks - a seeded one does. Inserting the split on
+  // top would leave each contributor two rows, and since approving only ever settles one of them
+  // the thread stays `collecting` for ever and never pushes. Nothing here can have moved money
+  // yet: lock is only reachable from `voting`, and only a locked thread can be pulled against.
+  db.contributions.remove((c) => c.threadId === threadId);
+
   for (const share of evenSplit(winner.priceCents, contributors)) {
     const id = newId();
     db.contributions.insert({
@@ -404,6 +412,8 @@ export function lockThread(threadId: string, userId: string): GiftThreadRow {
       pullTxnId: null,
       pullStan: null,
       pullRrn: null,
+      pullApprovalCode: null,
+      pullTransmissionDateTime: null,
       statusIdentifier: null,
       reversalTxnId: null,
       idempotencyKey: pullKey(id),
@@ -569,6 +579,8 @@ export async function approveShare(
     pullTxnId: result.txnId ?? null,
     pullStan: result.stan,
     pullRrn: result.rrn,
+    pullApprovalCode: result.approvalCode ?? null,
+    pullTransmissionDateTime: result.transmissionDateTime ?? null,
     statusIdentifier: result.statusIdentifier ?? null,
     updatedAt: now(),
   });
@@ -595,6 +607,8 @@ export async function resolvePendingPulls(threadId: string): Promise<void> {
         pullTxnId: result.txnId ?? row.pullTxnId,
         pullStan: result.stan ?? row.pullStan,
         pullRrn: result.rrn ?? row.pullRrn,
+        pullApprovalCode: result.approvalCode ?? row.pullApprovalCode,
+        pullTransmissionDateTime: result.transmissionDateTime ?? row.pullTransmissionDateTime,
         updatedAt: now(),
       });
     } else if (result.actionCode && result.actionCode !== '00') {
@@ -720,6 +734,8 @@ export async function runReversals(threadId: string): Promise<void> {
         txnId: current.pullTxnId ?? undefined,
         amountCents: current.amountCents,
         cardRef: getUser(current.userId).visaCardRef ?? '',
+        approvalCode: current.pullApprovalCode ?? undefined,
+        transmissionDateTime: current.pullTransmissionDateTime ?? undefined,
       },
       idempotencyKey: reverseKey(current.id),
     });

@@ -3,7 +3,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { verifyUser } from './auth/verifyUser.js';
 import { config } from './config.js';
-import { catalogueFromPostgres, hydrateFromPostgres } from './db/postgres.js';
+import { catalogueFromPostgres, closePool, hydrateFromPostgres } from './db/postgres.js';
 import { startJobs } from './jobs/scheduler.js';
 import { setCatalogue } from './products/catalogue.js';
 import { AppError } from './lib/errors.js';
@@ -18,7 +18,14 @@ const PUBLIC_ROUTES = new Set(['/health', '/demo/reset']);
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
 
-  await app.register(cors, { origin: config.FRONTEND_ORIGIN, credentials: true });
+  // `methods` has to be spelled out: @fastify/cors defaults to GET,HEAD,POST, which silently
+  // blocked every PATCH (item visibility) and DELETE (comments) from the browser. The preflight
+  // still answered 204, so the request simply never happened and the UI rolled back with no error.
+  await app.register(cors, {
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
 
   app.addHook('onRequest', async (request) => {
     if (PUBLIC_ROUTES.has(request.routeOptions.url ?? request.url)) return;
@@ -81,6 +88,14 @@ if (isEntrypoint) {
   } else if (demoModeEnabled()) {
     resetDemoState();
   }
+  // Hand the pooler its connections back on the way out. Without this a `tsx watch` restart leaves
+  // the old process's clients held open long enough for the new one to fail hydration.
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      void app.close().then(closePool).then(() => process.exit(0));
+    });
+  }
+
   await app.listen({ port: config.PORT, host: '0.0.0.0' });
   startJobs();
   logger.info('listening', { port: config.PORT, visaMode: config.VISA_MODE });

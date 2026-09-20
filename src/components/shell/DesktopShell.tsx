@@ -27,7 +27,8 @@ export function DesktopShell({
 }) {
   const holeScale = 0.8 + step * 0.32;
   const ribbonX = -step * 90;
-  const stepLabel = step <= 4 ? `${step} / 4` : "The end";
+  const stepLabel =
+    step <= storyChapters.length ? `${step} / ${storyChapters.length}` : "The end";
 
   return (
     <div
@@ -151,7 +152,7 @@ export function DesktopShell({
         style={{
           position: "absolute",
           left: "50%",
-          top: 30,
+          top: 38,
           transform: "translateX(-50%)",
           display: "flex",
           alignItems: "center",
@@ -215,7 +216,7 @@ export function DesktopShell({
         style={{
           position: "absolute",
           right: 48,
-          top: 30,
+          top: 32,
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -257,7 +258,7 @@ export function DesktopShell({
         style={{
           position: "absolute",
           left: 226,
-          top: 546,
+          top: 566,
           width: 104,
           textAlign: "center",
           fontFamily: "var(--font-hand), cursive",
@@ -273,7 +274,7 @@ export function DesktopShell({
         style={{
           position: "absolute",
           right: 226,
-          top: 546,
+          top: 566,
           width: 104,
           textAlign: "center",
           fontFamily: "var(--font-hand), cursive",
@@ -286,36 +287,26 @@ export function DesktopShell({
         keep falling
       </div>
 
+      {/* Bottom rail: privacy note on the left, reactions on the right. Both sit
+          clear of the card, which ends at y 970. */}
       <div
         style={{
           position: "absolute",
           left: 48,
-          bottom: 34,
+          bottom: 24,
+          maxWidth: 300,
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           gap: 10,
           fontSize: 14,
+          lineHeight: 1.35,
           color: "rgba(245,236,217,0.78)",
         }}
       >
-        <Lock />
+        <span style={{ flexShrink: 0, marginTop: 2 }}>
+          <Lock />
+        </span>
         <span>Private to your group. Exact totals are never shared.</span>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          right: 48,
-          bottom: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 14,
-          color: "rgba(245,236,217,0.78)",
-        }}
-      >
-        <Key>←</Key>
-        <Key>→</Key>
-        <span>to fall through</span>
       </div>
     </div>
   );
@@ -338,7 +329,7 @@ function NavCircle({
   const base: React.CSSProperties = {
     position: "absolute",
     ...position,
-    top: 468,
+    top: 488,
     width: 64,
     height: 64,
     borderRadius: "50%",
@@ -381,27 +372,6 @@ function NavCircle({
     >
       {side === "left" ? <ArrowLeft size={26} /> : <ArrowRight size={26} />}
     </motion.button>
-  );
-}
-
-function Key({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        minWidth: 30,
-        height: 28,
-        padding: "0 6px",
-        boxSizing: "border-box",
-        border: "1px solid rgba(245,236,217,0.4)",
-        borderRadius: 6,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 13,
-      }}
-    >
-      {children}
-    </div>
   );
 }
 

@@ -9,13 +9,9 @@ import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaTag } from "@/components/chapters/GiftCard";
 import { getUser } from "@/data/users";
+import { findOptions, formatPrice, type ProductOption } from "@/services/commerce";
 import {
-  findOptions,
-  formatPrice,
-  searchUrl,
-  type ProductOption,
-} from "@/services/commerce";
-import {
+  approveShare,
   buildPaymentInstruction,
   defaultSpendLimits,
   exceedsLimits,
@@ -23,6 +19,7 @@ import {
   type CheckoutStage,
   type PaymentInstruction,
   type PurchaseOutcome,
+  type ShareApproval,
 } from "@/services/checkout";
 import { useApp } from "@/state/store";
 import type { UserId } from "@/lib/types";
@@ -33,6 +30,11 @@ export interface BuyRequest {
   inspiredByUserId?: UserId;
   /** A group-gift share rather than the full price. */
   amountCentsOverride?: number;
+  /**
+   * Set for a group gift. Turns the sheet from the sourcing simulation into the
+   * real thing: approving here runs the Visa pull for this contributor.
+   */
+  threadId?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function BuySheet({
   const [stage, setStage] = useState<CheckoutStage>("idle");
   const [instruction, setInstruction] = useState<PaymentInstruction | null>(null);
   const [outcome, setOutcome] = useState<PurchaseOutcome | null>(null);
+  const [share, setShare] = useState<ShareApproval | null>(null);
 
   // Load the three sourced options whenever a new item is opened.
   useEffect(() => {
@@ -64,6 +67,7 @@ export function BuySheet({
     setChosen(0);
     setStage("reviewing");
     setOutcome(null);
+    setShare(null);
     setInstruction(null);
 
     findOptions(request.productId).then((next) => {
@@ -104,6 +108,11 @@ export function BuySheet({
       amountCentsOverride: request.amountCentsOverride,
     });
     setInstruction(next);
+
+    if (request.threadId) {
+      setShare(await approveShare(request.threadId, next, setStage));
+      return;
+    }
 
     const result = await runCheckout(next, setStage);
     setOutcome(result);
@@ -156,7 +165,15 @@ export function BuySheet({
           }}
         >
           <AnimatePresence mode="wait">
-            {stage === "confirmed" && outcome ? (
+            {share ? (
+              <ShareResult
+                key="share"
+                share={share}
+                option={option}
+                amountCents={amountCents}
+                onClose={onClose}
+              />
+            ) : stage === "confirmed" && outcome ? (
               <Confirmed
                 key="confirmed"
                 outcome={outcome}
@@ -165,7 +182,12 @@ export function BuySheet({
                 onClose={onClose}
               />
             ) : busy ? (
-              <Authorizing key="authorizing" stage={stage} amountCents={amountCents} />
+              <Authorizing
+                key="authorizing"
+                stage={stage}
+                amountCents={amountCents}
+                threadId={request.threadId}
+              />
             ) : (
               <Review
                 key="review"
@@ -258,7 +280,7 @@ function Review({
         <>
           <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
             <ItemLink
-              url={searchUrl(option.product.title, option.product.merchant)}
+              url={option.product.url}
               label={`${option.product.title} at ${option.product.merchant}`}
               style={{
                 width: 150,
@@ -276,7 +298,7 @@ function Review({
             </ItemLink>
             <div style={{ flex: 1, minWidth: 0 }}>
               <ItemLink
-                url={searchUrl(option.product.title, option.product.merchant)}
+                url={option.product.url}
                 label={`${option.product.title} at ${option.product.merchant}`}
                 style={{
                   fontFamily: "var(--font-display), Georgia, serif",
@@ -472,9 +494,11 @@ function Review({
 function Authorizing({
   stage,
   amountCents,
+  threadId,
 }: {
   stage: CheckoutStage;
   amountCents: number;
+  threadId?: string;
 }) {
   const authorizing = stage === "authorizing";
 
@@ -552,12 +576,18 @@ function Authorizing({
           lineHeight: 1,
         }}
       >
-        {authorizing ? "Approve with your passkey" : "Paying the merchant"}
+        {authorizing
+          ? "Approve with your passkey"
+          : threadId
+            ? "Pulling your share"
+            : "Paying the merchant"}
       </div>
       <div style={{ fontSize: 17, lineHeight: 1.4, maxWidth: 420 }}>
         {authorizing
           ? `Confirm ${formatPrice(amountCents)} with Face ID. The agent can't spend more, or anywhere else, than you approve.`
-          : "Requesting an agent token and completing the order."}
+          : threadId
+            ? "Visa Direct is moving your share into the gift pot."
+            : "Requesting an agent token and completing the order."}
       </div>
       <div
         style={{
@@ -572,6 +602,204 @@ function Authorizing({
         We never store card numbers.
       </div>
     </motion.div>
+  );
+}
+
+/**
+ * What the approve endpoint actually said. Every number on this screen comes
+ * off the response: the contribution's `visaTxnId`, and the thread's `state`
+ * and `pushStatus` once the last share lands and the pot is pushed.
+ */
+function ShareResult({
+  share,
+  option,
+  amountCents,
+  onClose,
+}: {
+  share: ShareApproval;
+  option?: ProductOption;
+  amountCents: number;
+  onClose: () => void;
+}) {
+  const funded = share.ok && share.thread.state !== "collecting";
+  const pushed = share.ok && share.thread.pushStatus === "succeeded";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3, ease: [0.2, 0.8, 0.3, 1] }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        alignItems: "center",
+        textAlign: "center",
+      }}
+    >
+      <div className="a-stamp" style={{ marginTop: 6 }}>
+        <div
+          style={{
+            width: 110,
+            height: 110,
+            borderRadius: "50%",
+            border: "3px solid #141A47",
+            background: share.ok ? "#A8DCC2" : "#E8806F",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "6px 6px 0 #141A47",
+          }}
+        >
+          <svg width="58" height="58" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            {share.ok ? (
+              <path
+                d="M12 25 L20 33 L36 15"
+                stroke="#141A47"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : (
+              <path
+                d="M15 15 L33 33 M33 15 L15 33"
+                stroke="#141A47"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+              />
+            )}
+          </svg>
+        </div>
+      </div>
+
+      <div
+        style={{ fontFamily: "var(--font-display), Georgia, serif", fontSize: 44, lineHeight: 1 }}
+      >
+        {share.ok
+          ? funded
+            ? "The pot is full"
+            : `Your ${formatPrice(amountCents)} is in`
+          : "Your share didn’t go through"}
+      </div>
+
+      {share.ok ? (
+        <>
+          <div style={{ fontSize: 17, lineHeight: 1.4, maxWidth: 440 }}>
+            {funded
+              ? `Every share has landed. ${formatPrice(
+                  share.thread.contributions.reduce((sum, c) => sum + (c.amountCents ?? 0), 0),
+                )} ${pushed ? "was pushed to" : "is on its way to"} ${
+                  share.thread.contributions.find((c) => c.userId === share.thread.organiserId)
+                    ?.name ?? "the organiser"
+                }.`
+              : `Waiting on ${
+                  share.thread.contributions.filter((c) => c.status === "pending").length
+                } more to approve. Nobody sees what anyone put in.`}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "center",
+              fontSize: 13,
+            }}
+          >
+            <Receipt label="Pull" value={share.contribution.visaTxnId ?? "—"} />
+            <Receipt label="Thread" value={share.thread.state} />
+            {share.thread.pushStatus && (
+              <Receipt label="Push" value={share.thread.pushStatus} />
+            )}
+          </div>
+        </>
+      ) : (
+        <div
+          style={{
+            padding: "14px 18px",
+            border: "2px solid #141A47",
+            borderRadius: 22,
+            background: "#FBF6EA",
+            fontSize: 16,
+            lineHeight: 1.4,
+            maxWidth: 440,
+          }}
+        >
+          {share.reason}
+          {share.contribution && (
+            <div style={{ fontSize: 13, opacity: 0.7, marginTop: 6 }}>
+              status {share.contribution.status}
+            </div>
+          )}
+        </div>
+      )}
+
+      {option && (
+        <ItemLink
+          url={option.product.url}
+          label={`${option.product.title} at ${option.product.merchant}`}
+          style={{ display: "flex", alignItems: "center", gap: 14 }}
+        >
+          <div
+            style={{
+              width: 70,
+              height: 70,
+              boxSizing: "border-box",
+              border: "2px solid #141A47",
+              borderRadius: 16,
+              background: option.product.bg,
+              padding: 8,
+            }}
+          >
+            <ProductArt kind={option.product.art} src={option.product.image} />
+          </div>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>{option.product.title}</div>
+            <div style={{ fontSize: 15, opacity: 0.8 }}>{option.product.merchant}</div>
+          </div>
+        </ItemLink>
+      )}
+
+      <button
+        type="button"
+        onClick={onClose}
+        style={{
+          width: "100%",
+          height: 58,
+          border: 0,
+          borderRadius: 999,
+          background: "#141A47",
+          color: "#F5ECD9",
+          fontSize: 17,
+          fontWeight: 700,
+          boxShadow: "4px 4px 0 #E8806F",
+        }}
+      >
+        {share.ok ? "Back to the gift" : "Back and try again"}
+      </button>
+    </motion.div>
+  );
+}
+
+function Receipt({ label, value }: { label: string; value: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 12px",
+        border: "2px solid #141A47",
+        borderRadius: 999,
+        background: "#FBF6EA",
+        fontWeight: 700,
+      }}
+    >
+      <span style={{ color: "#C4553F", fontSize: 11, letterSpacing: "0.1em" }}>
+        {label.toUpperCase()}
+      </span>
+      {value}
+    </span>
   );
 }
 
@@ -632,7 +860,7 @@ function Confirmed({
 
       {option && (
         <ItemLink
-          url={searchUrl(option.product.title, option.product.merchant)}
+          url={option.product.url}
           label={`${option.product.title} at ${option.product.merchant}`}
           style={{ display: "flex", alignItems: "center", gap: 14 }}
         >

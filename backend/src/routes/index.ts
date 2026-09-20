@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import birthdaysRoutes from './birthdays.js';
 import commentsRoutes from './comments.js';
 import contributionsRoutes from './contributions.js';
+import debateRoutes from './debate.js';
 import demoRoutes from './demo.js';
 import findsRoutes from './finds.js';
 import groupsRoutes from './groups.js';
@@ -24,6 +25,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     reactionsRoutes,
     commentsRoutes,
     findsRoutes,
+    debateRoutes,
     wishlistRoutes,
     birthdaysRoutes,
     wrappedRoutes,

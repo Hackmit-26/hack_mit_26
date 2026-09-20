@@ -1,4 +1,4 @@
-import { createPrivateKey } from 'node:crypto';
+import { X509Certificate, createPrivateKey } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { CompactEncrypt, compactDecrypt, importPKCS8, importX509 } from 'jose';
 import type { CryptoKey } from 'jose';
@@ -53,6 +53,27 @@ function privateKey(): Promise<CryptoKey> {
 export async function assertMleKeys(): Promise<void> {
   if (!mleEnabled) return;
   await Promise.all([serverCert(), privateKey()]);
+}
+
+export type MleCertInfo = { subject: string; issuer: string; validTo: string; isOurs: boolean };
+
+/**
+ * Describes whatever is sitting at VISA_MLE_SERVER_CERT_PATH. The dashboard hands out two
+ * certificates and they are easy to swap: the one we want is Visa's server encryption
+ * certificate, not the client certificate signed from our own CSR. Encrypting to our own
+ * certificate produces a JWE Visa cannot read and answers 9125 all over again - the same
+ * symptom as sending no encryption at all, which is a miserable thing to re-diagnose.
+ */
+export function describeServerCert(): MleCertInfo {
+  const cert = new X509Certificate(read(config.VISA_MLE_SERVER_CERT_PATH, 'the Visa MLE certificate'));
+  const ours = new X509Certificate(readFileSync(config.VISA_CERT_PATH));
+  return {
+    subject: cert.subject.replace(/\n/g, ', '),
+    issuer: cert.issuer.replace(/\n/g, ', '),
+    validTo: cert.validTo,
+    isOurs: cert.publicKey.export({ type: 'spki', format: 'pem' }).toString() ===
+      ours.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+  };
 }
 
 /** Wraps a request body as `{ encData }`. `iat` is milliseconds and Visa only honours it for two minutes. */

@@ -53,6 +53,7 @@ function mount() {
 const offlineApi: WishlistApi = {
   addLink: () => Promise.reject(new Error("fetch failed")),
   list: () => Promise.reject(new Error("fetch failed")),
+  remove: () => Promise.reject(new Error("fetch failed")),
 };
 
 beforeEach(() => {
@@ -60,6 +61,7 @@ beforeEach(() => {
   setWishlistApi({
     addLink: vi.fn(async () => result()),
     list: vi.fn(async () => []),
+    remove: vi.fn(async () => {}),
   });
 });
 
@@ -113,7 +115,7 @@ describe("wishlist store", () => {
 
   it("passes a typed price through to the seam", async () => {
     const addLink = vi.fn(async () => result({ priceCents: 3800 }));
-    setWishlistApi({ addLink, list: async () => [] });
+    setWishlistApi({ addLink, list: async () => [], remove: async () => {} });
     mount();
 
     await act(async () => {
@@ -128,6 +130,7 @@ describe("wishlist store", () => {
     setWishlistApi({
       addLink: () => new Promise<WishlistLinkResult>((r) => (release = r)),
       list: async () => [],
+      remove: async () => {},
     });
     mount();
 
@@ -180,7 +183,7 @@ describe("wishlist store", () => {
 
   it("ignores an empty url without calling the seam", async () => {
     const addLink = vi.fn(async () => result());
-    setWishlistApi({ addLink, list: async () => [] });
+    setWishlistApi({ addLink, list: async () => [], remove: async () => {} });
     mount();
 
     await act(async () => {
@@ -199,10 +202,38 @@ describe("wishlist store", () => {
     expect(api.wishlist).toHaveLength(0);
   });
 
+  // The removal used to be a local dispatch only, so the row came back on the next refresh
+  // while the screen promised it had "stopped counting as a signal immediately".
+  it("tells the server about a removal, not just this device", async () => {
+    const remove = vi.fn(async () => {});
+    setWishlistApi({ addLink: async () => result(), list: async () => [], remove });
+    mount();
+
+    await act(async () => api.toggleSaved(CATALOGUE_ID));
+    await act(async () => api.removeWishlistItem(CATALOGUE_ID));
+
+    expect(remove).toHaveBeenCalledWith(CATALOGUE_ID);
+  });
+
+  it("keeps the row gone even if the server rejects the removal", async () => {
+    setWishlistApi({
+      addLink: async () => result(),
+      list: async () => [],
+      remove: () => Promise.reject(new Error("fetch failed")),
+    });
+    mount();
+
+    await act(async () => api.toggleSaved(CATALOGUE_ID));
+    await act(async () => api.removeWishlistItem(CATALOGUE_ID));
+
+    expect(api.wishlist).toHaveLength(0);
+  });
+
   it("merges the server list without duplicating what is already local", async () => {
     setWishlistApi({
       addLink: async () => result(),
       list: async () => [result({ id: "srv-9", name: "Hojicha tin" })],
+      remove: async () => {},
     });
     mount();
 
@@ -218,6 +249,7 @@ describe("wishlist store", () => {
     setWishlistApi({
       addLink: async () => result(),
       list: async () => [result({ id: "srv-9", name: "Hojicha tin", url: null })],
+      remove: async () => {},
     });
     mount();
 
@@ -234,6 +266,7 @@ describe("wishlist store", () => {
     setWishlistApi({
       addLink: async () => result(),
       list: async () => [result({ id: "srv-9", url: "https://tinandtulip.com/rings" })],
+      remove: async () => {},
     });
     mount();
 

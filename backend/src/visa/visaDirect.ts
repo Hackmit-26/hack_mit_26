@@ -39,11 +39,18 @@ function base(kind: TxnKind, amountCents: number, stan: string, rrn: string) {
   };
 }
 
+/** Visa echoes `2026-09-20T03:45:18.000Z` but only accepts it back without the millis or the zone. */
+function visaDateTime(value: string | undefined): string | undefined {
+  return value?.replace(/\.\d+/, '').replace(/Z$/, '');
+}
+
 type VisaBody = {
   actionCode?: string;
   transactionIdentifier?: number | string;
   statusIdentifier?: string;
   responseCode?: string;
+  approvalCode?: string;
+  transmissionDateTime?: string;
   errorMessage?: string;
   message?: string;
 };
@@ -66,6 +73,9 @@ function interpret(
     rrn,
     actionCode,
     statusIdentifier: parsed.statusIdentifier,
+    approvalCode: parsed.approvalCode,
+    transmissionDateTime: parsed.transmissionDateTime,
+    correlationId,
     raw: body,
     error: ok
       ? undefined
@@ -105,6 +115,10 @@ export const sandboxVisaDirect: VisaDirect = {
       recipientCardExpiryDate: card.expirationDate,
       transactionCurrencyCode: 'USD',
       sourceOfFundsCode: '05',
+      // One of senderAccountNumber/senderReference is mandatory for an AA push. The money reaching
+      // the organiser was pooled from several AFTs, so there is no single sender account to name;
+      // the reference points back at this transfer instead. Without either: `3001 ... missing`.
+      senderReference: rrn,
       senderName: 'Social Shopping',
       senderAddress: '901 Metro Center Blvd',
       senderCity: 'Foster City',
@@ -127,11 +141,15 @@ export const sandboxVisaDirect: VisaDirect = {
       ...base('reverse', originalPull.amountCents, stan, rrn),
       senderPrimaryAccountNumber: card.pan,
       senderCardExpiryDate: card.expirationDate,
+      senderCurrencyCode: 'USD',
+      // Exactly these four, and no acquirerCountryCode: the reversal schema has no such member, and
+      // including it answers `Invalid content found starting with element 'acquirerCountryCode'` -
+      // which reads like a bad country code and is really "that field does not belong here".
       originalDataElements: {
-        acquiringBin: Number(config.VISA_ACQUIRING_BIN),
-        acquirerCountryCode: config.VISA_ACQUIRER_COUNTRY_CODE,
+        approvalCode: originalPull.approvalCode,
         systemsTraceAuditNumber: Number(originalPull.stan),
-        approvalCode: undefined,
+        transmissionDateTime: visaDateTime(originalPull.transmissionDateTime),
+        acquiringBin: Number(config.VISA_ACQUIRING_BIN),
       },
       ...(originalPull.txnId ? { transactionIdentifier: Number(originalPull.txnId) } : {}),
     };

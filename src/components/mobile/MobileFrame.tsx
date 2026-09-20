@@ -1,13 +1,17 @@
 "use client";
 
+import { storyChapters } from "@/data/chapters";
 import { Grain } from "@/components/primitives/Glyphs";
 
 export const M_W = 390;
 export const M_H = 844;
 
+/** One segment per numbered chapter, so adding a chapter does not need this file edited. */
+const STEPS = storyChapters.map((_, i) => i + 1);
+
 /**
- * Mobile card: full-bleed, no frame. Four progress segments at the top, the
- * wordmark and "n / 4" below it, then the chapter's own content.
+ * Mobile card: full-bleed, no frame. One progress segment per chapter at the top, the
+ * wordmark and "n / N" below it, then the chapter's own content.
  */
 export function MobileFrame({
   step,
@@ -16,7 +20,7 @@ export function MobileFrame({
   children,
   decor,
 }: {
-  /** 1-based; 5 is the closing screen, which fills every segment. */
+  /** 1-based; anything past the last chapter is the closing screen, which fills every segment. */
   step: number;
   bg: string;
   grainId: string;
@@ -49,7 +53,7 @@ export function MobileFrame({
           gap: 4,
         }}
       >
-        {[1, 2, 3, 4].map((n) => (
+        {STEPS.map((n) => (
           <div
             key={n}
             style={{
@@ -78,7 +82,7 @@ export function MobileFrame({
           Shop <em style={{ color: "#B8412F" }}>Wrapped</em>
         </div>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.14em" }}>
-          {step <= 4 ? `${step} / 4` : "The end"}
+          {step <= STEPS.length ? `${step} / ${STEPS.length}` : "The end"}
         </div>
       </div>
 

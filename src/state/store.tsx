@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   createContext,
   useCallback,
   useContext,
@@ -13,7 +14,7 @@ import {
 
 import { purchases as seedPurchases, seededReactions } from "@/data";
 import { productsById } from "@/data/products";
-import { backendGroupId, users } from "@/data/users";
+import { backendGroupId, setActiveViewer, users } from "@/data/users";
 import {
   addWishlistLink,
   createComment,
@@ -21,7 +22,11 @@ import {
   getViewerId,
   listComments,
   listWishlist,
+  removeReaction,
+  resetDemo as resetDemoRequest,
+  setViewer,
 } from "@/lib/api";
+import { DEFAULT_VIEWER_ID } from "@/lib/config";
 import type { Comment, CommentTargetType } from "@/lib/apiTypes";
 import type {
   ArtKind,
@@ -72,6 +77,7 @@ export interface WishlistLinkResult {
 export interface WishlistApi {
   addLink(url: string, priceCents?: number): Promise<WishlistLinkResult>;
   list(): Promise<WishlistLinkResult[]>;
+  remove(itemId: string): Promise<void>;
 }
 
 /**
@@ -88,6 +94,11 @@ const backendWishlistApi: WishlistApi = {
   async list() {
     const items = await listWishlist();
     return items.map((item) => ({ ...item, url: item.productUrl }));
+  },
+  // A wishlist row *is* a `wishlist` reaction - `GET /wishlist` is just the items the viewer
+  // starred - so dropping the reaction is the removal. There is no `DELETE /wishlist`.
+  async remove(itemId) {
+    await removeReaction({ itemId, type: "wishlist" });
   },
 };
 
@@ -213,6 +224,8 @@ function byCreatedAt(a: StoredComment, b: StoredComment): number {
  * is mutated only through these actions.
  */
 interface AppState {
+  /** Who the app is currently being used as. Changed only by the demo viewer switcher. */
+  viewerId: UserId;
   reactions: Reaction[];
   privacy: PrivacySettings;
   wishlist: WishlistItem[];
@@ -242,9 +255,21 @@ type Action =
   | { type: "record-order"; outcome: PurchaseOutcome }
   | { type: "start-group-gift"; userId: UserId }
   | { type: "hydrate"; state: AppState }
+  | { type: "switch-viewer"; userId: UserId }
   | { type: "reset-demo" };
 
-const VIEWER: UserId = "kristina";
+/**
+ * The person the app is being used as. Lives in state, not as a constant, because the stage demo
+ * is one operator driving a four-person group gift on their own.
+ */
+function isUserId(value: string | undefined): value is UserId {
+  return value !== undefined && value in users;
+}
+
+function initialViewerId(): UserId {
+  const fromEnv = process.env.NEXT_PUBLIC_DEV_USER_ID;
+  return isUserId(fromEnv) ? fromEnv : (DEFAULT_VIEWER_ID as UserId);
+}
 
 let idCounter = 0;
 function nextId(): string {
@@ -337,6 +362,7 @@ function itemFromResult(result: WishlistLinkResult): WishlistItem {
 
 function initialState(): AppState {
   return {
+    viewerId: initialViewerId(),
     reactions: seededReactions,
     privacy: {
       showAmounts: false,
@@ -368,7 +394,7 @@ function reducer(state: AppState, action: Action): AppState {
       const existing = state.reactions.find(
         (r) =>
           r.targetId === action.targetId &&
-          r.userId === VIEWER &&
+          r.userId === state.viewerId &&
           r.kind === action.kind,
       );
       if (existing) {
@@ -382,9 +408,9 @@ function reducer(state: AppState, action: Action): AppState {
         reactions: [
           ...state.reactions,
           {
-            id: `r-local-${action.targetId}-${action.kind}`,
+            id: `r-local-${state.viewerId}-${action.targetId}-${action.kind}`,
             targetId: action.targetId,
-            userId: VIEWER,
+            userId: state.viewerId,
             kind: action.kind,
           },
         ],
@@ -514,6 +540,16 @@ function reducer(state: AppState, action: Action): AppState {
     case "hydrate":
       return action.state;
 
+    /**
+     * Everything the server scopes to the bearer token is dropped so it reloads as the new person:
+     * the wishlist is theirs alone, and every comment carries a `mine` flag computed against the
+     * old token. Reactions, privacy and orders are group-level demo state and survive the hop.
+     */
+    case "switch-viewer":
+      return action.userId === state.viewerId
+        ? state
+        : { ...state, viewerId: action.userId, wishlist: [], comments: {} };
+
     case "reset-demo": {
       const fresh = initialState();
       try {
@@ -530,7 +566,8 @@ function reducer(state: AppState, action: Action): AppState {
 }
 
 interface AppContextValue extends AppState {
-  viewerId: UserId;
+  /** Demo control: become another member of the group. Re-points the API token and remounts. */
+  setViewerId: (userId: UserId) => void;
   /** Catalogue saves only, so callers can keep looking ids up in `src/data`. */
   savedProductIds: string[];
   toggleReaction: (targetId: string, kind: ReactionKind) => void;
@@ -565,7 +602,7 @@ interface AppContextValue extends AppState {
   recordOrder: (outcome: PurchaseOutcome) => void;
   startGroupGift: (userId: UserId) => void;
   hasStartedGroupGift: (userId: UserId) => boolean;
-  resetDemo: () => void;
+  resetDemo: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -592,6 +629,8 @@ function loadState(): AppState {
     return {
       ...base,
       ...saved,
+      // A session stored before the switcher existed, or by an older id scheme, has no usable one.
+      viewerId: isUserId(saved.viewerId) ? saved.viewerId : base.viewerId,
       wishlist: migrated,
       comments: saved.comments ?? base.comments,
       privacy: { ...base.privacy, ...(saved.privacy ?? {}) },
@@ -611,6 +650,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "hydrate", state: saved });
     setHydrated(true);
   }, []);
+
+  /**
+   * The two things outside React that have to agree with `state.viewerId`: the bearer token every
+   * request is signed with, and the module-level `viewer` that `displayName()` reads to decide who
+   * gets called "You". Done during render, not in an effect, because children render before a
+   * parent's effects run - in an effect the first frame after a switch would still say "Kristina".
+   * Both writes are idempotent assignments to module state, so re-running them is free.
+   */
+  setActiveViewer(state.viewerId);
+  setViewer(state.viewerId);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -635,9 +684,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const viewerReacted = useCallback(
     (targetId: string, kind: ReactionKind) =>
       state.reactions.some(
-        (r) => r.targetId === targetId && r.userId === VIEWER && r.kind === kind,
+        (r) => r.targetId === targetId && r.userId === state.viewerId && r.kind === kind,
       ),
-    [state.reactions],
+    [state.reactions, state.viewerId],
   );
 
   /**
@@ -668,6 +717,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
         },
       });
     }
+  }, []);
+
+  /**
+   * The screen promises "remove an item and it stops counting as a signal immediately", so this
+   * has to reach the server: a local-only removal came back on the next refresh. Optimistic, and
+   * deliberately not rolled back — a row the user deleted must not reappear under their cursor.
+   */
+  const removeWishlistItem = useCallback((id: string) => {
+    dispatch({ type: "wishlist-remove", id });
+    // A local draft id matches no reaction, so the delete is a harmless 204 no-op — no guard needed.
+    void wishlistApi.remove(id).catch((err) => {
+      console.error("wishlist removal failed", err);
+    });
+  }, []);
+
+  /**
+   * The stage recovery button. Clearing local state alone left every hidden item hidden and
+   * every removed wishlist row gone, because all of that now lives on the server — so this has
+   * to reseed the backend too, then reload to drop the per-viewer finds and comment caches.
+   */
+  const resetDemo = useCallback(async () => {
+    try {
+      await resetDemoRequest();
+    } catch (err) {
+      // Worth seeing: in `postgres` mode the route is disabled, and the operator needs to know
+      // the button did nothing rather than assume the seed is clean.
+      console.error("demo reset failed", err);
+    }
+    dispatch({ type: "reset-demo" });
+    window.location.reload();
   }, []);
 
   const refreshWishlist = useCallback(async () => {
@@ -708,8 +787,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const draft: StoredComment = {
         id: `c-local-${nextId()}`,
         parentId,
-        authorId: VIEWER,
-        authorName: users[VIEWER].name,
+        authorId: state.viewerId,
+        authorName: users[state.viewerId].name,
         body: text,
         createdAt: new Date().toISOString(),
         mine: true,
@@ -744,7 +823,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [],
+    [state.viewerId],
   );
 
   const deleteComment = useCallback(async (target: CommentTarget, commentId: string) => {
@@ -763,6 +842,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [state.comments],
   );
 
+  /**
+   * Become somebody else. The token and `viewer` are re-pointed here as well as during render so
+   * that anything fired in this same tick is already signed as the new person, the reducer drops
+   * the data that belonged to the old one, and the `key` below throws the whole tree away so every
+   * `useEffect(..., [])` that fetched something fetches it again.
+   */
+  const setViewerId = useCallback((userId: UserId) => {
+    setActiveViewer(userId);
+    setViewer(userId);
+    dispatch({ type: "switch-viewer", userId });
+  }, []);
+
   const savedProductIds = useMemo(
     () =>
       state.wishlist
@@ -775,7 +866,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       savedProductIds,
-      viewerId: VIEWER,
+      setViewerId,
       toggleReaction,
       reactionsFor,
       viewerReacted,
@@ -788,7 +879,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSaved: (productId) => dispatch({ type: "toggle-saved", productId }),
       isSaved: (productId) => state.wishlist.some((w) => w.productId === productId),
       addWishlistLink,
-      removeWishlistItem: (id) => dispatch({ type: "wishlist-remove", id }),
+      removeWishlistItem,
       refreshWishlist,
       commentsFor,
       commentCount: (target) => (state.comments[commentKey(target)]?.items ?? []).length,
@@ -799,11 +890,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       recordOrder: (outcome) => dispatch({ type: "record-order", outcome }),
       startGroupGift: (userId) => dispatch({ type: "start-group-gift", userId }),
       hasStartedGroupGift: (userId) => state.groupGiftStarted.includes(userId),
-      resetDemo: () => dispatch({ type: "reset-demo" }),
+      resetDemo,
     }),
     [
       state,
       savedProductIds,
+      setViewerId,
       toggleReaction,
       reactionsFor,
       viewerReacted,
@@ -816,7 +908,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {/*
+        Keyed on the viewer: switching person unmounts and remounts the whole app, which is the
+        only way to guarantee that every mount-time fetch re-runs as the new token and that the
+        components which read `viewer`/`displayName()` straight off the module (rather than through
+        this context) redraw. It is exactly what signing out and back in would do.
+      */}
+      <Fragment key={state.viewerId}>{children}</Fragment>
+    </AppContext.Provider>
+  );
 }
 
 export function useApp(): AppContextValue {

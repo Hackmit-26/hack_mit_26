@@ -6,6 +6,7 @@ import {
   DEMO_GROUP_ID,
   DEMO_RECIPIENT_ID,
   DEMO_REVERSAL_THREAD_ID,
+  DEMO_SHARE_CENTS,
   DEMO_STAR_ITEM_ID,
   DEMO_USER_IDS,
   deadlineForBirthday,
@@ -124,7 +125,7 @@ describe('seedDemoData', () => {
     seedDemoData();
 
     expect(db.users.all().map((u) => u.id).sort()).toEqual(
-      [DEMO_USER_IDS.leo, DEMO_USER_IDS.maya, DEMO_USER_IDS.priya, DEMO_USER_IDS.sam].sort(),
+      [DEMO_USER_IDS.kristina, DEMO_USER_IDS.esh, DEMO_USER_IDS.sabina, DEMO_USER_IDS.madhav].sort(),
     );
     expect(db.groups.all()).toHaveLength(1);
     expect(db.groups.all()[0]?.id).toBe(DEMO_GROUP_ID);
@@ -153,7 +154,7 @@ describe('seedDemoData', () => {
     seedDemoData();
 
     const star = db.items.find((i) => i.id === DEMO_STAR_ITEM_ID);
-    expect(star?.ownerId).toBe(DEMO_USER_IDS.sam);
+    expect(star?.ownerId).toBe(DEMO_USER_IDS.esh);
     expect(star?.ownerId).not.toBe(DEMO_RECIPIENT_ID);
     expect(star?.visibility).toBe('shared');
     expect(
@@ -162,6 +163,20 @@ describe('seedDemoData', () => {
           r.userId === DEMO_RECIPIENT_ID && r.itemId === DEMO_STAR_ITEM_ID && r.type === 'heart',
       ),
     ).toBeDefined();
+  });
+
+  it('overlaps wishlists so a find can show more than one name wanting it', () => {
+    seedDemoData();
+
+    const shared = new Set(db.items.filter((i) => i.visibility !== 'private').map((i) => i.id));
+    const byItem = new Map<string, Set<string>>();
+    for (const r of db.reactions.filter((r) => r.type === 'wishlist' && shared.has(r.itemId))) {
+      byItem.set(r.itemId, (byItem.get(r.itemId) ?? new Set<string>()).add(r.userId));
+    }
+
+    const contested = [...byItem.values()].filter((users) => users.size > 1);
+    expect(contested.length).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...contested.map((users) => users.size))).toBeGreaterThanOrEqual(3);
   });
 
   it('gives the recipient a birthday inside the nudge window', () => {
@@ -213,7 +228,7 @@ describe('seedDemoThreads', () => {
     expect(db.giftPicks.filter((p) => p.threadId === DEMO_BIRTHDAY_THREAD_ID)).toHaveLength(0);
   });
 
-  it('creates a collecting thread with exactly two pulled shares for the reversal moment', () => {
+  it('creates a collecting thread with three unpulled $50 shares to approve on stage', () => {
     const thread = db.giftThreads.find((t) => t.id === DEMO_REVERSAL_THREAD_ID);
     const contributions = db.contributions.filter((c) => c.threadId === DEMO_REVERSAL_THREAD_ID);
     const pick = db.giftPicks.find((p) => p.id === thread?.winningPickId);
@@ -221,12 +236,12 @@ describe('seedDemoThreads', () => {
     expect(thread?.state).toBe('collecting');
     expect(thread?.recipientId).not.toBe(DEMO_RECIPIENT_ID);
     expect(contributions).toHaveLength(3);
-    expect(contributions.filter((c) => c.status === 'pulled')).toHaveLength(2);
 
-    for (const pulledRow of contributions.filter((c) => c.status === 'pulled')) {
-      expect(pulledRow.pullTxnId).toBeTruthy();
-      expect(pulledRow.pullStan).toBeTruthy();
-      expect(pulledRow.pullRrn).toBeTruthy();
+    // Nothing pre-pulled: each of the three people is approved for real from the viewer switcher.
+    for (const row of contributions) {
+      expect(row.status).toBe('pending');
+      expect(row.amountCents).toBe(DEMO_SHARE_CENTS);
+      expect(row.pullTxnId).toBeNull();
     }
 
     // §7.4 invariant: shares add up to the winning pick's price.
@@ -240,7 +255,7 @@ describe('seedDemoThreads', () => {
     expect(pick?.citedItemIds.length).toBeGreaterThan(0);
     for (const itemId of pick?.citedItemIds ?? []) {
       const item = db.items.find((i) => i.id === itemId);
-      expect(item?.ownerId).toBe(DEMO_USER_IDS.maya);
+      expect(item?.ownerId).toBe(DEMO_USER_IDS.esh);
       expect(pick?.reason).toContain(item?.name);
     }
   });
@@ -303,7 +318,7 @@ describe('POST /demo/reset', () => {
     expect(db.users.all()).toHaveLength(4);
     expect(db.items.all().length).toBeGreaterThanOrEqual(100);
     expect(db.giftThreads.all()).toHaveLength(2);
-    expect(db.contributions.filter((c) => c.status === 'pulled')).toHaveLength(2);
+    expect(db.contributions.filter((c) => c.status === 'pending')).toHaveLength(3);
   });
 
   it('is repeatable without duplicating rows', async () => {

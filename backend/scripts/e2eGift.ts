@@ -49,12 +49,15 @@ async function ok<T>(
 /**
  * `POST /threads` kicks off pick generation in the background, so the frontend just polls
  * `GET /threads/:id`. Calling `POST /threads/:id/picks` here instead would burn a regeneration.
+ *
+ * The budget covers a real LLM, which takes 25-30s across the profile, query and reason calls once
+ * schema retries are counted. A mock answers on the first poll, so this costs nothing under mock.
  */
 async function awaitPicks(threadId: string, userId: string): Promise<Thread['picks']> {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  for (let attempt = 0; attempt < 130; attempt++) {
     const thread = await ok<Thread>('GET', `/threads/${threadId}`, userId);
     if (thread.picks.length > 0) return thread.picks;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 700));
   }
   throw new Error(`picks never generated for ${threadId}`);
 }

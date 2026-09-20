@@ -1,7 +1,7 @@
 import type { Chapter, ChapterId } from "@/lib/types";
 
 /**
- * The four chapters plus the closing screen, in story order.
+ * The numbered chapters plus the closing screen, in story order.
  * Names, questions and card grounds come from the design system artboard's
  * chapter strip.
  */
@@ -39,6 +39,14 @@ export const chapters: Chapter[] = [
     fg: "#141A47",
   },
   {
+    id: "debate",
+    name: "The Group Chat",
+    kicker: "Chapter 5 · The group chat",
+    question: "What did we argue about?",
+    bg: "#BBA9E8",
+    fg: "#141A47",
+  },
+  {
     id: "closing",
     name: "The End",
     kicker: "September issue · The end",
@@ -48,7 +56,7 @@ export const chapters: Chapter[] = [
   },
 ];
 
-/** The four numbered chapters; the closing screen is not counted in "n / 4". */
+/** The numbered chapters; the closing screen is not counted in "n / 5". */
 export const storyChapters = chapters.filter((c) => c.id !== "closing");
 
 export const chapterOrder: ChapterId[] = chapters.map((c) => c.id);

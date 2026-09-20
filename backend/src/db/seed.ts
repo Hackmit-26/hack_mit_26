@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { evenSplit } from '../domain/splits.js';
 import { db, now } from './store.js';
 import type {
+  CommentRow,
   ContributionRow,
   GiftPickRow,
   GiftThreadRow,
@@ -19,32 +20,45 @@ import type {
  * them. Auth in dev is `Authorization: Bearer dev:<userId>`, so these double as demo logins.
  */
 export const DEMO_USER_IDS = {
-  priya: 'user-priya',
-  sam: 'user-sam',
-  maya: 'user-maya',
-  leo: 'user-leo',
+  kristina: 'kristina',
+  esh: 'esh',
+  sabina: 'sabina',
+  madhav: 'madhav',
 } as const;
 
-export const DEMO_GROUP_ID = 'group-demo';
-export const DEMO_INVITE_CODE = 'HACKMIT';
+export const DEMO_GROUP_ID = 'tea-party';
+export const DEMO_INVITE_CODE = 'TEAPARTY';
 
 /**
- * §15: Priya is the birthday recipient, so she must never be the account we present from.
- * Sam organises both threads and is the safe stage login.
+ * §15: Sabina is the birthday recipient of the live `picking` thread, so she is never the account
+ * the AI picks are presented from. Kristina organises both threads and is the stage login.
  */
-export const DEMO_RECIPIENT_ID = DEMO_USER_IDS.priya;
-export const DEMO_ORGANISER_ID = DEMO_USER_IDS.sam;
+export const DEMO_RECIPIENT_ID = DEMO_USER_IDS.sabina;
+export const DEMO_ORGANISER_ID = DEMO_USER_IDS.kristina;
 
-/** The heart that makes the gift picker look inspired: Priya hearted Sam's refurbished SX-70. */
-export const DEMO_STAR_ITEM_ID = 'item-sam-01';
+/** The heart that makes the gift picker look inspired: Sabina hearted Esh's refurbished SX-70. */
+export const DEMO_STAR_ITEM_ID = 'item-esh-01';
 
-export const DEMO_BIRTHDAY_THREAD_ID = 'thread-priya-birthday';
-export const DEMO_REVERSAL_THREAD_ID = 'thread-maya-birthday';
-export const DEMO_REVERSAL_PICK_ID = 'pick-maya-bike-computer';
+/**
+ * The item the seeded comment threads are loudest about. `GET /groups/:groupId/debate` ranks the
+ * threads itself - this constant is only here so tests and the stage script can name the expected
+ * winner without hardcoding it inside the ranking.
+ */
+export const DEMO_DEBATE_ITEM_ID = 'item-esh-06';
+
+export const DEMO_BIRTHDAY_THREAD_ID = 'thread-sabina-birthday';
+export const DEMO_REVERSAL_THREAD_ID = 'thread-esh-birthday';
+export const DEMO_REVERSAL_PICK_ID = 'pick-esh-oscillator';
 
 /** Budget for the birthday thread. Chosen so the hearted SX-70 (329.00) sits at the top end. */
 export const DEMO_BUDGET_MIN_CENTS = 15_000;
 export const DEMO_BUDGET_MAX_CENTS = 36_000;
+
+/**
+ * "I can put in $50" - the stage line. The collecting thread's pick is priced at exactly three of
+ * these so `evenSplit` hands each of the three contributors a round $50.00 with no remainder.
+ */
+export const DEMO_SHARE_CENTS = 5_000;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -231,8 +245,8 @@ export function seed(today = new Date()): { groupId: string; userIds: string[] }
 
 /**
  * The two threads §15 needs on stage:
- *  - a fresh `picking` thread for Priya, so picks are generated live;
- *  - a pre-made `collecting` thread for Maya with two shares already pulled, which the organiser
+ *  - a fresh `picking` thread for Sabina, so picks are generated live;
+ *  - a pre-made `collecting` thread for Esh with two shares already pulled, which the organiser
  *    cancels to show Visa Direct reversals. Contribution rows are written directly with fake txn
  *    ids - nothing here calls Visa.
  * Idempotent, and a no-op if seedDemoData() has not run.
@@ -243,7 +257,7 @@ export function seedDemoThreads(today = new Date()): void {
 
   const createdAt = now();
   const recipient = db.users.find((u) => u.id === DEMO_RECIPIENT_ID);
-  const reversalRecipient = db.users.find((u) => u.id === DEMO_USER_IDS.maya);
+  const reversalRecipient = db.users.find((u) => u.id === DEMO_USER_IDS.esh);
   if (!recipient?.birthday || !reversalRecipient?.birthday) return;
 
   const birthdayThread: GiftThreadRow = {
@@ -266,11 +280,11 @@ export function seedDemoThreads(today = new Date()): void {
   const reversalThread: GiftThreadRow = {
     id: DEMO_REVERSAL_THREAD_ID,
     groupId: DEMO_GROUP_ID,
-    recipientId: DEMO_USER_IDS.maya,
+    recipientId: DEMO_USER_IDS.esh,
     organiserId: DEMO_ORGANISER_ID,
     state: 'collecting',
-    budgetMinCents: 20_000,
-    budgetMaxCents: 30_000,
+    budgetMinCents: 12_000,
+    budgetMaxCents: 18_000,
     deadline: deadlineForBirthday(reversalRecipient.birthday, today),
     winningPickId: DEMO_REVERSAL_PICK_ID,
     pushTxnId: null,
@@ -283,47 +297,313 @@ export function seedDemoThreads(today = new Date()): void {
   const reversalPick: GiftPickRow = {
     id: DEMO_REVERSAL_PICK_ID,
     threadId: DEMO_REVERSAL_THREAD_ID,
-    productName: 'Smart Bike Computer',
-    productUrl: 'https://www.kestrelrunning.com/products/smart-bike-computer',
-    imageUrl: 'https://picsum.photos/seed/p107/600/600',
-    priceCents: 27_900,
-    merchant: 'Kestrel Running',
+    productName: 'Dual Wavefolder Oscillator Module',
+    productUrl: 'https://www.signalforge.com/products/dual-wavefolder-oscillator',
+    imageUrl: 'https://picsum.photos/seed/p214/600/600',
+    priceCents: DEMO_SHARE_CENTS * 3,
+    merchant: 'Signal Forge',
     reason:
-      'Maya measures everything - the Pacer 5 GPS Multisport Watch and the Velo 3 Carbon Plate Racing Shoe say as much - but her cross-training rides are the one thing she has no data for.',
-    citedItemIds: ['item-maya-04', 'item-maya-01'],
+      'Esh has the room and the cabling and nothing to put in it - the Eurorack Skiff Case 84HP is two thirds empty and the Patch Cable Pack, 20 x 3.5mm is still half coiled - so one more voice is the obvious next thing.',
+    citedItemIds: ['item-esh-04', 'item-esh-05'],
     source: 'ai',
     createdAt,
   };
 
   // Everyone except the recipient chips in (§7.4).
   const contributorIds = db.memberships
-    .filter((m) => m.groupId === DEMO_GROUP_ID && m.userId !== DEMO_USER_IDS.maya)
+    .filter((m) => m.groupId === DEMO_GROUP_ID && m.userId !== DEMO_USER_IDS.esh)
     .map((m) => m.userId);
 
-  // Two already pulled; the organiser's own share is still pending when he cancels on stage.
-  const pulled = new Set(contributorIds.filter((id) => id !== DEMO_ORGANISER_ID));
-
+  /**
+   * Every share starts `pending`. The stage script is one person hopping between Kristina, Sabina
+   * and Madhav and approving each $50 share for real, so nothing may be pre-pulled: a pre-pulled
+   * row cannot be approved again and would take that person's moment away. The reversal beat is
+   * still reachable - approve one or two, then cancel as the organiser.
+   */
   const contributions: ContributionRow[] = evenSplit(reversalPick.priceCents, contributorIds).map(
-    (share, index) => {
-      const isPulled = pulled.has(share.userId);
-      return {
-        id: `contrib-${DEMO_REVERSAL_THREAD_ID}-${share.userId}`,
-        threadId: DEMO_REVERSAL_THREAD_ID,
-        userId: share.userId,
-        amountCents: share.amountCents,
-        status: isPulled ? 'pulled' : 'pending',
-        pullTxnId: isPulled ? `demo-pull-txn-${4_100_000_000_000 + index}` : null,
-        pullStan: isPulled ? String(100_100 + index) : null,
-        pullRrn: isPulled ? `62620${String(100_000 + index)}` : null,
-        statusIdentifier: null,
-        reversalTxnId: null,
-        idempotencyKey: `contribution:contrib-${DEMO_REVERSAL_THREAD_ID}-${share.userId}:pull`,
-        updatedAt: createdAt,
-      };
-    },
+    (share) => ({
+      id: `contrib-${DEMO_REVERSAL_THREAD_ID}-${share.userId}`,
+      threadId: DEMO_REVERSAL_THREAD_ID,
+      userId: share.userId,
+      amountCents: share.amountCents,
+      status: 'pending',
+      pullTxnId: null,
+      pullStan: null,
+      pullRrn: null,
+      pullApprovalCode: null,
+      pullTransmissionDateTime: null,
+      statusIdentifier: null,
+      reversalTxnId: null,
+      idempotencyKey: `contribution:contrib-${DEMO_REVERSAL_THREAD_ID}-${share.userId}:pull`,
+      updatedAt: createdAt,
+    }),
   );
 
   db.giftThreads.insertMany([birthdayThread, reversalThread]);
   db.giftPicks.insert(reversalPick);
   db.contributions.insertMany(contributions);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Comments: the group chat the "most argued about" card is computed from      */
+/* -------------------------------------------------------------------------- */
+
+type SeedComment = {
+  /** Suffixed onto `comment-demo-` for a stable id a reply can point at. */
+  key: string;
+  userId: string;
+  /** Whole days back from the seed's `today`; always >= 1 so nothing lands in the future. */
+  daysAgo: number;
+  /** UTC `HH:MM` on that day. */
+  time: string;
+  body: string;
+  replyTo?: string;
+};
+
+const commentId = (key: string): string => `comment-demo-${key}`;
+
+/** First message of the loudest thread; doubles as the idempotency probe. */
+const DEMO_FIRST_COMMENT_ID = commentId('synth-01');
+
+/**
+ * Three real threads, not one, so "most discussed" is a comparison the endpoint has to win rather
+ * than a single thread by default. The synth argument is the intended winner on message count;
+ * the knife and the camera exist to be beaten.
+ */
+const DEMO_COMMENT_THREADS: { itemId: string; comments: SeedComment[] }[] = [
+  {
+    // Mother-25 Semi-Modular Synth (Esh). Three days, four people, five nested replies.
+    itemId: DEMO_DEBATE_ITEM_ID,
+    comments: [
+      {
+        key: 'synth-01',
+        userId: DEMO_USER_IDS.sabina,
+        daysAgo: 5,
+        time: '10:02',
+        body: 'esh your 84HP skiff is two thirds empty and you have bought a whole new instrument to not put in it',
+      },
+      {
+        key: 'synth-02',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 5,
+        time: '10:09',
+        replyTo: 'synth-01',
+        body: 'the case is empty BECAUSE i was waiting for this. the skiff was a promise to my future self',
+      },
+      {
+        key: 'synth-03',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 5,
+        time: '10:21',
+        body: 'semi-modular is a different argument. that ladder filter self-oscillates. it is a real instrument, not a module',
+      },
+      {
+        key: 'synth-04',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 5,
+        time: '10:40',
+        body: 'i am neutral here. i am simply saying it is a beautiful object and the knobs look nice',
+      },
+      {
+        key: 'synth-05',
+        userId: DEMO_USER_IDS.sabina,
+        daysAgo: 5,
+        time: '11:02',
+        replyTo: 'synth-03',
+        body: 'madhav you would defend a hand-forged toothpick if it came in a wooden box. you are not neutral',
+      },
+      {
+        key: 'synth-06',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 4,
+        time: '09:15',
+        body: 'the patch cables are still half coiled in the bag. they have been WAITING. this is not impulse, it is overdue',
+      },
+      {
+        key: 'synth-07',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 4,
+        time: '09:31',
+        replyTo: 'synth-06',
+        body: 'he has bought from 12 different stores in 14 purchases. overdue is doing a lot of work in that sentence',
+      },
+      {
+        key: 'synth-08',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 4,
+        time: '09:36',
+        body: 'correction: i am no longer neutral. i have now seen the purchase history',
+      },
+      {
+        key: 'synth-09',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 4,
+        time: '19:48',
+        body: 'the 32 point patchbay is the point. you patch it into the case you already own. one instrument, two boxes',
+      },
+      {
+        key: 'synth-10',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 2,
+        time: '11:58',
+        body: 'i recorded something on it at 3am. sending it now. if you all hate it i will return the whole thing',
+      },
+      {
+        key: 'synth-11',
+        userId: DEMO_USER_IDS.sabina,
+        daysAgo: 2,
+        time: '12:06',
+        replyTo: 'synth-10',
+        body: 'ok that is genuinely gorgeous. i retract the skiff comment. keep it',
+      },
+      {
+        key: 'synth-12',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 2,
+        time: '12:12',
+        body: 'madhav has had the signal forge tab open for six minutes and has gone very quiet',
+      },
+      {
+        key: 'synth-13',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 2,
+        time: '12:20',
+        replyTo: 'synth-12',
+        body: 'i am researching. for an article. that i am writing',
+      },
+    ],
+  },
+  {
+    // Carbon Steel Gyuto 210mm (Madhav). Same day, so spanDays floors to 0 and clamps to 1.
+    itemId: 'item-madhav-04',
+    comments: [
+      {
+        key: 'gyuto-01',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 7,
+        time: '18:40',
+        body: 'why does a knife need to rust. buy a victorinox like a normal person and stop performing',
+      },
+      {
+        key: 'gyuto-02',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 7,
+        time: '18:52',
+        replyTo: 'gyuto-01',
+        body: 'a victorinox is a fine knife for someone who does not care about the edge. i care about the edge',
+      },
+      {
+        key: 'gyuto-03',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 7,
+        time: '19:05',
+        body: 'he hand dries it. i have watched him hand dry a knife. it took four minutes',
+      },
+      {
+        key: 'gyuto-04',
+        userId: DEMO_USER_IDS.sabina,
+        daysAgo: 7,
+        time: '19:20',
+        body: 'blue 2 carbon is genuinely better steel though. the victorinox thing is a vibe, not a fact',
+      },
+      {
+        key: 'gyuto-05',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 7,
+        time: '20:14',
+        replyTo: 'gyuto-02',
+        body: 'the edge you care about will be orange by october',
+      },
+      {
+        key: 'gyuto-06',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 7,
+        time: '20:30',
+        body: 'it is called a patina and it is supposed to do that',
+      },
+    ],
+  },
+  {
+    // Contax T2 (Kristina). Short and admiring - nobody is arguing.
+    itemId: 'item-kristina-26',
+    comments: [
+      {
+        key: 'contax-01',
+        userId: DEMO_USER_IDS.sabina,
+        daysAgo: 9,
+        time: '15:02',
+        body: 'the t2 is the correct grail. titanium, zeiss sonnar, no notes',
+      },
+      {
+        key: 'contax-02',
+        userId: DEMO_USER_IDS.madhav,
+        daysAgo: 9,
+        time: '15:11',
+        body: 'every photo out of that thing looks like someone remembered it instead of taking it',
+      },
+      {
+        key: 'contax-03',
+        userId: DEMO_USER_IDS.kristina,
+        daysAgo: 9,
+        time: '15:30',
+        replyTo: 'contax-02',
+        body: 'madhav that is the nicest thing anyone has said about a camera i do not own yet',
+      },
+      {
+        key: 'contax-04',
+        userId: DEMO_USER_IDS.esh,
+        daysAgo: 9,
+        time: '15:44',
+        body: 'saving up is a strong phrase for looking at it every day',
+      },
+    ],
+  },
+];
+
+/** `daysAgo` days before `today`, at that UTC wall clock. Always in the past for daysAgo >= 1. */
+function commentTimestamp(today: Date, daysAgo: number, time: string): string {
+  const day = new Date(today.getTime() - daysAgo * 86_400_000);
+  return new Date(
+    Date.UTC(
+      day.getUTCFullYear(),
+      day.getUTCMonth(),
+      day.getUTCDate(),
+      Number(time.slice(0, 2)),
+      Number(time.slice(3, 5)),
+    ),
+  ).toISOString();
+}
+
+/**
+ * Seeds the three §15 comment threads so the "most argued about" card has something real to
+ * compute over. Every comment hangs off a `shared` item in the demo group, so `assertItemVisibleTo`
+ * lets every member read the whole thread.
+ * Idempotent, and a no-op if seedDemoData() has not run.
+ */
+export function seedDemoComments(today = new Date()): void {
+  if (!alreadySeeded()) return;
+  if (db.comments.find((c) => c.id === DEMO_FIRST_COMMENT_ID)) return;
+
+  const rows: CommentRow[] = [];
+  for (const thread of DEMO_COMMENT_THREADS) {
+    const item = db.items.find((i) => i.id === thread.itemId);
+    if (!item) continue;
+
+    for (const comment of thread.comments) {
+      rows.push({
+        id: commentId(comment.key),
+        userId: comment.userId,
+        groupId: item.groupId,
+        targetType: 'purchase',
+        targetId: item.id,
+        parentId: comment.replyTo ? commentId(comment.replyTo) : null,
+        body: comment.body,
+        createdAt: commentTimestamp(today, comment.daysAgo, comment.time),
+        editedAt: null,
+        deletedAt: null,
+      });
+    }
+  }
+
+  db.comments.insertMany(rows);
 }
