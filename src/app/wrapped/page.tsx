@@ -73,6 +73,9 @@ export default function WrappedPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (buy) return;
+      // A tile's item modal sits on top of the story. Arrows would otherwise change
+      // the chapter underneath it, so the viewer closes the modal onto a different card.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
       const target = e.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
 
@@ -89,6 +92,17 @@ export default function WrappedPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [go, replay, buy]);
+
+  // `?chapter=gift` opens the story on that chapter, so the home page can link at a
+  // specific answer. Read after mount, not during render: the server has no query
+  // string, and a first index that disagreed with it would hydrate wrong.
+  useEffect(() => {
+    const want = new URLSearchParams(window.location.search).get("chapter");
+    const at = want ? deck.findIndex((c) => c.chapter === want) : -1;
+    if (at > 0) setIndex(at);
+    // Once, on entry: re-running it would drag the viewer back every time the deck changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The story is a fixed stage; stop the page itself scrolling behind it.
   useEffect(() => {

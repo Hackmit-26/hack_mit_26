@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 
+import { useItemDetail } from "@/components/commerce/ItemDetailModal";
 import { Avatar } from "@/components/primitives/Avatar";
 import { ArrowRight, GiftIcon, Grain } from "@/components/primitives/Glyphs";
 import { ItemLink } from "@/components/primitives/ItemLink";
@@ -629,6 +630,7 @@ function RecRow({
 }) {
   const product = getProduct(rec.productId);
   const forName = getUser(rec.forUserId).name;
+  const { openItem } = useItemDetail();
 
   return (
     <div
@@ -658,6 +660,7 @@ function RecRow({
         <ItemLink
           url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             width: 132,
             height: 132,
@@ -665,10 +668,11 @@ function RecRow({
             border: "2px solid #141A47",
             borderRadius: 20,
             background: product.bg,
-            padding: 12,
+            padding: product.image ? 0 : 12,
+            overflow: "hidden",
           }}
         >
-          <ProductArt kind={product.art} />
+          <ProductArt kind={product.art} src={product.image} />
         </ItemLink>
         <div
           style={{
@@ -694,6 +698,7 @@ function RecRow({
         <ItemLink
           url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 28,
@@ -757,6 +762,7 @@ function DetailScreen({
   const rec = currentRec(state);
   const product = getProduct(rec.productId);
   const person = getUser(state.who);
+  const { openItem } = useItemDetail();
 
   return (
     <>
@@ -797,6 +803,7 @@ function DetailScreen({
       <ItemLink
         url={product.url}
         label={`${product.title} at ${product.merchant}`}
+        onActivate={() => openItem({ kind: "product", id: product.id })}
         style={{
           position: "absolute",
           left: 44,
@@ -811,10 +818,17 @@ function DetailScreen({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        <div style={{ width: 210, height: 210 }}>
-          <ProductArt kind={product.art} />
+        <div
+          style={
+            product.image
+              ? { position: "absolute", inset: 0 }
+              : { width: 210, height: 210 }
+          }
+        >
+          <ProductArt kind={product.art} src={product.image} />
         </div>
         <div
           style={{
@@ -843,6 +857,7 @@ function DetailScreen({
         <ItemLink
           url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 50,
@@ -1036,6 +1051,7 @@ function GroupGiftPanel({
   const gift = groupGifts[who];
   const product = getProduct(gift.productId);
   const each = shareOf(product.priceCents, gift.splitWays);
+  const { openItem } = useItemDetail();
 
   const { thread, error: loadError, reload } = useGroupGiftThread(who);
 
@@ -1189,6 +1205,7 @@ function GroupGiftPanel({
         <ItemLink
           url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             width: 140,
             height: 140,
@@ -1197,10 +1214,11 @@ function GroupGiftPanel({
             border: "2px solid #141A47",
             borderRadius: 20,
             background: product.bg,
-            padding: 12,
+            padding: product.image ? 0 : 12,
+            overflow: "hidden",
           }}
         >
-          <ProductArt kind={product.art} />
+          <ProductArt kind={product.art} src={product.image} />
         </ItemLink>
         <div
           style={{
@@ -1214,6 +1232,7 @@ function GroupGiftPanel({
           <ItemLink
             url={product.url}
             label={`${product.title} at ${product.merchant}`}
+            onActivate={() => openItem({ kind: "product", id: product.id })}
             style={{
               fontFamily: "var(--font-display), Georgia, serif",
               fontSize: 30,

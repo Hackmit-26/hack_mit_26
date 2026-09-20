@@ -7,6 +7,7 @@ import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { CommentComposer } from "@/components/comments/CommentComposer";
 import { artForFind } from "@/components/commerce/findsStore";
+import { useItemDetail } from "@/components/commerce/ItemDetailModal";
 import { VisaTag, contributionChip, useGroupGiftThread } from "@/components/chapters/GiftCard";
 import { DebateTranscript, debateOwner, useDebateThread } from "@/components/chapters/DebateCard";
 import { useGroupDebate } from "@/components/chapters/debateStore";
@@ -934,6 +935,7 @@ export function MGift({
   }) => void;
 }) {
   const { viewerId } = useApp();
+  const { openItem } = useItemDetail();
   const person = getUser(state.who);
   const profile = giftProfiles[state.who];
   const isGroup = state.budget === "group";
@@ -1143,6 +1145,7 @@ export function MGift({
                   <ItemLink
                     url={p.url}
                     label={`${p.title} at ${p.merchant}`}
+                    onActivate={() => openItem({ kind: "product", id: p.id })}
                     style={{
                       width: 84,
                       height: 84,
@@ -1171,6 +1174,7 @@ export function MGift({
                   <ItemLink
                     url={p.url}
                     label={`${p.title} at ${p.merchant}`}
+                    onActivate={() => openItem({ kind: "product", id: p.id })}
                     style={{
                       fontFamily: "var(--font-display), Georgia, serif",
                       fontSize: 22,
@@ -1278,6 +1282,7 @@ export function MGift({
             <ItemLink
               url={groupProduct.url}
               label={`${groupProduct.title} at ${groupProduct.merchant}`}
+              onActivate={() => openItem({ kind: "product", id: groupProduct.id })}
               style={{
                 width: 96,
                 height: 96,
@@ -1295,6 +1300,7 @@ export function MGift({
               <ItemLink
                 url={groupProduct.url}
                 label={`${groupProduct.title} at ${groupProduct.merchant}`}
+                onActivate={() => openItem({ kind: "product", id: groupProduct.id })}
                 style={{
                   fontFamily: "var(--font-display), Georgia, serif",
                   fontSize: 22,
