@@ -135,7 +135,7 @@ export function SpotSabina() {
           left: 44,
           top: 268,
           width: 632,
-          height: 150,
+          height: 136,
           boxSizing: "border-box",
           border: "2px solid #141A47",
           borderRadius: 26,
@@ -219,7 +219,7 @@ export function SpotSabina() {
         style={{
           position: "absolute",
           left: 44,
-          top: 448,
+          top: 416,
           width: 266,
           filter: "drop-shadow(4px 4px 0 #141A47)",
         }}
@@ -313,11 +313,11 @@ export function SpotSabina() {
         style={{
           position: "absolute",
           left: 336,
-          top: 448,
+          top: 414,
           width: 340,
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: 10,
         }}
       >
         {s.stats.map((stat, i) => (
@@ -331,7 +331,7 @@ export function SpotSabina() {
               display: "flex",
               alignItems: "center",
               gap: 14,
-              padding: "12px 16px 12px 12px",
+              padding: "10px 16px 10px 12px",
               border: "2px solid #141A47",
               borderRadius: 22,
               background: "#F5ECD9",
@@ -397,7 +397,7 @@ export function SpotSabina() {
         style={{
           position: "absolute",
           left: 44,
-          top: 812,
+          top: 802,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,

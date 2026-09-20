@@ -64,6 +64,7 @@ export default async function findsRoutes(app: FastifyInstance): Promise<void> {
         };
 
         if (ownerId !== null && isTaken(item, userId)) find.taken = true;
+        if (item.purchasedAt === null) find.wanted = true;
         return find;
       });
   });

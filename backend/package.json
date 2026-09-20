@@ -11,6 +11,7 @@
     "visa:smoke": "tsx scripts/visaSmoke.ts",
     "e2e:gift": "DB_MODE=memory tsx scripts/e2eGift.ts",
     "demo:check": "DB_MODE=memory tsx scripts/demoCheck.ts",
+    "demo:arm": "tsx scripts/armDemo.ts",
     "db:check": "tsx scripts/dbCheck.ts",
     "demo:seed": "tsx scripts/seedDemoPersonas.ts"
   },

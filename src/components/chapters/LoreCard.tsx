@@ -28,7 +28,7 @@ export function LoreCard({
       style={{
         position: "absolute",
         left: 360,
-        top: 50,
+        top: 70,
         width: 720,
         height: 900,
         borderRadius: 36,

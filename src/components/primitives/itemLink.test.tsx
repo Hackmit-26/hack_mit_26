@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ItemLink } from "@/components/primitives/ItemLink";
 
@@ -42,5 +42,40 @@ describe("ItemLink", () => {
 
     expect(container.querySelector("a")).toBeNull();
     expect(screen.getByText("Charm necklace")).toBeTruthy();
+  });
+
+  it("opens the details instead of the page when given a handler", () => {
+    const onActivate = vi.fn();
+    const { container } = render(
+      <ItemLink
+        url="https://threadbare.com/scarf"
+        label="Oat cashmere scarf at threadbare.com"
+        onActivate={onActivate}
+      >
+        <span>Oat cashmere scarf</span>
+      </ItemLink>,
+    );
+
+    expect(container.querySelector("a")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Oat cashmere scarf at threadbare.com — open the item details",
+      }),
+    );
+    expect(onActivate).toHaveBeenCalledOnce();
+  });
+
+  it("is still clickable when the item has no page at all", () => {
+    const onActivate = vi.fn();
+    render(
+      <ItemLink url={null} label="Iced matcha at Verde Café" onActivate={onActivate}>
+        <span>Iced matcha</span>
+      </ItemLink>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Iced matcha at Verde Café — open the item details" }),
+    );
+    expect(onActivate).toHaveBeenCalledOnce();
   });
 });

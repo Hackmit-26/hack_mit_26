@@ -111,12 +111,25 @@ const APPROVED: ReadonlySet<ContributionStatus> = new Set<ContributionStatus>([
   'refunded',
 ]);
 
-const PAN = /\b\d{13,19}\b/g;
+const PAN_KEY = /(primaryAccountNumber|accountNumber)$/i;
+const PAN_DIGITS = /^\d{13,19}$/;
 
-/** Visa payloads carry PANs; never let one reach a table the whole team can read. */
-function safeJson(value: unknown): string {
+/**
+ * Visa payloads carry PANs; never let one reach a table the whole team can read.
+ *
+ * Masking runs per value rather than across the serialised text. A blanket `\b\d{13,19}\b` also
+ * matches `transactionIdentifier`, which Visa returns as a bare JSON *number*: rewriting it to
+ * `****7290` mid-literal yields `{"transactionIdentifier":****7290}`, which Postgres rejects as
+ * invalid json. The mirror is fire-and-forget, so that emptied the audit trail without ever
+ * failing a request.
+ */
+export function safeJson(value: unknown): string {
   try {
-    return JSON.stringify(value ?? {}).replace(PAN, (pan) => `****${pan.slice(-4)}`);
+    return JSON.stringify(value ?? {}, (key, val: unknown) => {
+      if (PAN_KEY.test(key)) return `****${String(val).slice(-4)}`;
+      if (typeof val === 'string' && PAN_DIGITS.test(val)) return `****${val.slice(-4)}`;
+      return val;
+    });
   } catch {
     return '{}';
   }

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/verifyUser.js';
 import { assertMember, assertOrganiser, loadVisibleThread } from '../domain/permissions.js';
+import { invalidState } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
 import {
   addMemberPick,
@@ -39,6 +40,13 @@ export default async function threadsRoutes(app: FastifyInstance): Promise<void>
   app.post('/threads', async (request, reply) => {
     const { userId } = requireAuth(request);
     const body = createBody.parse(request.body);
+
+    // Authorise before answering anything about whether a thread exists. The 409 below names the
+    // thread id, so without these two guards a recipient could POST themselves as recipientId and
+    // learn their own gift exists - the one secret §5.2 protects - and a non-member could probe
+    // the group the same way. createThread re-checks both; this only moves them earlier.
+    assertMember(body.groupId, userId);
+    if (body.recipientId === userId) throw invalidState('You cannot organise your own gift');
 
     // 409 carries the existing thread id so the frontend can jump straight to it (§7.2).
     const duplicate = findDuplicateThread(body.groupId, body.recipientId);

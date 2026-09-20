@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ItemDetailProvider } from "@/components/commerce/ItemDetailModal";
 import { AddLinkForm } from "@/components/wishlist/AddLinkForm";
 import { SaveButton } from "@/components/wishlist/SaveButton";
 import { WishlistGrid, WishlistTile } from "@/components/wishlist/WishlistGrid";
@@ -39,8 +40,13 @@ function localItem(over: Partial<WishlistItem> = {}): WishlistItem {
   };
 }
 
+/** Tiles open the item detail modal, so the provider is part of the page now. */
 function ui(children: ReactNode) {
-  return render(<AppProvider>{children}</AppProvider>);
+  return render(
+    <AppProvider>
+      <ItemDetailProvider>{children}</ItemDetailProvider>
+    </AppProvider>,
+  );
 }
 
 function paste(url: string) {
@@ -55,6 +61,7 @@ beforeEach(() => {
   setWishlistApi({
     addLink: vi.fn(async () => serverItem()),
     list: vi.fn(async () => []),
+    remove: vi.fn(async () => {}),
   });
 });
 
@@ -90,27 +97,43 @@ describe("WishlistGrid", () => {
 });
 
 describe("WishlistTile links", () => {
-  it("links the photo and the title out to the product page", () => {
+  it("opens the item's details, and keeps the page one click away", () => {
     ui(
-      <WishlistTile
-        item={localItem({ url: "https://threadbare.com/scarf" })}
-        onRemove={() => {}}
-      />,
+      <>
+        <SaveButton productId={CATALOGUE_ID} />
+        <WishlistGrid />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save to your list" }));
+
+    // The tile itself is now the way into the item, not a jump to the shop.
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Silver stacking rings, set of 3 at Tin & Tulip — open the item details",
+      }),
     );
 
-    const link = screen.getByRole("link", {
-      name: /Oat cashmere scarf at threadbare.com — open the product page/,
-    });
-    expect(link.getAttribute("href")).toBe("https://threadbare.com/scarf");
-    expect(link.getAttribute("target")).toBe("_blank");
-    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.getAttribute("aria-label")).toBe(
+      "Silver stacking rings, set of 3 at Tin & Tulip",
+    );
+    const out = screen
+      .getAllByRole("link")
+      .find((a) => /Open the product page/.test(a.textContent ?? ""));
+    expect(out?.getAttribute("href")).toBe("https://www.etsy.com/c/jewelry/rings");
+    expect(out?.getAttribute("target")).toBe("_blank");
   });
 
-  it("renders a plain tile when the item has no product page", () => {
-    const { container } = ui(<WishlistTile item={localItem()} onRemove={() => {}} />);
+  it("still opens the details for an item with no product page", () => {
+    ui(<WishlistTile item={localItem()} onRemove={() => {}} />);
 
-    expect(container.querySelector("a")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText("Oat cashmere scarf")).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: "Oat cashmere scarf at threadbare.com — open the item details",
+      }),
+    ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Remove Oat cashmere scarf from your list" }),
     ).toBeTruthy();
@@ -125,6 +148,9 @@ describe("WishlistTile links", () => {
     );
 
     expect(container.querySelector("a")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /open the item details/ }),
+    ).toBeNull();
     expect(screen.getByText("Reading the page")).toBeTruthy();
   });
 
@@ -132,6 +158,7 @@ describe("WishlistTile links", () => {
     setWishlistApi({
       addLink: async () => serverItem({ url: "https://threadbare.com/scarf" }),
       list: async () => [],
+      remove: async () => {},
     });
 
     ui(
@@ -179,6 +206,7 @@ describe("AddLinkForm", () => {
     setWishlistApi({
       addLink: () => new Promise<WishlistLinkResult>((r) => (release = r)),
       list: async () => [],
+      remove: async () => {},
     });
 
     ui(
@@ -210,6 +238,7 @@ describe("AddLinkForm", () => {
         throw new Error("fetch failed");
       },
       list: async () => [],
+      remove: async () => {},
     });
 
     ui(
@@ -230,7 +259,7 @@ describe("AddLinkForm", () => {
 
   it("carries a typed price into the request", async () => {
     const addLink = vi.fn(async () => serverItem({ priceCents: 3800 }));
-    setWishlistApi({ addLink, list: async () => [] });
+    setWishlistApi({ addLink, list: async () => [], remove: async () => {} });
 
     ui(<AddLinkForm />);
     fireEvent.change(screen.getByLabelText("Product link"), {
@@ -248,7 +277,7 @@ describe("AddLinkForm", () => {
 
   it("rejects something that is not a link", async () => {
     const addLink = vi.fn(async () => serverItem());
-    setWishlistApi({ addLink, list: async () => [] });
+    setWishlistApi({ addLink, list: async () => [], remove: async () => {} });
 
     ui(
       <>

@@ -121,6 +121,20 @@ export function Heart({ size = 16 }: { size?: number }) {
   );
 }
 
+export function Star({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d="M8 1.5 L9.9 5.9 L14.6 6.3 L11 9.4 L12.1 14 L8 11.5 L3.9 14 L5 9.4 L1.4 6.3 L6.1 5.9 Z"
+        fill="#F5C64B"
+        stroke="#141A47"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Lock({ size = 16 }: { size?: number }) {
   return (
     <svg

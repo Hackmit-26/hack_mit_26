@@ -1,22 +1,28 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
 
+import { useItemDetail } from "@/components/commerce/ItemDetailModal";
 import { Avatar } from "@/components/primitives/Avatar";
 import { ArrowRight, GiftIcon, Grain } from "@/components/primitives/Glyphs";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaMark } from "@/components/primitives/VisaMark";
 import {
+  birthdayTag,
+  birthdayIsSoon,
   budgets,
+  daysUntilBirthday,
   getProduct,
   giftProfiles,
-  giftableUserIds,
   groupGifts,
   recommendationsFor,
 } from "@/data/products";
-import { getUser } from "@/data/users";
-import { formatPrice, searchUrl, shareOf } from "@/services/commerce";
+import { backendGroupId, getUser, groupMembersExcept, users } from "@/data/users";
+import { ApiError, listGroupThreads } from "@/lib/api";
+import type { Contribution, Thread } from "@/lib/apiTypes";
+import { formatPrice, shareOf } from "@/services/commerce";
 import { useApp } from "@/state/store";
 import type { BudgetKey, Recommendation, UserId } from "@/lib/types";
 
@@ -52,9 +58,10 @@ export function GiftCard({
     forUserId: UserId;
     amountCentsOverride?: number;
     inspiredByUserId?: UserId;
+    threadId?: string;
   }) => void;
 }) {
-  const { isSaved, toggleSaved, startGroupGift, hasStartedGroupGift } = useApp();
+  const { isSaved, toggleSaved, startGroupGift, hasStartedGroupGift, viewerId } = useApp();
 
   const person = getUser(state.who);
   const profile = giftProfiles[state.who];
@@ -67,7 +74,7 @@ export function GiftCard({
       style={{
         position: "absolute",
         left: 360,
-        top: 50,
+        top: 70,
         width: 720,
         height: 900,
         boxSizing: "border-box",
@@ -220,7 +227,7 @@ export function GiftCard({
                         border: "2px solid #141A47",
                         borderRadius: 999,
                         background:
-                          t === "Birthday in 12 days" ? "#E8806F" : TINT[i % 5],
+                          t === birthdayTag(state.who) ? "#E8806F" : TINT[i % 5],
                         fontSize: 14.5,
                         fontWeight: 600,
                         transform: `rotate(${ROT[i % 5]}deg)`,
@@ -305,13 +312,15 @@ export function GiftCard({
               {isGroup && (
                 <GroupGiftPanel
                   who={state.who}
+                  viewerId={viewerId}
                   started={hasStartedGroupGift(state.who)}
                   onStart={() => startGroupGift(state.who)}
-                  onBuyShare={(productId, amount) =>
+                  onBuyShare={(productId, amount, threadId) =>
                     onBuy({
                       productId,
                       forUserId: state.who,
                       amountCentsOverride: amount,
+                      ...(threadId ? { threadId } : {}),
                     })
                   }
                 />
@@ -380,6 +389,7 @@ function PickScreen({
   state: GiftState;
   setState: (next: GiftState) => void;
 }) {
+  const { viewerId } = useApp();
   const person = getUser(state.who);
 
   return (
@@ -480,7 +490,7 @@ function PickScreen({
           gap: 22,
         }}
       >
-        {giftableUserIds.map((id) => {
+        {groupMembersExcept(viewerId).map((id) => {
           const on = id === state.who;
           const u = getUser(id);
           return (
@@ -549,7 +559,7 @@ function PickScreen({
           textAlign: "center",
         }}
       >
-        {state.who === "sabina" ? (
+        {birthdayIsSoon(state.who) ? (
           <span
             style={{
               display: "inline-flex",
@@ -565,7 +575,7 @@ function PickScreen({
               fontWeight: 700,
             }}
           >
-            Sabina’s birthday is in 12 days
+            {person.name}’s birthday is in {daysUntilBirthday(state.who)} days
             <span
               style={{ fontFamily: "var(--font-hand), cursive", fontSize: 22, fontWeight: 700 }}
             >
@@ -574,7 +584,8 @@ function PickScreen({
           </span>
         ) : (
           <span style={{ fontFamily: "var(--font-hand), cursive", fontSize: 26, lineHeight: 1 }}>
-            the AI reads {person.name}’s September carts so you don’t have to guess.
+            {daysUntilBirthday(state.who)} days to {person.name}’s birthday. the AI reads their
+            September carts so you don’t have to guess.
           </span>
         )}
       </div>
@@ -619,6 +630,7 @@ function RecRow({
 }) {
   const product = getProduct(rec.productId);
   const forName = getUser(rec.forUserId).name;
+  const { openItem } = useItemDetail();
 
   return (
     <div
@@ -646,8 +658,9 @@ function RecRow({
         }}
       >
         <ItemLink
-          url={searchUrl(product.title, product.merchant)}
+          url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             width: 132,
             height: 132,
@@ -655,10 +668,11 @@ function RecRow({
             border: "2px solid #141A47",
             borderRadius: 20,
             background: product.bg,
-            padding: 12,
+            padding: product.image ? 0 : 12,
+            overflow: "hidden",
           }}
         >
-          <ProductArt kind={product.art} />
+          <ProductArt kind={product.art} src={product.image} />
         </ItemLink>
         <div
           style={{
@@ -682,8 +696,9 @@ function RecRow({
         }}
       >
         <ItemLink
-          url={searchUrl(product.title, product.merchant)}
+          url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 28,
@@ -747,6 +762,7 @@ function DetailScreen({
   const rec = currentRec(state);
   const product = getProduct(rec.productId);
   const person = getUser(state.who);
+  const { openItem } = useItemDetail();
 
   return (
     <>
@@ -785,8 +801,9 @@ function DetailScreen({
       </div>
 
       <ItemLink
-        url={searchUrl(product.title, product.merchant)}
+        url={product.url}
         label={`${product.title} at ${product.merchant}`}
+        onActivate={() => openItem({ kind: "product", id: product.id })}
         style={{
           position: "absolute",
           left: 44,
@@ -801,10 +818,17 @@ function DetailScreen({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        <div style={{ width: 210, height: 210 }}>
-          <ProductArt kind={product.art} />
+        <div
+          style={
+            product.image
+              ? { position: "absolute", inset: 0 }
+              : { width: 210, height: 210 }
+          }
+        >
+          <ProductArt kind={product.art} src={product.image} />
         </div>
         <div
           style={{
@@ -831,8 +855,9 @@ function DetailScreen({
 
       <div style={{ position: "absolute", left: 44, top: 358, width: 632 }}>
         <ItemLink
-          url={searchUrl(product.title, product.merchant)}
+          url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 50,
@@ -943,40 +968,173 @@ function DetailScreen({
   );
 }
 
+/** How a contribution reads on the card. Coral is the only failure colour. */
+export function contributionChip(c: Contribution): { status: string; bg: string } {
+  const amount = c.amountCents === null ? "" : ` ${formatPrice(c.amountCents)}`;
+  switch (c.status) {
+    case "pending":
+      return { status: `Pending${amount}`, bg: "transparent" };
+    case "pulling":
+      return { status: `Pulling${amount}…`, bg: "#F5E39B" };
+    case "pulled":
+      return { status: `In:${amount}`, bg: "#A8DCC2" };
+    case "failed":
+      return { status: "Pull failed", bg: "#E8806F" };
+    case "opted_out":
+      return { status: "Opted out", bg: "transparent" };
+    case "removed":
+      return { status: "Removed", bg: "transparent" };
+    default:
+      return { status: `Refund ${c.status === "refunded" ? "done" : "in flight"}`, bg: "#BBA9E8" };
+  }
+}
+
+/** Live while anyone can still act on it; a bought/revealed gift stops polling. */
+const OPEN_STATES = new Set(["picking", "voting", "collecting", "funded"]);
+
+/**
+ * The group gift for one recipient, read straight off `GET /groups/:id/threads`.
+ *
+ * Polled rather than pushed: three people approve this gift from three
+ * different logins during the demo, and the backend has no push channel, so
+ * the only honest way to show someone else's share landing is to re-read it.
+ * Shared with the mobile gift chapter so both render the same truth.
+ */
+export function useGroupGiftThread(who: UserId): {
+  thread: Thread | null;
+  error: string | null;
+  reload: () => void;
+} {
+  const [thread, setThread] = useState<Thread | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (): Promise<void> => {
+    try {
+      const threads = await listGroupThreads(backendGroupId);
+      setThread(threads.find((t) => t.recipientId === who && OPEN_STATES.has(t.state)) ?? null);
+      setError(null);
+    } catch (cause) {
+      setThread(null);
+      setError(cause instanceof ApiError ? cause.message : "Could not reach the server");
+    }
+  }, [who]);
+
+  useEffect(() => {
+    let live = true;
+    const tick = () => {
+      if (live) void load();
+    };
+    tick();
+    const timer = setInterval(tick, 2500);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [load]);
+
+  return { thread, error, reload: () => void load() };
+}
+
 function GroupGiftPanel({
   who,
+  viewerId,
   started,
   onStart,
   onBuyShare,
 }: {
   who: UserId;
+  viewerId: UserId;
   started: boolean;
   onStart: () => void;
-  onBuyShare: (productId: string, amountCents: number) => void;
+  onBuyShare: (productId: string, amountCents: number, threadId?: string) => void;
 }) {
   const gift = groupGifts[who];
   const product = getProduct(gift.productId);
   const each = shareOf(product.priceCents, gift.splitWays);
+  const { openItem } = useItemDetail();
 
-  const others = giftableUserIds.filter((w) => w !== who);
-  const contributors = (["kristina", ...others] as UserId[]).map((w, i) => {
-    const isViewer = i === 0;
-    const status = started
-      ? isViewer
-        ? `In: ${formatPrice(each)}`
-        : "Invited"
-      : isViewer
-        ? `Ready: ${formatPrice(each)}`
-        : "Not invited yet";
-    const bg = started
-      ? isViewer
-        ? "#A8DCC2"
-        : "#F5E39B"
-      : isViewer
-        ? "#A8DCC2"
-        : "transparent";
-    return { who: w, name: isViewer ? "You" : getUser(w).name, status, bg };
-  });
+  const { thread, error: loadError, reload } = useGroupGiftThread(who);
+
+  const mine = thread?.contributions.find((c) => c.userId === viewerId) ?? null;
+  const canApprove = thread?.state === "collecting" && mine?.status === "pending";
+  const myShare = mine?.amountCents ?? each;
+
+  // Once a thread exists the locked pick and the people still in it are the truth, not the
+  // catalogue product the card was drawn around: an opt-out re-splits the pot and the headline
+  // has to move with the chips underneath it.
+  const potCents =
+    thread?.picks.find((p) => p.id === thread.winningPickId)?.priceCents ?? product.priceCents;
+  // A thread that is still `picking` has no contributions yet, so it cannot say how the pot
+  // divides; fall back to the catalogue estimate until the shares are actually written.
+  const stillIn =
+    thread?.contributions.filter((c) => c.status !== "opted_out" && c.status !== "removed") ?? [];
+  const splitWays = stillIn.length > 0 ? stillIn.length : gift.splitWays;
+  const pulledTotal =
+    thread?.contributions
+      .filter((c) => c.status === "pulled")
+      .reduce((sum, c) => sum + (c.amountCents ?? 0), 0) ?? 0;
+
+  // The demo seed and the UI share the four bare ids, but the column is free text.
+  const avatarFor = (id: string): UserId => (id in users ? (id as UserId) : who);
+
+  const contributors: { who: UserId; key: string; name: string; status: string; bg: string }[] = thread
+    ? thread.contributions.map((c) => ({
+        who: avatarFor(c.userId),
+        key: c.userId,
+        name: c.userId === viewerId ? "You" : c.name,
+        ...contributionChip(c),
+      }))
+    : groupMembersExcept(who).map((w) => {
+        const isViewer = w === viewerId;
+        return {
+          who: w,
+          key: w,
+          name: isViewer ? "You" : getUser(w).name,
+          status: started
+            ? isViewer
+              ? `Ready: ${formatPrice(each)}`
+              : "Invited"
+            : isViewer
+              ? `Ready: ${formatPrice(each)}`
+              : "Not invited yet",
+          bg: isViewer ? "#A8DCC2" : started ? "#F5E39B" : "transparent",
+        };
+      });
+
+  const buttonLabel = (): string => {
+    if (loadError) return "Retry";
+    if (canApprove) return `Approve your ${formatPrice(myShare)} share`;
+    if (mine?.status === "pulling") return "Your pull is still settling…";
+    if (mine?.status === "failed") return "Retry your share";
+    if (thread?.state === "funded") {
+      return thread.pushStatus === "succeeded"
+        ? `${formatPrice(pulledTotal)} sent to ${
+            thread.contributions.find((c) => c.userId === thread.organiserId)?.name ?? "the organiser"
+          }`
+        : `${formatPrice(pulledTotal)} collected`;
+    }
+    if (mine?.status === "pulled") return `Your ${formatPrice(myShare)} is in`;
+    if (thread) return "Waiting on the shortlist";
+    return started ? `Approve your ${formatPrice(each)} share` : "Start Group Gift";
+  };
+
+  const buttonEnabled = Boolean(loadError) || canApprove || mine?.status === "failed" || !thread;
+
+  const onButton = (): void => {
+    if (loadError) {
+      reload();
+      return;
+    }
+    if (thread) {
+      if (canApprove || mine?.status === "failed") onBuyShare(product.id, myShare, thread.id);
+      return;
+    }
+    if (!started) {
+      onStart();
+      return;
+    }
+    onBuyShare(product.id, each);
+  };
 
   return (
     <div
@@ -994,27 +1152,71 @@ function GroupGiftPanel({
         boxShadow: "5px 5px 0 #141A47",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: 38,
-          padding: "0 16px",
-          boxSizing: "border-box",
-          border: "2px solid #141A47",
-          borderRadius: 999,
-          background: gift.bannerBg,
-          fontSize: 15,
-          fontWeight: 700,
-        }}
-      >
-        {gift.banner}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            height: 38,
+            padding: "0 16px",
+            boxSizing: "border-box",
+            border: "2px solid #141A47",
+            borderRadius: 999,
+            background: gift.bannerBg,
+            fontSize: 15,
+            fontWeight: 700,
+          }}
+        >
+          {gift.banner}
+        </div>
+        {thread && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              height: 38,
+              padding: "0 14px",
+              boxSizing: "border-box",
+              border: "2px solid #141A47",
+              borderRadius: 999,
+              background: thread.state === "funded" ? "#A8DCC2" : "#F5ECD9",
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {thread.state}
+            {thread.pushStatus && <span style={{ color: "#B8412F" }}>push {thread.pushStatus}</span>}
+          </div>
+        )}
       </div>
+
+      {loadError && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: "8px 14px",
+            boxSizing: "border-box",
+            border: "2px solid #141A47",
+            borderRadius: 18,
+            background: "#E8806F",
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          Couldn’t read the gift thread — {loadError}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
         <ItemLink
-          url={searchUrl(product.title, product.merchant)}
+          url={product.url}
           label={`${product.title} at ${product.merchant}`}
+          onActivate={() => openItem({ kind: "product", id: product.id })}
           style={{
             width: 140,
             height: 140,
@@ -1023,10 +1225,11 @@ function GroupGiftPanel({
             border: "2px solid #141A47",
             borderRadius: 20,
             background: product.bg,
-            padding: 12,
+            padding: product.image ? 0 : 12,
+            overflow: "hidden",
           }}
         >
-          <ProductArt kind={product.art} />
+          <ProductArt kind={product.art} src={product.image} />
         </ItemLink>
         <div
           style={{
@@ -1038,8 +1241,9 @@ function GroupGiftPanel({
           }}
         >
           <ItemLink
-            url={searchUrl(product.title, product.merchant)}
+            url={product.url}
             label={`${product.title} at ${product.merchant}`}
+            onActivate={() => openItem({ kind: "product", id: product.id })}
             style={{
               fontFamily: "var(--font-display), Georgia, serif",
               fontSize: 30,
@@ -1053,7 +1257,7 @@ function GroupGiftPanel({
             <VisaTag />
           </div>
           <div style={{ fontSize: 14.5, marginTop: 4 }}>
-            {formatPrice(product.priceCents)} total, split {gift.splitWays} ways
+            {formatPrice(potCents)} total, split {splitWays} ways
           </div>
           <div
             style={{
@@ -1063,8 +1267,10 @@ function GroupGiftPanel({
               color: "#B8412F",
             }}
           >
-            {formatPrice(each)}{" "}
-            <span style={{ fontSize: 24, color: "#141A47" }}>each</span>
+            {formatPrice(myShare)}{" "}
+            <span style={{ fontSize: 24, color: "#141A47" }}>
+              {thread ? "yours" : "each"}
+            </span>
           </div>
         </div>
       </div>
@@ -1072,7 +1278,7 @@ function GroupGiftPanel({
       <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
         {contributors.map((c) => (
           <div
-            key={c.who}
+            key={c.key}
             style={{
               flex: 1,
               display: "flex",
@@ -1110,13 +1316,8 @@ function GroupGiftPanel({
 
       <button
         type="button"
-        onClick={() => {
-          if (!started) {
-            onStart();
-          } else {
-            onBuyShare(product.id, each);
-          }
-        }}
+        onClick={onButton}
+        disabled={!buttonEnabled}
         style={{
           marginTop: 12,
           width: "100%",
@@ -1127,15 +1328,15 @@ function GroupGiftPanel({
           gap: 10,
           border: "2px solid #141A47",
           borderRadius: 999,
-          background: started ? "#A8DCC2" : "#141A47",
-          color: started ? "#141A47" : "#F5ECD9",
+          background: buttonEnabled ? "#141A47" : "#A8DCC2",
+          color: buttonEnabled ? "#F5ECD9" : "#141A47",
           fontSize: 18,
           fontWeight: 700,
           boxShadow: "4px 4px 0 #B8412F",
           transition: "background .3s, color .3s",
         }}
       >
-        {started ? `Approve your ${formatPrice(each)} share` : "Start Group Gift"}
+        {buttonLabel()}
       </button>
 
       <div style={{ fontSize: 13.5, lineHeight: 1.3, marginTop: 10 }}>

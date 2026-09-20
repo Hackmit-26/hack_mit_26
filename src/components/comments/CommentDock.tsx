@@ -53,10 +53,13 @@ export function CommentDock({
     onOpenChange?.(next);
   }
 
-  const { targetType, targetId } = target;
+  // `groupId` has to travel with the load. A `wrapped_card` is generated copy, not a row the
+  // backend owns, so it cannot resolve the target without one and rejects the list with
+  // "groupId is required". Dropping it meant Wrapped card comments posted fine and never loaded back.
+  const { targetType, targetId, groupId } = target;
   useEffect(() => {
-    void loadComments({ targetType, targetId });
-  }, [loadComments, targetType, targetId]);
+    void loadComments({ targetType, targetId, groupId });
+  }, [loadComments, targetType, targetId, groupId]);
 
   // A card change while the panel is open should not show the previous conversation.
   useEffect(() => setOpenState(false), [targetType, targetId]);

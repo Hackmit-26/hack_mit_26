@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, Hanken_Grotesk, Instrument_Serif } from "next/font/google";
 
+import { ItemDetailProvider } from "@/components/commerce/ItemDetailModal";
+import { ViewerSwitcher } from "@/components/demo/ViewerSwitcher";
 import { AppProvider } from "@/state/store";
 import "./globals.css";
 
@@ -52,7 +54,13 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable} ${hand.variable}`}
     >
       <body>
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          {/* Inside the store: the modal reads the wishlist, orders and privacy. */}
+          <ItemDetailProvider>
+            {children}
+            <ViewerSwitcher />
+          </ItemDetailProvider>
+        </AppProvider>
       </body>
     </html>
   );

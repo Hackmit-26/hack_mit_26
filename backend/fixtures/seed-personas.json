@@ -1,177 +1,1207 @@
 {
   "group": {
-    "id": "group-demo",
-    "name": "Loading Dock",
-    "emoji": "📦",
-    "inviteCode": "HACKMIT"
+    "id": "tea-party",
+    "name": "The Tea Party",
+    "emoji": "🫖",
+    "inviteCode": "TEAPARTY"
   },
   "personas": [
     {
-      "id": "user-priya",
-      "name": "Priya Raman",
+      "id": "kristina",
+      "name": "Kristina",
       "avatarUrl": "https://i.pravatar.cc/240?img=47",
-      "birthday": "1999-09-28",
-      "birthdayInDays": 9,
+      "birthday": "1999-03-07",
       "visaCardRef": "test-card-1",
       "cardLast4": "3304",
       "blurb": "Shoots 35mm film, develops at home, and will not buy a pair of jeans that hasn't been sanforized.",
       "items": [
-        { "id": "item-priya-01", "name": "Canon AE-1 Program 35mm SLR Body", "category": "tech", "merchant": "KEH Camera", "description": "Second-hand Canon AE-1 Program body with fresh light seals, my main 35mm camera.", "priceCents": 21500, "purchasedAt": "2026-04-11", "visibility": "shared" },
-        { "id": "item-priya-02", "name": "Kodak Portra 400, 5-Roll Pack", "category": "tech", "merchant": "Analogue Revival", "description": "Five rolls of Portra 400 for the summer, all shot at box speed.", "priceCents": 8500, "purchasedAt": "2026-05-02", "visibility": "shared" },
-        { "id": "item-priya-03", "name": "Ilford HP5 Plus, 10-Roll Brick", "category": "tech", "merchant": "Analogue Revival", "description": "Brick of ten rolls of HP5 Plus black and white film, pushed to 1600 for gigs.", "priceCents": 9500, "purchasedAt": "2026-05-02", "visibility": "shared" },
-        { "id": "item-priya-04", "name": "Whiskey Leather Camera Strap", "category": "accessories", "merchant": "Hardgraft Goods", "description": "Hand-stitched whiskey leather camera strap with brass lugs for the AE-1.", "priceCents": 8900, "purchasedAt": "2026-04-19", "visibility": "shared" },
-        { "id": "item-priya-05", "name": "Waxed Canvas Camera Bag", "category": "accessories", "merchant": "Field & Frame", "description": "Waxed canvas shoulder bag with padded dividers for two bodies and four primes.", "priceCents": 15900, "purchasedAt": "2026-06-07", "visibility": "shared" },
-        { "id": "item-priya-06", "name": "Selvedge Denim Trucker Jacket", "category": "clothing", "merchant": "Ironheart Supply", "description": "Rigid 14oz selvedge trucker in unwashed indigo, six months from its first wash.", "priceCents": 28900, "purchasedAt": "2026-04-26", "visibility": "shared" },
-        { "id": "item-priya-07", "name": "Raw Denim Jeans 13oz", "category": "clothing", "merchant": "Tanuki Denim Co", "description": "Unsanforized 13oz raw denim, slim taper, soaked once and worn since.", "priceCents": 21500, "purchasedAt": "2026-05-16", "visibility": "shared" },
-        { "id": "item-priya-08", "name": "Thrifted 1970s Levi's 517", "category": "clothing", "merchant": "Second Sunday", "description": "Orange-tab 517 bootcut from a Somerville thrift bin, hems already frayed just right.", "priceCents": 6800, "purchasedAt": "2026-07-04", "visibility": "shared" },
-        { "id": "item-priya-09", "name": "Sashiko Denim Repair Kit", "category": "accessories", "merchant": "Mendwell", "description": "Indigo sashiko thread, needles and patches for mending the knee blowout on the 517s.", "priceCents": 4200, "purchasedAt": "2026-07-11", "visibility": "shared" },
-        { "id": "item-priya-10", "name": "Natural Indigo Dye Vat Kit", "category": "art_crafts", "merchant": "Mendwell", "description": "Pre-reduced natural indigo vat kit, used to overdye a faded denim shirt.", "priceCents": 4900, "purchasedAt": "2026-07-25", "visibility": "shared" },
-        { "id": "item-priya-11", "name": "Two-Reel Film Developing Tank", "category": "art_crafts", "merchant": "Analogue Revival", "description": "Stainless two-reel developing tank for black and white film in the bathroom sink.", "priceCents": 5900, "purchasedAt": "2026-05-30", "visibility": "shared" },
-        { "id": "item-priya-12", "name": "Ilford Multigrade Paper, 25 Sheets", "category": "art_crafts", "merchant": "Analogue Revival", "description": "Twenty-five sheets of 8x10 resin-coated multigrade darkroom paper, pearl finish.", "priceCents": 4400, "purchasedAt": "2026-06-14", "visibility": "shared" },
-        { "id": "item-priya-13", "name": "Archival Negative Sleeves, 100pk", "category": "stationery", "merchant": "Gallery Grain", "description": "Hundred acid-free sleeves for filing 35mm negatives seven strips to a page.", "priceCents": 2600, "purchasedAt": "2026-06-14", "visibility": "shared" },
-        { "id": "item-priya-14", "name": "Solid Oak Picture Frame 8x10", "category": "home", "merchant": "Gallery Grain", "description": "White oak 8x10 frame with museum glass, hung the first decent darkroom print in it.", "priceCents": 4400, "purchasedAt": "2026-06-21", "visibility": "shared" },
-        { "id": "item-priya-15", "name": "Magnum Contact Sheets", "category": "books", "merchant": "Shelf Life Books", "description": "Oversized book of Magnum contact sheets showing the frames either side of the famous ones.", "priceCents": 8900, "purchasedAt": "2026-05-09", "visibility": "shared" },
-        { "id": "item-priya-16", "name": "The Negative by Ansel Adams", "category": "books", "merchant": "Shelf Life Books", "description": "Ansel Adams on exposure and the zone system, read entirely on the red line.", "priceCents": 3600, "purchasedAt": "2026-04-11", "visibility": "shared" },
-        { "id": "item-priya-17", "name": "Heavyweight Loopwheel Tee", "category": "clothing", "merchant": "Warehouse & Co", "description": "Boxy loopwheeled 9oz tee in ecru, the only thing worn under the trucker jacket.", "priceCents": 6500, "purchasedAt": "2026-06-28", "visibility": "shared" },
-        { "id": "item-priya-18", "name": "Moleskin Chore Coat", "category": "clothing", "merchant": "Le Laboureur", "description": "French chore coat in brushed moleskin, pockets deep enough for a spare camera body.", "priceCents": 14900, "purchasedAt": "2026-08-15", "visibility": "shared" },
-        { "id": "item-priya-19", "name": "Film Stock Enamel Pin Set", "category": "accessories", "merchant": "Analogue Club", "description": "Four enamel pins shaped like Portra, Tri-X, Ektar and HP5 canisters, all on the camera bag.", "priceCents": 2400, "purchasedAt": "2026-07-18", "visibility": "shared" },
-        { "id": "item-priya-20", "name": "200-Pocket Linen Photo Album", "category": "stationery", "merchant": "Analogue Club", "description": "Linen album for 4x6 scans with a memo strip for writing the film stock on each one.", "priceCents": 3400, "purchasedAt": "2026-08-01", "visibility": "shared" },
-        { "id": "item-priya-21", "name": "Brass Quick-Release Keyring", "category": "accessories", "merchant": "Craighill", "description": "Brass keyring with a quick-release shackle so the darkroom key comes off on its own.", "priceCents": 3800, "purchasedAt": "2026-08-22", "visibility": "shared" },
-        { "id": "item-priya-22", "name": "Red LED Darkroom Safelight", "category": "home", "merchant": "Analogue Revival", "description": "Screw-in red LED safelight that makes the bathroom usable for multigrade paper.", "priceCents": 3900, "purchasedAt": "2026-06-21", "visibility": "shared" },
-        { "id": "item-priya-23", "name": "Suede Desert Boot", "category": "shoes", "merchant": "Clarkwell", "description": "Sand suede desert boots on crepe, bought for a wedding and worn constantly since.", "priceCents": 15900, "purchasedAt": "2026-05-23", "visibility": "private" },
-        { "id": "item-priya-24", "name": "Rosehip Facial Oil 30ml", "category": "beauty", "merchant": "Verdant Apothecary", "description": "Cold-pressed rosehip oil, unscented, the only thing that survives winter in Boston.", "priceCents": 4800, "purchasedAt": "2026-08-29", "visibility": "private" },
-        { "id": "item-priya-25", "name": "Sandalwood & Cedar Eau de Parfum", "category": "beauty", "merchant": "Atelier Nord", "description": "Sandalwood and cedar eau de parfum with a dry vetiver base, a slightly reckless purchase.", "priceCents": 13500, "purchasedAt": "2026-09-05", "visibility": "anonymous" },
-        { "id": "item-priya-26", "name": "Contax T2 Titanium 35mm Compact", "category": "tech", "merchant": "KEH Camera", "description": "The grail compact, Zeiss Sonnar 38mm f/2.8 lens, titanium body. Saving up.", "priceCents": 89900, "purchasedAt": null, "visibility": "shared" }
+        {
+          "id": "item-kristina-01",
+          "name": "Canon AE-1 Program 35mm SLR Body",
+          "category": "tech",
+          "merchant": "KEH Camera",
+          "description": "Second-hand Canon AE-1 Program body with fresh light seals, my main 35mm camera.",
+          "priceCents": 21500,
+          "purchasedAt": "2026-04-11",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-02",
+          "name": "Kodak Portra 400, 5-Roll Pack",
+          "category": "tech",
+          "merchant": "Analogue Revival",
+          "description": "Five rolls of Portra 400 for the summer, all shot at box speed.",
+          "priceCents": 8500,
+          "purchasedAt": "2026-05-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-03",
+          "name": "Ilford HP5 Plus, 10-Roll Brick",
+          "category": "tech",
+          "merchant": "Analogue Revival",
+          "description": "Brick of ten rolls of HP5 Plus black and white film, pushed to 1600 for gigs.",
+          "priceCents": 9500,
+          "purchasedAt": "2026-05-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-04",
+          "name": "Whiskey Leather Camera Strap",
+          "category": "accessories",
+          "merchant": "Hardgraft Goods",
+          "description": "Hand-stitched whiskey leather camera strap with brass lugs for the AE-1.",
+          "priceCents": 8900,
+          "purchasedAt": "2026-04-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-05",
+          "name": "Waxed Canvas Camera Bag",
+          "category": "accessories",
+          "merchant": "Field & Frame",
+          "description": "Waxed canvas shoulder bag with padded dividers for two bodies and four primes.",
+          "priceCents": 15900,
+          "purchasedAt": "2026-06-07",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-06",
+          "name": "Selvedge Denim Trucker Jacket",
+          "category": "clothing",
+          "merchant": "Ironheart Supply",
+          "description": "Rigid 14oz selvedge trucker in unwashed indigo, six months from its first wash.",
+          "priceCents": 28900,
+          "purchasedAt": "2026-04-26",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-07",
+          "name": "Raw Denim Jeans 13oz",
+          "category": "clothing",
+          "merchant": "Tanuki Denim Co",
+          "description": "Unsanforized 13oz raw denim, slim taper, soaked once and worn since.",
+          "priceCents": 21500,
+          "purchasedAt": "2026-05-16",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-08",
+          "name": "Thrifted 1970s Levi's 517",
+          "category": "clothing",
+          "merchant": "Second Sunday",
+          "description": "Orange-tab 517 bootcut from a Somerville thrift bin, hems already frayed just right.",
+          "priceCents": 6800,
+          "purchasedAt": "2026-07-04",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-09",
+          "name": "Sashiko Denim Repair Kit",
+          "category": "accessories",
+          "merchant": "Mendwell",
+          "description": "Indigo sashiko thread, needles and patches for mending the knee blowout on the 517s.",
+          "priceCents": 4200,
+          "purchasedAt": "2026-07-11",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-10",
+          "name": "Natural Indigo Dye Vat Kit",
+          "category": "art_crafts",
+          "merchant": "Mendwell",
+          "description": "Pre-reduced natural indigo vat kit, used to overdye a faded denim shirt.",
+          "priceCents": 4900,
+          "purchasedAt": "2026-07-25",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-11",
+          "name": "Two-Reel Film Developing Tank",
+          "category": "art_crafts",
+          "merchant": "Analogue Revival",
+          "description": "Stainless two-reel developing tank for black and white film in the bathroom sink.",
+          "priceCents": 5900,
+          "purchasedAt": "2026-05-30",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-12",
+          "name": "Ilford Multigrade Paper, 25 Sheets",
+          "category": "art_crafts",
+          "merchant": "Analogue Revival",
+          "description": "Twenty-five sheets of 8x10 resin-coated multigrade darkroom paper, pearl finish.",
+          "priceCents": 4400,
+          "purchasedAt": "2026-06-14",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-13",
+          "name": "Archival Negative Sleeves, 100pk",
+          "category": "stationery",
+          "merchant": "Gallery Grain",
+          "description": "Hundred acid-free sleeves for filing 35mm negatives seven strips to a page.",
+          "priceCents": 2600,
+          "purchasedAt": "2026-06-14",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-14",
+          "name": "Solid Oak Picture Frame 8x10",
+          "category": "home",
+          "merchant": "Gallery Grain",
+          "description": "White oak 8x10 frame with museum glass, hung the first decent darkroom print in it.",
+          "priceCents": 4400,
+          "purchasedAt": "2026-06-21",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-15",
+          "name": "Magnum Contact Sheets",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "Oversized book of Magnum contact sheets showing the frames either side of the famous ones.",
+          "priceCents": 8900,
+          "purchasedAt": "2026-05-09",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-16",
+          "name": "The Negative by Ansel Adams",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "Ansel Adams on exposure and the zone system, read entirely on the red line.",
+          "priceCents": 3600,
+          "purchasedAt": "2026-04-11",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-17",
+          "name": "Heavyweight Loopwheel Tee",
+          "category": "clothing",
+          "merchant": "Warehouse & Co",
+          "description": "Boxy loopwheeled 9oz tee in ecru, the only thing worn under the trucker jacket.",
+          "priceCents": 6500,
+          "purchasedAt": "2026-06-28",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-18",
+          "name": "Moleskin Chore Coat",
+          "category": "clothing",
+          "merchant": "Le Laboureur",
+          "description": "French chore coat in brushed moleskin, pockets deep enough for a spare camera body.",
+          "priceCents": 14900,
+          "purchasedAt": "2026-08-15",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-19",
+          "name": "Film Stock Enamel Pin Set",
+          "category": "accessories",
+          "merchant": "Analogue Club",
+          "description": "Four enamel pins shaped like Portra, Tri-X, Ektar and HP5 canisters, all on the camera bag.",
+          "priceCents": 2400,
+          "purchasedAt": "2026-07-18",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-20",
+          "name": "200-Pocket Linen Photo Album",
+          "category": "stationery",
+          "merchant": "Analogue Club",
+          "description": "Linen album for 4x6 scans with a memo strip for writing the film stock on each one.",
+          "priceCents": 3400,
+          "purchasedAt": "2026-08-01",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-21",
+          "name": "Brass Quick-Release Keyring",
+          "category": "accessories",
+          "merchant": "Craighill",
+          "description": "Brass keyring with a quick-release shackle so the darkroom key comes off on its own.",
+          "priceCents": 3800,
+          "purchasedAt": "2026-08-22",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-22",
+          "name": "Red LED Darkroom Safelight",
+          "category": "home",
+          "merchant": "Analogue Revival",
+          "description": "Screw-in red LED safelight that makes the bathroom usable for multigrade paper.",
+          "priceCents": 3900,
+          "purchasedAt": "2026-06-21",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-kristina-23",
+          "name": "Suede Desert Boot",
+          "category": "shoes",
+          "merchant": "Clarkwell",
+          "description": "Sand suede desert boots on crepe, bought for a wedding and worn constantly since.",
+          "priceCents": 15900,
+          "purchasedAt": "2026-05-23",
+          "visibility": "private"
+        },
+        {
+          "id": "item-kristina-24",
+          "name": "Rosehip Facial Oil 30ml",
+          "category": "beauty",
+          "merchant": "Verdant Apothecary",
+          "description": "Cold-pressed rosehip oil, unscented, the only thing that survives winter in Boston.",
+          "priceCents": 4800,
+          "purchasedAt": "2026-08-29",
+          "visibility": "private"
+        },
+        {
+          "id": "item-kristina-25",
+          "name": "Sandalwood & Cedar Eau de Parfum",
+          "category": "beauty",
+          "merchant": "Atelier Nord",
+          "description": "Sandalwood and cedar eau de parfum with a dry vetiver base, a slightly reckless purchase.",
+          "priceCents": 13500,
+          "purchasedAt": "2026-09-05",
+          "visibility": "anonymous"
+        },
+        {
+          "id": "item-kristina-26",
+          "name": "Contax T2 Titanium 35mm Compact",
+          "category": "tech",
+          "merchant": "KEH Camera",
+          "description": "The grail compact, Zeiss Sonnar 38mm f/2.8 lens, titanium body. Saving up.",
+          "priceCents": 89900,
+          "purchasedAt": null,
+          "visibility": "shared"
+        }
       ]
     },
     {
-      "id": "user-sam",
-      "name": "Sam Okafor",
+      "id": "esh",
+      "name": "Esh",
       "avatarUrl": "https://i.pravatar.cc/240?img=12",
-      "birthday": "1998-03-14",
+      "birthday": "1997-11-15",
       "visaCardRef": "test-card-2",
       "cardLast4": "0006",
       "blurb": "Patches modular synths, lubes his own keyboard switches, and restores 1970s electronics on the kitchen table.",
       "items": [
-        { "id": "item-sam-01", "name": "Polaroid SX-70 Sonar, Refurbished", "category": "tech", "merchant": "Analogue Revival", "description": "Refurbished 1970s Polaroid SX-70 Sonar folding SLR, rebuilt light seals and a new leather wrap.", "priceCents": 32900, "purchasedAt": "2026-08-30", "visibility": "shared" },
-        { "id": "item-sam-02", "name": "PO-33 Pocket Operator Sampler", "category": "music", "merchant": "Teenage Circuit", "description": "Pocket sampler with 40 seconds of memory, used entirely for recording the T stop announcements.", "priceCents": 8900, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-sam-03", "name": "Volca Bass Analogue Synthesiser", "category": "music", "merchant": "Korgan Audio", "description": "Three-oscillator analogue bass synth with a 16-step sequencer, runs on six AA batteries.", "priceCents": 15900, "purchasedAt": "2026-04-18", "visibility": "shared" },
-        { "id": "item-sam-04", "name": "Eurorack Skiff Case 84HP", "category": "music", "merchant": "Signal Forge", "description": "Powered 84HP eurorack skiff, currently two thirds empty and that is the whole problem.", "priceCents": 21500, "purchasedAt": "2026-05-10", "visibility": "shared" },
-        { "id": "item-sam-05", "name": "Patch Cable Pack, 20 x 3.5mm", "category": "music", "merchant": "Signal Forge", "description": "Twenty colour-coded 3.5mm patch cables in mixed lengths, already not enough.", "priceCents": 3200, "purchasedAt": "2026-05-10", "visibility": "shared" },
-        { "id": "item-sam-06", "name": "Mother-25 Semi-Modular Synth", "category": "music", "merchant": "Signal Forge", "description": "Semi-modular monosynth with a 32-point patchbay and a ladder filter that self-oscillates.", "priceCents": 39900, "purchasedAt": "2026-06-06", "visibility": "shared" },
-        { "id": "item-sam-07", "name": "Analogue Spring Reverb Pedal", "category": "music", "merchant": "Signal Forge", "description": "Real spring tank reverb with a dwell control and a CV input for the rack.", "priceCents": 18500, "purchasedAt": "2026-07-01", "visibility": "shared" },
-        { "id": "item-sam-08", "name": "65% Mechanical Keyboard Kit", "category": "tech", "merchant": "Keebworks", "description": "Hot-swap 65% aluminium gasket-mount kit with a brass weight, built over one weekend.", "priceCents": 17500, "purchasedAt": "2026-04-25", "visibility": "shared" },
-        { "id": "item-sam-09", "name": "PBT Doubleshot Keycap Set", "category": "tech", "merchant": "Keebworks", "description": "145-key doubleshot PBT set in Cherry profile, cream and slate, took nine months to ship.", "priceCents": 12500, "purchasedAt": "2026-05-24", "visibility": "shared" },
-        { "id": "item-sam-10", "name": "Linear Switch Tester, 9 Switches", "category": "tech", "merchant": "Keebworks", "description": "Acrylic tester with nine lubed linears so I could finally admit 45g is too light.", "priceCents": 2800, "purchasedAt": "2026-04-25", "visibility": "shared" },
-        { "id": "item-sam-11", "name": "Lubed Linear Switches, 70pc", "category": "tech", "merchant": "Keebworks", "description": "Seventy 63g linear switches, hand-lubed with 205g0 over three episodes of a podcast.", "priceCents": 4900, "purchasedAt": "2026-05-24", "visibility": "shared" },
-        { "id": "item-sam-12", "name": "Coiled Aviator USB-C Cable", "category": "tech", "merchant": "Keebworks", "description": "Hand-sleeved coiled USB-C cable with an aviator connector, entirely cosmetic, worth it.", "priceCents": 5500, "purchasedAt": "2026-06-13", "visibility": "shared" },
-        { "id": "item-sam-13", "name": "Temperature-Controlled Soldering Station", "category": "tech", "merchant": "Bench Tools Co", "description": "65W soldering station with a ceramic heater, bought to recap the SX-70 flash bar contacts.", "priceCents": 9900, "purchasedAt": "2026-08-08", "visibility": "shared" },
-        { "id": "item-sam-14", "name": "Desoldering Pump and Braid Kit", "category": "tech", "merchant": "Bench Tools Co", "description": "Spring-loaded desoldering pump with three widths of copper braid for pulling old caps.", "priceCents": 2200, "purchasedAt": "2026-08-08", "visibility": "shared" },
-        { "id": "item-sam-15", "name": "Closed-Back Studio Monitor Headphones", "category": "music", "merchant": "Aurion Audio", "description": "Flat-response closed-back monitors, 250 ohm, for patching at 1am without a roommate revolt.", "priceCents": 12900, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-sam-16", "name": "USB Audio Interface 2-in 2-out", "category": "music", "merchant": "Aurion Audio", "description": "Bus-powered 2i2 USB-C interface with direct monitoring, the hub of the whole desk.", "priceCents": 17900, "purchasedAt": "2026-06-20", "visibility": "shared" },
-        { "id": "item-sam-17", "name": "MIDI Keyboard Controller 25-Key", "category": "music", "merchant": "Korgan Audio", "description": "25 slim keys with eight pads and eight knobs, mapped to the Mother-25's patchbay.", "priceCents": 11900, "purchasedAt": "2026-07-12", "visibility": "shared" },
-        { "id": "item-sam-18", "name": "Patterns for Modular Synthesis", "category": "books", "merchant": "Signal Press", "description": "A hundred modular patch ideas with routing diagrams, dog-eared at the generative chapter.", "priceCents": 4200, "purchasedAt": "2026-06-06", "visibility": "shared" },
-        { "id": "item-sam-19", "name": "Walnut Record Storage Crate", "category": "home", "merchant": "Gallery Grain", "description": "Dovetailed walnut crate holding about seventy records upright next to the desk.", "priceCents": 11900, "purchasedAt": "2026-07-26", "visibility": "shared" },
-        { "id": "item-sam-20", "name": "Vinyl Record Cleaning Kit", "category": "music", "merchant": "Groove Care", "description": "Goat hair brush, stylus brush and alcohol-free fluid for rescuing dollar-bin records.", "priceCents": 4400, "purchasedAt": "2026-07-26", "visibility": "shared" },
-        { "id": "item-sam-21", "name": "Portable Bluetooth Turntable", "category": "music", "merchant": "Groove Care", "description": "Belt-drive suitcase turntable with a real cartridge, carried to two cookouts this summer.", "priceCents": 24900, "purchasedAt": "2026-05-31", "visibility": "shared" },
-        { "id": "item-sam-22", "name": "Vegetable-Tanned Leather Desk Pad", "category": "stationery", "merchant": "Hardgraft Goods", "description": "80x40cm leather desk pad with wool felt backing, deadens the keyboard enough for calls.", "priceCents": 9500, "purchasedAt": "2026-06-13", "visibility": "shared" },
-        { "id": "item-sam-23", "name": "Arcade Fight Stick", "category": "games", "merchant": "Pixel Attic", "description": "Sanwa-button fight stick with a swappable gate and a re-arted panel showing a modular rack.", "priceCents": 17900, "purchasedAt": "2026-08-22", "visibility": "shared" },
-        { "id": "item-sam-24", "name": "Instant Colour Film Twin Pack", "category": "tech", "merchant": "Analogue Revival", "description": "Sixteen shots of colour instant film to test whether the SX-70 rollers actually work.", "priceCents": 3400, "purchasedAt": "2026-08-30", "visibility": "shared" },
-        { "id": "item-sam-25", "name": "Chrome Safety Razor", "category": "beauty", "merchant": "Mason & Ford", "description": "Three-piece chrome safety razor with a knurled handle and twenty stainless blades.", "priceCents": 6900, "purchasedAt": "2026-09-06", "visibility": "private" }
+        {
+          "id": "item-esh-01",
+          "name": "Polaroid SX-70 Sonar, Refurbished",
+          "category": "tech",
+          "merchant": "Analogue Revival",
+          "description": "Refurbished 1970s Polaroid SX-70 Sonar folding SLR, rebuilt light seals and a new leather wrap.",
+          "priceCents": 32900,
+          "purchasedAt": "2026-08-30",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-02",
+          "name": "PO-33 Pocket Operator Sampler",
+          "category": "music",
+          "merchant": "Teenage Circuit",
+          "description": "Pocket sampler with 40 seconds of memory, used entirely for recording the T stop announcements.",
+          "priceCents": 8900,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-03",
+          "name": "Volca Bass Analogue Synthesiser",
+          "category": "music",
+          "merchant": "Korgan Audio",
+          "description": "Three-oscillator analogue bass synth with a 16-step sequencer, runs on six AA batteries.",
+          "priceCents": 15900,
+          "purchasedAt": "2026-04-18",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-04",
+          "name": "Eurorack Skiff Case 84HP",
+          "category": "music",
+          "merchant": "Signal Forge",
+          "description": "Powered 84HP eurorack skiff, currently two thirds empty and that is the whole problem.",
+          "priceCents": 21500,
+          "purchasedAt": "2026-05-10",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-05",
+          "name": "Patch Cable Pack, 20 x 3.5mm",
+          "category": "music",
+          "merchant": "Signal Forge",
+          "description": "Twenty colour-coded 3.5mm patch cables in mixed lengths, already not enough.",
+          "priceCents": 3200,
+          "purchasedAt": "2026-05-10",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-06",
+          "name": "Mother-25 Semi-Modular Synth",
+          "category": "music",
+          "merchant": "Signal Forge",
+          "description": "Semi-modular monosynth with a 32-point patchbay and a ladder filter that self-oscillates.",
+          "priceCents": 39900,
+          "purchasedAt": "2026-06-06",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-07",
+          "name": "Analogue Spring Reverb Pedal",
+          "category": "music",
+          "merchant": "Signal Forge",
+          "description": "Real spring tank reverb with a dwell control and a CV input for the rack.",
+          "priceCents": 18500,
+          "purchasedAt": "2026-07-01",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-08",
+          "name": "65% Mechanical Keyboard Kit",
+          "category": "tech",
+          "merchant": "Keebworks",
+          "description": "Hot-swap 65% aluminium gasket-mount kit with a brass weight, built over one weekend.",
+          "priceCents": 17500,
+          "purchasedAt": "2026-04-25",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-09",
+          "name": "PBT Doubleshot Keycap Set",
+          "category": "tech",
+          "merchant": "Keebworks",
+          "description": "145-key doubleshot PBT set in Cherry profile, cream and slate, took nine months to ship.",
+          "priceCents": 12500,
+          "purchasedAt": "2026-05-24",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-10",
+          "name": "Linear Switch Tester, 9 Switches",
+          "category": "tech",
+          "merchant": "Keebworks",
+          "description": "Acrylic tester with nine lubed linears so I could finally admit 45g is too light.",
+          "priceCents": 2800,
+          "purchasedAt": "2026-04-25",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-11",
+          "name": "Lubed Linear Switches, 70pc",
+          "category": "tech",
+          "merchant": "Keebworks",
+          "description": "Seventy 63g linear switches, hand-lubed with 205g0 over three episodes of a podcast.",
+          "priceCents": 4900,
+          "purchasedAt": "2026-05-24",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-12",
+          "name": "Coiled Aviator USB-C Cable",
+          "category": "tech",
+          "merchant": "Keebworks",
+          "description": "Hand-sleeved coiled USB-C cable with an aviator connector, entirely cosmetic, worth it.",
+          "priceCents": 5500,
+          "purchasedAt": "2026-06-13",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-13",
+          "name": "Temperature-Controlled Soldering Station",
+          "category": "tech",
+          "merchant": "Bench Tools Co",
+          "description": "65W soldering station with a ceramic heater, bought to recap the SX-70 flash bar contacts.",
+          "priceCents": 9900,
+          "purchasedAt": "2026-08-08",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-14",
+          "name": "Desoldering Pump and Braid Kit",
+          "category": "tech",
+          "merchant": "Bench Tools Co",
+          "description": "Spring-loaded desoldering pump with three widths of copper braid for pulling old caps.",
+          "priceCents": 2200,
+          "purchasedAt": "2026-08-08",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-15",
+          "name": "Closed-Back Studio Monitor Headphones",
+          "category": "music",
+          "merchant": "Aurion Audio",
+          "description": "Flat-response closed-back monitors, 250 ohm, for patching at 1am without a roommate revolt.",
+          "priceCents": 12900,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-16",
+          "name": "USB Audio Interface 2-in 2-out",
+          "category": "music",
+          "merchant": "Aurion Audio",
+          "description": "Bus-powered 2i2 USB-C interface with direct monitoring, the hub of the whole desk.",
+          "priceCents": 17900,
+          "purchasedAt": "2026-06-20",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-17",
+          "name": "MIDI Keyboard Controller 25-Key",
+          "category": "music",
+          "merchant": "Korgan Audio",
+          "description": "25 slim keys with eight pads and eight knobs, mapped to the Mother-25's patchbay.",
+          "priceCents": 11900,
+          "purchasedAt": "2026-07-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-18",
+          "name": "Patterns for Modular Synthesis",
+          "category": "books",
+          "merchant": "Signal Press",
+          "description": "A hundred modular patch ideas with routing diagrams, dog-eared at the generative chapter.",
+          "priceCents": 4200,
+          "purchasedAt": "2026-06-06",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-19",
+          "name": "Walnut Record Storage Crate",
+          "category": "home",
+          "merchant": "Gallery Grain",
+          "description": "Dovetailed walnut crate holding about seventy records upright next to the desk.",
+          "priceCents": 11900,
+          "purchasedAt": "2026-07-26",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-20",
+          "name": "Vinyl Record Cleaning Kit",
+          "category": "music",
+          "merchant": "Groove Care",
+          "description": "Goat hair brush, stylus brush and alcohol-free fluid for rescuing dollar-bin records.",
+          "priceCents": 4400,
+          "purchasedAt": "2026-07-26",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-21",
+          "name": "Portable Bluetooth Turntable",
+          "category": "music",
+          "merchant": "Groove Care",
+          "description": "Belt-drive suitcase turntable with a real cartridge, carried to two cookouts this summer.",
+          "priceCents": 24900,
+          "purchasedAt": "2026-05-31",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-22",
+          "name": "Vegetable-Tanned Leather Desk Pad",
+          "category": "stationery",
+          "merchant": "Hardgraft Goods",
+          "description": "80x40cm leather desk pad with wool felt backing, deadens the keyboard enough for calls.",
+          "priceCents": 9500,
+          "purchasedAt": "2026-06-13",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-23",
+          "name": "Arcade Fight Stick",
+          "category": "games",
+          "merchant": "Pixel Attic",
+          "description": "Sanwa-button fight stick with a swappable gate and a re-arted panel showing a modular rack.",
+          "priceCents": 17900,
+          "purchasedAt": "2026-08-22",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-24",
+          "name": "Instant Colour Film Twin Pack",
+          "category": "tech",
+          "merchant": "Analogue Revival",
+          "description": "Sixteen shots of colour instant film to test whether the SX-70 rollers actually work.",
+          "priceCents": 3400,
+          "purchasedAt": "2026-08-30",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-esh-25",
+          "name": "Chrome Safety Razor",
+          "category": "beauty",
+          "merchant": "Mason & Ford",
+          "description": "Three-piece chrome safety razor with a knurled handle and twenty stainless blades.",
+          "priceCents": 6900,
+          "purchasedAt": "2026-09-06",
+          "visibility": "private"
+        }
       ]
     },
     {
-      "id": "user-maya",
-      "name": "Maya Fitzgerald",
+      "id": "sabina",
+      "name": "Sabina",
       "avatarUrl": "https://i.pravatar.cc/240?img=31",
-      "birthday": "1997-11-02",
+      "birthday": "1998-10-02",
+      "birthdayInDays": 12,
       "visaCardRef": "test-card-3",
       "cardLast4": "7685",
       "blurb": "Runs with the Tuesday club, races anything with a bib number, and treats gear like laboratory equipment.",
       "items": [
-        { "id": "item-maya-01", "name": "Velo 3 Carbon Plate Racing Shoe", "category": "shoes", "merchant": "Kestrel Running", "description": "Carbon-plated marathon racer, 39mm PEBA stack, saved for race day and nothing else.", "priceCents": 25000, "purchasedAt": "2026-06-02", "visibility": "shared" },
-        { "id": "item-maya-02", "name": "Cumulus Lite Daily Trainer", "category": "shoes", "merchant": "Kestrel Running", "description": "Neutral daily trainer with supercritical foam, third identical pair in two years.", "priceCents": 14000, "purchasedAt": "2026-04-08", "visibility": "shared" },
-        { "id": "item-maya-03", "name": "Scree GTX Trail Running Shoe", "category": "shoes", "merchant": "Northbound Trail", "description": "Gore-Tex trail shoe with 5mm lugs and a rock plate, for the Middlesex Fells in mud season.", "priceCents": 17500, "purchasedAt": "2026-05-17", "visibility": "shared" },
-        { "id": "item-maya-04", "name": "Pacer 5 GPS Multisport Watch", "category": "tech", "merchant": "Kestrel Running", "description": "Dual-frequency GPS watch with 26 hours of tracking, replaced a watch that drifted in tunnels.", "priceCents": 34900, "purchasedAt": "2026-04-08", "visibility": "shared" },
-        { "id": "item-maya-05", "name": "Hydration Running Vest 5L", "category": "sports_outdoors", "merchant": "Kestrel Running", "description": "Five-litre vest with two soft flasks, zero bounce even at marathon pace.", "priceCents": 14500, "purchasedAt": "2026-05-17", "visibility": "shared" },
-        { "id": "item-maya-06", "name": "Energy Gel Variety Box, 24ct", "category": "sports_outdoors", "merchant": "Fuelworks", "description": "Twenty-four gels across six flavours, the caffeinated ones already gone.", "priceCents": 5400, "purchasedAt": "2026-06-28", "visibility": "shared" },
-        { "id": "item-maya-07", "name": "Merino Running Socks, 3-Pack", "category": "sports_outdoors", "merchant": "Kestrel Running", "description": "Cushioned merino quarter socks with a seamless toe, the only ones that survive 20 milers.", "priceCents": 4800, "purchasedAt": "2026-04-08", "visibility": "shared" },
-        { "id": "item-maya-08", "name": "Running Headlamp 400 Lumens", "category": "sports_outdoors", "merchant": "Northbound Trail", "description": "96g rechargeable headlamp with a rear red light, for 5:30am loops around Fresh Pond.", "priceCents": 6900, "purchasedAt": "2026-08-16", "visibility": "shared" },
-        { "id": "item-maya-09", "name": "Polarised Sport Sunglasses", "category": "accessories", "merchant": "Kestrel Running", "description": "24g polarised running sunglasses with a no-slip bridge and interchangeable lenses.", "priceCents": 15500, "purchasedAt": "2026-06-02", "visibility": "shared" },
-        { "id": "item-maya-10", "name": "Percussive Massage Gun", "category": "sports_outdoors", "merchant": "Recovery Lab", "description": "Quiet percussive massage gun with five speeds, aimed exclusively at the calves.", "priceCents": 19900, "purchasedAt": "2026-07-05", "visibility": "shared" },
-        { "id": "item-maya-11", "name": "Grid Texture Foam Roller", "category": "sports_outdoors", "merchant": "Recovery Lab", "description": "33cm hollow-core roller with a firm grid surface, lives permanently by the sofa.", "priceCents": 4200, "purchasedAt": "2026-04-19", "visibility": "shared" },
-        { "id": "item-maya-12", "name": "Recovery Slide", "category": "shoes", "merchant": "Kestrel Running", "description": "Squishy post-run slide with a deep arch cradle, worn straight out of the race chute.", "priceCents": 6500, "purchasedAt": "2026-06-02", "visibility": "shared" },
-        { "id": "item-maya-13", "name": "Insulated Trail Flask 750ml", "category": "sports_outdoors", "merchant": "Northbound Trail", "description": "750ml vacuum flask that keeps coffee hot for twelve hours at a cold start line.", "priceCents": 4400, "purchasedAt": "2026-05-17", "visibility": "shared" },
-        { "id": "item-maya-14", "name": "Carbon Folding Trekking Poles", "category": "sports_outdoors", "merchant": "Northbound Trail", "description": "158g Z-fold carbon poles that collapse to 36cm and stow inside the running vest.", "priceCents": 13900, "purchasedAt": "2026-07-19", "visibility": "shared" },
-        { "id": "item-maya-15", "name": "Running with the Kenyans", "category": "books", "merchant": "Shelf Life Books", "description": "Six months of training in Iten at altitude, read twice, quoted at the club far too often.", "priceCents": 1800, "purchasedAt": "2026-04-19", "visibility": "shared" },
-        { "id": "item-maya-16", "name": "Electrolyte Tablet Tubes, 6-Pack", "category": "sports_outdoors", "merchant": "Fuelworks", "description": "Six tubes of electrolyte tablets, citrus and berry, one tube per long run in August.", "priceCents": 3600, "purchasedAt": "2026-06-28", "visibility": "shared" },
-        { "id": "item-maya-17", "name": "Anti-Chafe Balm Stick", "category": "sports_outdoors", "merchant": "Recovery Lab", "description": "Beeswax anti-chafe stick, the single highest return per dollar in the whole drawer.", "priceCents": 1600, "purchasedAt": "2026-07-05", "visibility": "shared" },
-        { "id": "item-maya-18", "name": "Fleece Half-Zip Pullover", "category": "clothing", "merchant": "Ridgeway Outfitters", "description": "Grid fleece half-zip with a tall collar, sized to wear under the hydration vest.", "priceCents": 9800, "purchasedAt": "2026-08-16", "visibility": "shared" },
-        { "id": "item-maya-19", "name": "Packable Rain Shell", "category": "clothing", "merchant": "Stormline", "description": "210g waterproof shell that stuffs into its own chest pocket, lives in the vest year round.", "priceCents": 19900, "purchasedAt": "2026-05-24", "visibility": "shared" },
-        { "id": "item-maya-20", "name": "2-Person Backpacking Tent", "category": "sports_outdoors", "merchant": "Summit Forge", "description": "Freestanding two-person tent at 1.2kg with two vestibules, used on the Presidentials.", "priceCents": 32900, "purchasedAt": "2026-07-19", "visibility": "shared" },
-        { "id": "item-maya-21", "name": "Down Sleeping Bag, 20F", "category": "sports_outdoors", "merchant": "Summit Forge", "description": "20F mummy bag with 800-fill hydrophobic down and a draft collar, 850g packed.", "priceCents": 28900, "purchasedAt": "2026-07-19", "visibility": "shared" },
-        { "id": "item-maya-22", "name": "Natural Rubber Yoga Mat 5mm", "category": "sports_outdoors", "merchant": "Recovery Lab", "description": "5mm tree rubber mat that still grips with damp hands, used for the mobility routine.", "priceCents": 8800, "purchasedAt": "2026-04-19", "visibility": "shared" },
-        { "id": "item-maya-23", "name": "Waterproof Hiking Boot", "category": "shoes", "merchant": "Summit Forge", "description": "Mid-cut nubuck hiker with a load-carrying shank, for the weekends that are not running.", "priceCents": 22500, "purchasedAt": "2026-06-14", "visibility": "shared" },
-        { "id": "item-maya-24", "name": "Loose Leaf Tea Sampler", "category": "food_drink", "merchant": "Ember & Grind", "description": "Eight tins of loose leaf, mostly hojicha, drunk instead of a second coffee before track.", "priceCents": 3200, "purchasedAt": "2026-08-23", "visibility": "anonymous" },
-        { "id": "item-maya-25", "name": "Kaolin & Green Tea Clay Mask", "category": "beauty", "merchant": "Verdant Apothecary", "description": "Powdered kaolin and matcha mask, mixed fresh, the entire post-long-run ritual.", "priceCents": 3200, "purchasedAt": "2026-09-06", "visibility": "private" }
+        {
+          "id": "item-sabina-01",
+          "name": "Velo 3 Carbon Plate Racing Shoe",
+          "category": "shoes",
+          "merchant": "Kestrel Running",
+          "description": "Carbon-plated marathon racer, 39mm PEBA stack, saved for race day and nothing else.",
+          "priceCents": 25000,
+          "purchasedAt": "2026-06-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-02",
+          "name": "Cumulus Lite Daily Trainer",
+          "category": "shoes",
+          "merchant": "Kestrel Running",
+          "description": "Neutral daily trainer with supercritical foam, third identical pair in two years.",
+          "priceCents": 14000,
+          "purchasedAt": "2026-04-08",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-03",
+          "name": "Scree GTX Trail Running Shoe",
+          "category": "shoes",
+          "merchant": "Northbound Trail",
+          "description": "Gore-Tex trail shoe with 5mm lugs and a rock plate, for the Middlesex Fells in mud season.",
+          "priceCents": 17500,
+          "purchasedAt": "2026-05-17",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-04",
+          "name": "Pacer 5 GPS Multisport Watch",
+          "category": "tech",
+          "merchant": "Kestrel Running",
+          "description": "Dual-frequency GPS watch with 26 hours of tracking, replaced a watch that drifted in tunnels.",
+          "priceCents": 34900,
+          "purchasedAt": "2026-04-08",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-05",
+          "name": "Hydration Running Vest 5L",
+          "category": "sports_outdoors",
+          "merchant": "Kestrel Running",
+          "description": "Five-litre vest with two soft flasks, zero bounce even at marathon pace.",
+          "priceCents": 14500,
+          "purchasedAt": "2026-05-17",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-06",
+          "name": "Energy Gel Variety Box, 24ct",
+          "category": "sports_outdoors",
+          "merchant": "Fuelworks",
+          "description": "Twenty-four gels across six flavours, the caffeinated ones already gone.",
+          "priceCents": 5400,
+          "purchasedAt": "2026-06-28",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-07",
+          "name": "Merino Running Socks, 3-Pack",
+          "category": "sports_outdoors",
+          "merchant": "Kestrel Running",
+          "description": "Cushioned merino quarter socks with a seamless toe, the only ones that survive 20 milers.",
+          "priceCents": 4800,
+          "purchasedAt": "2026-04-08",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-08",
+          "name": "Running Headlamp 400 Lumens",
+          "category": "sports_outdoors",
+          "merchant": "Northbound Trail",
+          "description": "96g rechargeable headlamp with a rear red light, for 5:30am loops around Fresh Pond.",
+          "priceCents": 6900,
+          "purchasedAt": "2026-08-16",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-09",
+          "name": "Polarised Sport Sunglasses",
+          "category": "accessories",
+          "merchant": "Kestrel Running",
+          "description": "24g polarised running sunglasses with a no-slip bridge and interchangeable lenses.",
+          "priceCents": 15500,
+          "purchasedAt": "2026-06-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-10",
+          "name": "Percussive Massage Gun",
+          "category": "sports_outdoors",
+          "merchant": "Recovery Lab",
+          "description": "Quiet percussive massage gun with five speeds, aimed exclusively at the calves.",
+          "priceCents": 19900,
+          "purchasedAt": "2026-07-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-11",
+          "name": "Grid Texture Foam Roller",
+          "category": "sports_outdoors",
+          "merchant": "Recovery Lab",
+          "description": "33cm hollow-core roller with a firm grid surface, lives permanently by the sofa.",
+          "priceCents": 4200,
+          "purchasedAt": "2026-04-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-12",
+          "name": "Recovery Slide",
+          "category": "shoes",
+          "merchant": "Kestrel Running",
+          "description": "Squishy post-run slide with a deep arch cradle, worn straight out of the race chute.",
+          "priceCents": 6500,
+          "purchasedAt": "2026-06-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-13",
+          "name": "Insulated Trail Flask 750ml",
+          "category": "sports_outdoors",
+          "merchant": "Northbound Trail",
+          "description": "750ml vacuum flask that keeps coffee hot for twelve hours at a cold start line.",
+          "priceCents": 4400,
+          "purchasedAt": "2026-05-17",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-14",
+          "name": "Carbon Folding Trekking Poles",
+          "category": "sports_outdoors",
+          "merchant": "Northbound Trail",
+          "description": "158g Z-fold carbon poles that collapse to 36cm and stow inside the running vest.",
+          "priceCents": 13900,
+          "purchasedAt": "2026-07-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-15",
+          "name": "Running with the Kenyans",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "Six months of training in Iten at altitude, read twice, quoted at the club far too often.",
+          "priceCents": 1800,
+          "purchasedAt": "2026-04-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-16",
+          "name": "Electrolyte Tablet Tubes, 6-Pack",
+          "category": "sports_outdoors",
+          "merchant": "Fuelworks",
+          "description": "Six tubes of electrolyte tablets, citrus and berry, one tube per long run in August.",
+          "priceCents": 3600,
+          "purchasedAt": "2026-06-28",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-17",
+          "name": "Anti-Chafe Balm Stick",
+          "category": "sports_outdoors",
+          "merchant": "Recovery Lab",
+          "description": "Beeswax anti-chafe stick, the single highest return per dollar in the whole drawer.",
+          "priceCents": 1600,
+          "purchasedAt": "2026-07-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-18",
+          "name": "Fleece Half-Zip Pullover",
+          "category": "clothing",
+          "merchant": "Ridgeway Outfitters",
+          "description": "Grid fleece half-zip with a tall collar, sized to wear under the hydration vest.",
+          "priceCents": 9800,
+          "purchasedAt": "2026-08-16",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-19",
+          "name": "Packable Rain Shell",
+          "category": "clothing",
+          "merchant": "Stormline",
+          "description": "210g waterproof shell that stuffs into its own chest pocket, lives in the vest year round.",
+          "priceCents": 19900,
+          "purchasedAt": "2026-05-24",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-20",
+          "name": "2-Person Backpacking Tent",
+          "category": "sports_outdoors",
+          "merchant": "Summit Forge",
+          "description": "Freestanding two-person tent at 1.2kg with two vestibules, used on the Presidentials.",
+          "priceCents": 32900,
+          "purchasedAt": "2026-07-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-21",
+          "name": "Down Sleeping Bag, 20F",
+          "category": "sports_outdoors",
+          "merchant": "Summit Forge",
+          "description": "20F mummy bag with 800-fill hydrophobic down and a draft collar, 850g packed.",
+          "priceCents": 28900,
+          "purchasedAt": "2026-07-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-22",
+          "name": "Natural Rubber Yoga Mat 5mm",
+          "category": "sports_outdoors",
+          "merchant": "Recovery Lab",
+          "description": "5mm tree rubber mat that still grips with damp hands, used for the mobility routine.",
+          "priceCents": 8800,
+          "purchasedAt": "2026-04-19",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-23",
+          "name": "Waterproof Hiking Boot",
+          "category": "shoes",
+          "merchant": "Summit Forge",
+          "description": "Mid-cut nubuck hiker with a load-carrying shank, for the weekends that are not running.",
+          "priceCents": 22500,
+          "purchasedAt": "2026-06-14",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-sabina-24",
+          "name": "Loose Leaf Tea Sampler",
+          "category": "food_drink",
+          "merchant": "Ember & Grind",
+          "description": "Eight tins of loose leaf, mostly hojicha, drunk instead of a second coffee before track.",
+          "priceCents": 3200,
+          "purchasedAt": "2026-08-23",
+          "visibility": "anonymous"
+        },
+        {
+          "id": "item-sabina-25",
+          "name": "Kaolin & Green Tea Clay Mask",
+          "category": "beauty",
+          "merchant": "Verdant Apothecary",
+          "description": "Powdered kaolin and matcha mask, mixed fresh, the entire post-long-run ritual.",
+          "priceCents": 3200,
+          "purchasedAt": "2026-09-06",
+          "visibility": "private"
+        }
       ]
     },
     {
-      "id": "user-leo",
-      "name": "Leo Tran",
+      "id": "madhav",
+      "name": "Madhav",
       "avatarUrl": "https://i.pravatar.cc/240?img=68",
       "birthday": "1999-06-27",
       "visaCardRef": "test-card-4",
       "cardLast4": "6687",
       "blurb": "Keeps a sourdough starter with a name, buys knives he sharpens himself, and is slowly filling the flat with his own pottery.",
       "items": [
-        { "id": "item-leo-01", "name": "Cast Iron Skillet 10 Inch", "category": "kitchen", "merchant": "Foundry & Flame", "description": "Pre-seasoned 10 inch cast iron skillet, black as tar now after a year of cornbread.", "priceCents": 5900, "purchasedAt": "2026-04-12", "visibility": "shared" },
-        { "id": "item-leo-02", "name": "Enamelled Dutch Oven 5.5qt", "category": "kitchen", "merchant": "Foundry & Flame", "description": "5.5qt sage enamelled Dutch oven with self-basting lid spikes, bakes the boules.", "priceCents": 18900, "purchasedAt": "2026-04-12", "visibility": "shared" },
-        { "id": "item-leo-03", "name": "Carbon Steel Wok 14 Inch", "category": "kitchen", "merchant": "Foundry & Flame", "description": "Hand-hammered 14 inch carbon steel wok, flat bottom, seasoned blue on a gas hob.", "priceCents": 6200, "purchasedAt": "2026-05-03", "visibility": "shared" },
-        { "id": "item-leo-04", "name": "Carbon Steel Gyuto 210mm", "category": "kitchen", "merchant": "Tsubaki Hamono", "description": "Hand-forged 210mm gyuto in blue #2 carbon steel, patinas grey and will rust if you look away.", "priceCents": 21500, "purchasedAt": "2026-05-03", "visibility": "shared" },
-        { "id": "item-leo-05", "name": "Japanese Whetstone 1000/6000", "category": "kitchen", "merchant": "Tsubaki Hamono", "description": "Combination water stone, #1000 and #6000, used on the gyuto every second Sunday.", "priceCents": 6800, "purchasedAt": "2026-05-03", "visibility": "shared" },
-        { "id": "item-leo-06", "name": "Donabe Clay Pot 2.5L", "category": "kitchen", "merchant": "Tsubaki Hamono", "description": "2.5 litre Iga-yaki donabe, straight from the flame to the middle of the table for nabe.", "priceCents": 17900, "purchasedAt": "2026-08-09", "visibility": "shared" },
-        { "id": "item-leo-07", "name": "Sourdough Starter Kit", "category": "kitchen", "merchant": "Levain Lab", "description": "Dehydrated 1890s starter, jar and thermometer. The starter is called Gerald.", "priceCents": 4800, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-leo-08", "name": "Oval Banneton Proofing Basket", "category": "kitchen", "merchant": "Levain Lab", "description": "Rattan oval banneton with a linen liner for 900g boules, leaves the spiral ring on the crust.", "priceCents": 3200, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-leo-09", "name": "Stoneground Bread Flour 5kg", "category": "food_drink", "merchant": "Levain Lab", "description": "Five kilos of stoneground organic bread flour at 13% protein, gone in three weeks.", "priceCents": 2400, "purchasedAt": "2026-08-02", "visibility": "shared" },
-        { "id": "item-leo-10", "name": "Digital Kitchen Scale 0.1g", "category": "kitchen", "merchant": "Levain Lab", "description": "Scale accurate to 0.1g with a built-in timer, for weighing starter at 7am like a lunatic.", "priceCents": 3900, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-leo-11", "name": "Hand-Thrown Ash Glaze Mug", "category": "home", "merchant": "Kiln & Field", "description": "12oz hand-thrown stoneware mug with a matte ash glaze and a chunky pulled handle.", "priceCents": 4200, "purchasedAt": "2026-06-07", "visibility": "shared" },
-        { "id": "item-leo-12", "name": "Stoneware Dinner Plate Set of 4", "category": "home", "merchant": "Kiln & Field", "description": "Four reactive-glaze stoneware plates in speckled oatmeal, no two quite the same colour.", "priceCents": 12800, "purchasedAt": "2026-06-07", "visibility": "shared" },
-        { "id": "item-leo-13", "name": "Air-Dry Clay and Tool Set", "category": "art_crafts", "merchant": "Kiln & Field", "description": "Two kilos of stone-effect air-dry clay and eleven tools, the gateway to the pottery class.", "priceCents": 4500, "purchasedAt": "2026-07-12", "visibility": "shared" },
-        { "id": "item-leo-14", "name": "Terracotta Planter with Saucer", "category": "home", "merchant": "Kiln & Field", "description": "Unglazed 20cm terracotta planter that has already gone chalky white at the rim.", "priceCents": 3900, "purchasedAt": "2026-07-12", "visibility": "shared" },
-        { "id": "item-leo-15", "name": "Cross-Back Linen Apron", "category": "home", "merchant": "Flax & Foam", "description": "Stonewashed linen cross-back apron with a towel loop, permanently dusted with flour.", "priceCents": 6400, "purchasedAt": "2026-05-24", "visibility": "shared" },
-        { "id": "item-leo-16", "name": "Tartine Bread", "category": "books", "merchant": "Shelf Life Books", "description": "The country loaf method start to finish, the spine cracked open at the autolyse chapter.", "priceCents": 4000, "purchasedAt": "2026-04-05", "visibility": "shared" },
-        { "id": "item-leo-17", "name": "Salt Fat Acid Heat", "category": "books", "merchant": "Shelf Life Books", "description": "The four elements of good cooking, illustrated, the reason the wok now gets preheated properly.", "priceCents": 3500, "purchasedAt": "2026-05-31", "visibility": "shared" },
-        { "id": "item-leo-18", "name": "The Japanese Pottery Handbook", "category": "books", "merchant": "Shelf Life Books", "description": "Pocket handbook of throwing, trimming and glazing techniques, read before every studio session.", "priceCents": 2400, "purchasedAt": "2026-07-12", "visibility": "shared" },
-        { "id": "item-leo-19", "name": "Barrel-Aged Miso Trio", "category": "food_drink", "merchant": "Tsubaki Hamono", "description": "Six-month white, one-year red and three-year hatcho miso, the red one is on everything.", "priceCents": 5400, "purchasedAt": "2026-08-09", "visibility": "shared" },
-        { "id": "item-leo-20", "name": "First Cold Press Olive Oil 750ml", "category": "food_drink", "merchant": "Nonna's Table", "description": "Single-estate Sicilian olive oil in a tin, peppery enough to make guests cough.", "priceCents": 4200, "purchasedAt": "2026-06-21", "visibility": "shared" },
-        { "id": "item-leo-21", "name": "Flaky Sea Salt Tin 250g", "category": "food_drink", "merchant": "Nonna's Table", "description": "250g of pyramid sea salt flakes in a tin that never leaves the side of the hob.", "priceCents": 1500, "purchasedAt": "2026-06-21", "visibility": "shared" },
-        { "id": "item-leo-22", "name": "Copper Moka Pot 6-Cup", "category": "kitchen", "merchant": "Ember & Grind", "description": "Hammered copper six-cup moka pot with a walnut handle, polished far too often.", "priceCents": 6900, "purchasedAt": "2026-05-31", "visibility": "shared" },
-        { "id": "item-leo-23", "name": "Hand Burr Coffee Grinder", "category": "kitchen", "merchant": "Ember & Grind", "description": "38mm conical burr hand grinder with 36 clicks, set to 14 for the moka pot every morning.", "priceCents": 16500, "purchasedAt": "2026-05-31", "visibility": "shared" },
-        { "id": "item-leo-24", "name": "Natural Wine Trio", "category": "food_drink", "merchant": "Cellar Six", "description": "A skin-contact white, a chilled gamay and a pet-nat, bought for a dinner and drunk before it.", "priceCents": 9600, "purchasedAt": "2026-08-30", "visibility": "anonymous" },
-        { "id": "item-leo-25", "name": "Shearling-Lined House Slipper", "category": "shoes", "merchant": "Hearth Home", "description": "Suede slippers lined in shearling with a rubber sole, worn for the 6am starter feed.", "priceCents": 8900, "purchasedAt": "2026-09-06", "visibility": "private" }
+        {
+          "id": "item-madhav-01",
+          "name": "Cast Iron Skillet 10 Inch",
+          "category": "kitchen",
+          "merchant": "Foundry & Flame",
+          "description": "Pre-seasoned 10 inch cast iron skillet, black as tar now after a year of cornbread.",
+          "priceCents": 5900,
+          "purchasedAt": "2026-04-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-02",
+          "name": "Enamelled Dutch Oven 5.5qt",
+          "category": "kitchen",
+          "merchant": "Foundry & Flame",
+          "description": "5.5qt sage enamelled Dutch oven with self-basting lid spikes, bakes the boules.",
+          "priceCents": 18900,
+          "purchasedAt": "2026-04-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-03",
+          "name": "Carbon Steel Wok 14 Inch",
+          "category": "kitchen",
+          "merchant": "Foundry & Flame",
+          "description": "Hand-hammered 14 inch carbon steel wok, flat bottom, seasoned blue on a gas hob.",
+          "priceCents": 6200,
+          "purchasedAt": "2026-05-03",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-04",
+          "name": "Carbon Steel Gyuto 210mm",
+          "category": "kitchen",
+          "merchant": "Tsubaki Hamono",
+          "description": "Hand-forged 210mm gyuto in blue #2 carbon steel, patinas grey and will rust if you look away.",
+          "priceCents": 21500,
+          "purchasedAt": "2026-05-03",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-05",
+          "name": "Japanese Whetstone 1000/6000",
+          "category": "kitchen",
+          "merchant": "Tsubaki Hamono",
+          "description": "Combination water stone, #1000 and #6000, used on the gyuto every second Sunday.",
+          "priceCents": 6800,
+          "purchasedAt": "2026-05-03",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-06",
+          "name": "Donabe Clay Pot 2.5L",
+          "category": "kitchen",
+          "merchant": "Tsubaki Hamono",
+          "description": "2.5 litre Iga-yaki donabe, straight from the flame to the middle of the table for nabe.",
+          "priceCents": 17900,
+          "purchasedAt": "2026-08-09",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-07",
+          "name": "Sourdough Starter Kit",
+          "category": "kitchen",
+          "merchant": "Levain Lab",
+          "description": "Dehydrated 1890s starter, jar and thermometer. The starter is called Gerald.",
+          "priceCents": 4800,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-08",
+          "name": "Oval Banneton Proofing Basket",
+          "category": "kitchen",
+          "merchant": "Levain Lab",
+          "description": "Rattan oval banneton with a linen liner for 900g boules, leaves the spiral ring on the crust.",
+          "priceCents": 3200,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-09",
+          "name": "Stoneground Bread Flour 5kg",
+          "category": "food_drink",
+          "merchant": "Levain Lab",
+          "description": "Five kilos of stoneground organic bread flour at 13% protein, gone in three weeks.",
+          "priceCents": 2400,
+          "purchasedAt": "2026-08-02",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-10",
+          "name": "Digital Kitchen Scale 0.1g",
+          "category": "kitchen",
+          "merchant": "Levain Lab",
+          "description": "Scale accurate to 0.1g with a built-in timer, for weighing starter at 7am like a lunatic.",
+          "priceCents": 3900,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-11",
+          "name": "Hand-Thrown Ash Glaze Mug",
+          "category": "home",
+          "merchant": "Kiln & Field",
+          "description": "12oz hand-thrown stoneware mug with a matte ash glaze and a chunky pulled handle.",
+          "priceCents": 4200,
+          "purchasedAt": "2026-06-07",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-12",
+          "name": "Stoneware Dinner Plate Set of 4",
+          "category": "home",
+          "merchant": "Kiln & Field",
+          "description": "Four reactive-glaze stoneware plates in speckled oatmeal, no two quite the same colour.",
+          "priceCents": 12800,
+          "purchasedAt": "2026-06-07",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-13",
+          "name": "Air-Dry Clay and Tool Set",
+          "category": "art_crafts",
+          "merchant": "Kiln & Field",
+          "description": "Two kilos of stone-effect air-dry clay and eleven tools, the gateway to the pottery class.",
+          "priceCents": 4500,
+          "purchasedAt": "2026-07-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-14",
+          "name": "Terracotta Planter with Saucer",
+          "category": "home",
+          "merchant": "Kiln & Field",
+          "description": "Unglazed 20cm terracotta planter that has already gone chalky white at the rim.",
+          "priceCents": 3900,
+          "purchasedAt": "2026-07-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-15",
+          "name": "Cross-Back Linen Apron",
+          "category": "home",
+          "merchant": "Flax & Foam",
+          "description": "Stonewashed linen cross-back apron with a towel loop, permanently dusted with flour.",
+          "priceCents": 6400,
+          "purchasedAt": "2026-05-24",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-16",
+          "name": "Tartine Bread",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "The country loaf method start to finish, the spine cracked open at the autolyse chapter.",
+          "priceCents": 4000,
+          "purchasedAt": "2026-04-05",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-17",
+          "name": "Salt Fat Acid Heat",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "The four elements of good cooking, illustrated, the reason the wok now gets preheated properly.",
+          "priceCents": 3500,
+          "purchasedAt": "2026-05-31",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-18",
+          "name": "The Japanese Pottery Handbook",
+          "category": "books",
+          "merchant": "Shelf Life Books",
+          "description": "Pocket handbook of throwing, trimming and glazing techniques, read before every studio session.",
+          "priceCents": 2400,
+          "purchasedAt": "2026-07-12",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-19",
+          "name": "Barrel-Aged Miso Trio",
+          "category": "food_drink",
+          "merchant": "Tsubaki Hamono",
+          "description": "Six-month white, one-year red and three-year hatcho miso, the red one is on everything.",
+          "priceCents": 5400,
+          "purchasedAt": "2026-08-09",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-20",
+          "name": "First Cold Press Olive Oil 750ml",
+          "category": "food_drink",
+          "merchant": "Nonna's Table",
+          "description": "Single-estate Sicilian olive oil in a tin, peppery enough to make guests cough.",
+          "priceCents": 4200,
+          "purchasedAt": "2026-06-21",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-21",
+          "name": "Flaky Sea Salt Tin 250g",
+          "category": "food_drink",
+          "merchant": "Nonna's Table",
+          "description": "250g of pyramid sea salt flakes in a tin that never leaves the side of the hob.",
+          "priceCents": 1500,
+          "purchasedAt": "2026-06-21",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-22",
+          "name": "Copper Moka Pot 6-Cup",
+          "category": "kitchen",
+          "merchant": "Ember & Grind",
+          "description": "Hammered copper six-cup moka pot with a walnut handle, polished far too often.",
+          "priceCents": 6900,
+          "purchasedAt": "2026-05-31",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-23",
+          "name": "Hand Burr Coffee Grinder",
+          "category": "kitchen",
+          "merchant": "Ember & Grind",
+          "description": "38mm conical burr hand grinder with 36 clicks, set to 14 for the moka pot every morning.",
+          "priceCents": 16500,
+          "purchasedAt": "2026-05-31",
+          "visibility": "shared"
+        },
+        {
+          "id": "item-madhav-24",
+          "name": "Natural Wine Trio",
+          "category": "food_drink",
+          "merchant": "Cellar Six",
+          "description": "A skin-contact white, a chilled gamay and a pet-nat, bought for a dinner and drunk before it.",
+          "priceCents": 9600,
+          "purchasedAt": "2026-08-30",
+          "visibility": "anonymous"
+        },
+        {
+          "id": "item-madhav-25",
+          "name": "Shearling-Lined House Slipper",
+          "category": "shoes",
+          "merchant": "Hearth Home",
+          "description": "Suede slippers lined in shearling with a rubber sole, worn for the 6am starter feed.",
+          "priceCents": 8900,
+          "purchasedAt": "2026-09-06",
+          "visibility": "private"
+        }
       ]
     }
   ],
   "reactions": [
-    { "userId": "user-priya", "itemId": "item-sam-01", "type": "heart" },
-    { "userId": "user-priya", "itemId": "item-leo-11", "type": "heart" },
-    { "userId": "user-priya", "itemId": "item-leo-12", "type": "heart" },
-    { "userId": "user-priya", "itemId": "item-priya-26", "type": "wishlist" },
-    { "userId": "user-leo", "itemId": "item-sam-01", "type": "heart" },
-    { "userId": "user-maya", "itemId": "item-sam-01", "type": "heart" },
-    { "userId": "user-maya", "itemId": "item-priya-06", "type": "heart" },
-    { "userId": "user-leo", "itemId": "item-priya-06", "type": "heart" },
-    { "userId": "user-sam", "itemId": "item-priya-01", "type": "heart" },
-    { "userId": "user-leo", "itemId": "item-priya-14", "type": "heart" },
-    { "userId": "user-maya", "itemId": "item-leo-11", "type": "heart" },
-    { "userId": "user-sam", "itemId": "item-leo-01", "type": "heart" },
-    { "userId": "user-sam", "itemId": "item-maya-04", "type": "heart" },
-    { "userId": "user-leo", "itemId": "item-maya-10", "type": "heart" },
-    { "userId": "user-maya", "itemId": "item-sam-21", "type": "heart" },
-    { "userId": "user-leo", "itemId": "item-maya-19", "type": "heart" },
-    { "userId": "user-sam", "itemId": "item-leo-04", "type": "wishlist" },
-    { "userId": "user-maya", "itemId": "item-sam-02", "type": "wishlist" },
-    { "userId": "user-leo", "itemId": "item-priya-06", "type": "wishlist" }
+    {
+      "userId": "kristina",
+      "itemId": "item-esh-01",
+      "type": "heart"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-madhav-11",
+      "type": "heart"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-madhav-12",
+      "type": "heart"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-kristina-26",
+      "type": "wishlist"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-esh-01",
+      "type": "heart"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-esh-01",
+      "type": "heart"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-kristina-06",
+      "type": "heart"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-kristina-06",
+      "type": "heart"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-kristina-01",
+      "type": "heart"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-kristina-14",
+      "type": "heart"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-madhav-11",
+      "type": "heart"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-madhav-01",
+      "type": "heart"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-sabina-04",
+      "type": "heart"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-sabina-10",
+      "type": "heart"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-esh-21",
+      "type": "heart"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-sabina-19",
+      "type": "heart"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-madhav-04",
+      "type": "wishlist"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-esh-02",
+      "type": "wishlist"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-kristina-06",
+      "type": "wishlist"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-esh-02",
+      "type": "wishlist"
+    },
+    {
+      "userId": "madhav",
+      "itemId": "item-esh-02",
+      "type": "wishlist"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-madhav-04",
+      "type": "wishlist"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-kristina-06",
+      "type": "wishlist"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-kristina-26",
+      "type": "wishlist"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-sabina-24",
+      "type": "wishlist"
+    },
+    {
+      "userId": "esh",
+      "itemId": "item-sabina-24",
+      "type": "wishlist"
+    },
+    {
+      "userId": "sabina",
+      "itemId": "item-sabina-24",
+      "type": "wishlist"
+    },
+    {
+      "userId": "kristina",
+      "itemId": "item-kristina-23",
+      "type": "wishlist"
+    }
   ]
 }

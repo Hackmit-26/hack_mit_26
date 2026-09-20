@@ -426,7 +426,7 @@ export default function JoinPage() {
                 <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                   <button
                     type="button"
-                    onClick={() => router.push("/welcome", { scroll: false })}
+                    onClick={() => router.push("/wrapped", { scroll: false })}
                     style={{
                       flex: "1 1 240px",
                       height: 60,
@@ -448,7 +448,7 @@ export default function JoinPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => router.push("/group")}
+                    onClick={() => router.push("/")}
                     style={{
                       flex: "0 1 180px",
                       height: 60,

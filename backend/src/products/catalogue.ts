@@ -8,7 +8,7 @@ export const productSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   url: z.url().nullable(),
-  imageUrl: z.url(),
+  imageUrl: z.url().nullable(),
   priceCents: z.number().int().positive(),
   merchant: z.string().min(1),
   category: z.string().min(1),
