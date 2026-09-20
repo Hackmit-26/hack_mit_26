@@ -2,23 +2,27 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { CommentDock } from "@/components/comments/CommentDock";
 import { FindHeart } from "@/components/commerce/FindHeart";
 import {
   artForFind,
   bgForFind,
-  feedOrder,
   findCommentTarget,
+  getCachedRosters,
+  memberId,
   ownerOf,
+  sharedUnion,
   useGroupFinds,
+  wantLine,
 } from "@/components/commerce/findsStore";
+import type { SharedRow } from "@/components/commerce/findsStore";
 import { useItemDetail } from "@/components/commerce/ItemDetailModal";
 import { useGroupDebate } from "@/components/chapters/debateStore";
 import { PersonSheet } from "@/components/group/PersonSheet";
 import { Avatar } from "@/components/primitives/Avatar";
-import { ArrowRight, GiftIcon, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ArrowRight, GiftIcon, Heart, Lock, Sparkle, Star } from "@/components/primitives/Glyphs";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaLockup } from "@/components/primitives/VisaMark";
@@ -37,7 +41,6 @@ import {
   groupMembersExcept,
   userList,
 } from "@/data/users";
-import type { FindItem } from "@/lib/apiTypes";
 import type { UserId } from "@/lib/types";
 import { formatPrice } from "@/services/commerce";
 import { useApp } from "@/state/store";
@@ -55,28 +58,38 @@ const pill: React.CSSProperties = {
   fontWeight: 700,
 };
 
-/** Two rows of the 180px grid on a normal laptop: enough to see all four people. */
-const FEED_SIZE = 12;
+/**
+ * Four rows of the 180px grid on a normal laptop. The section is the whole month — every
+ * shared buy and every wishlist entry — so this is the first look, not the whole of it;
+ * "Show all" opens the rest without a second fetch.
+ */
+const FIRST_LOOK = 24;
 
 /**
  * The home screen: who is in the group, what is shared this month, and the way into the
- * Wrapped. "Shared this month" is the live feed — `GET /groups/:id/finds` — so
- * its ids join the wishlist rosters and the comment threads on the server.
+ * Wrapped. "Shared this month" is the live feed — `GET /groups/:id/finds` joined with
+ * `GET /groups/:id/wishlists` — so its ids join the comment threads on the server too.
  */
 export default function HomePage() {
   const { orders, savedProductIds, viewerId, wishlist } = useApp();
   const { openItem } = useItemDetail();
   const [whose, setWhose] = useState<UserId | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const feed = useGroupFinds(backendGroupId);
   const finds = feed.status === "ready" ? feed.finds : [];
   const debate = useGroupDebate(backendGroupId);
 
+  // The rosters live in the same cache entry as the finds and are replaced in the same emit,
+  // so the array identity of `finds` is enough to catch a star landing on either of them.
+  const rows = useMemo(() => sharedUnion(finds, getCachedRosters()), [finds]);
+
   // The Wrapped calls one item the month's most argued-about buy. Round-robining the
   // feed by person buries it around row six, so the claim has nothing behind it on the
   // page the judges land on. Pin it instead, and say why it is pinned.
   const hotId = debate.status === "ready" ? debate.debate.itemId : null;
-  const recent = pinFirst(feedOrder(finds, FEED_SIZE), finds, hotId);
+  const shared = pinFirst(rows, hotId);
+  const visible = showAll ? shared : shared.slice(0, FIRST_LOOK);
 
   return (
     <PageShell>
@@ -175,7 +188,7 @@ export default function HomePage() {
                 }}
               >
                 {storyChapters.length} chapters
-                {feed.status === "ready" && ` · ${finds.length} shared finds`} · about 2
+                {feed.status === "ready" && ` · ${shared.length} shared finds`} · about 2
                 minutes
               </div>
             </div>
@@ -335,8 +348,24 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* shared finds */}
-      <SectionLabel style={{ marginTop: 40 }}>Shared this month</SectionLabel>
+      {/* shared finds — every buy and every wishlist entry in the group, deduplicated */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+          marginTop: 40,
+        }}
+      >
+        <SectionLabel>Shared this month</SectionLabel>
+        {feed.status === "ready" && shared.length > 0 && (
+          <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(245,236,217,0.72)" }}>
+            Everyone’s buys and wishlists · showing {visible.length} of {shared.length}
+          </span>
+        )}
+      </div>
       <div
         style={{
           display: "grid",
@@ -346,14 +375,15 @@ export default function HomePage() {
         }}
       >
         {feed.status === "loading" &&
-          Array.from({ length: FEED_SIZE }, (_, i) => <FindTileGhost key={i} />)}
+          Array.from({ length: FIRST_LOOK }, (_, i) => <FindTileGhost key={i} />)}
         {feed.status === "ready" &&
-          recent.map((find) => (
+          visible.map((row) => (
             <SharedFindTile
-              key={find.id}
-              find={find}
+              key={row.find.id}
+              row={row}
+              viewerId={viewerId}
               hot={
-                find.id === hotId && debate.status === "ready"
+                row.find.id === hotId && debate.status === "ready"
                   ? debate.debate.commentCount
                   : null
               }
@@ -361,8 +391,30 @@ export default function HomePage() {
           ))}
       </div>
 
+      {feed.status === "ready" && shared.length > FIRST_LOOK && (
+        <button
+          type="button"
+          onClick={() => setShowAll((on) => !on)}
+          aria-expanded={showAll}
+          style={{
+            ...pill,
+            marginTop: 16,
+            background: "transparent",
+            color: "#F5ECD9",
+            font: "inherit",
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          {showAll
+            ? `Show the first ${FIRST_LOOK}`
+            : `Show all ${shared.length} — ${shared.length - FIRST_LOOK} more`}
+        </button>
+      )}
+
       {feed.status === "error" && <FeedNotice>the group feed is not answering.</FeedNotice>}
-      {feed.status === "ready" && recent.length === 0 && (
+      {feed.status === "ready" && shared.length === 0 && (
         <FeedNotice>nothing shared yet this month.</FeedNotice>
       )}
 
@@ -476,13 +528,15 @@ export default function HomePage() {
   );
 }
 
-/** Hoists one row to the front of an already-trimmed page, keeping the page the same size. */
-function pinFirst(page: FindItem[], all: FindItem[], id: string | null): FindItem[] {
-  if (!id) return page;
-  const pinned = all.find((f) => f.id === id);
-  if (!pinned) return page;
-  const rest = page.filter((f) => f.id !== id);
-  return [pinned, ...rest].slice(0, page.length);
+/**
+ * Hoists one row to the front. The list is the whole month now rather than a trimmed page, so
+ * this reorders and never drops: everything stays reachable, the pinned row is just first.
+ */
+function pinFirst(rows: SharedRow[], id: string | null): SharedRow[] {
+  if (!id) return rows;
+  const pinned = rows.find((r) => r.find.id === id);
+  if (!pinned) return rows;
+  return [pinned, ...rows.filter((r) => r !== pinned)];
 }
 
 /**
@@ -623,10 +677,22 @@ function GiftLead({ forUserId }: { forUserId: UserId }) {
  * Finds carry no price — that is the backend's privacy design, not a gap — so
  * the row that used to hold the amount holds the real heart count instead.
  */
-function SharedFindTile({ find, hot }: { find: FindItem; hot: number | null }) {
+function SharedFindTile({
+  row,
+  viewerId,
+  hot,
+}: {
+  row: SharedRow;
+  viewerId: UserId;
+  hot: number | null;
+}) {
   const [talking, setTalking] = useState(false);
   const { openItem } = useItemDetail();
+  const { find, kind, wantedBy } = row;
   const owner = ownerOf(find);
+  const wish = kind === "wanted";
+  // On a want the owner's line already says they want it; the roster lists who *else* does.
+  const alsoWant = wish && owner !== null ? wantedBy.filter((p) => p.id !== owner) : wantedBy;
 
   return (
     <div
@@ -635,35 +701,68 @@ function SharedFindTile({ find, hot }: { find: FindItem; hot: number | null }) {
         gridColumn: talking ? "1 / -1" : "auto",
         padding: 12,
         boxSizing: "border-box",
-        border: hot === null ? "2px solid #141A47" : "3px solid #B8412F",
+        border:
+          hot !== null
+            ? "3px solid #B8412F"
+            : wish
+              ? "2px dashed #141A47"
+              : "2px solid #141A47",
         borderRadius: 20,
-        background: "#F5ECD9",
+        // A want is not a buy, so it does not get the buy's paper either.
+        background: wish ? "#FFFBEA" : "#F5ECD9",
         color: "#141A47",
         boxShadow: hot === null ? "4px 4px 0 #141A47" : "5px 5px 0 #B8412F",
       }}
     >
-      {hot !== null && (
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            height: 24,
-            padding: "0 10px",
-            marginBottom: 8,
-            boxSizing: "border-box",
-            borderRadius: 999,
-            background: "#B8412F",
-            color: "#F5ECD9",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
-        >
-          Most talked about · {hot}
-        </div>
-      )}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {hot !== null && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              height: 24,
+              padding: "0 10px",
+              marginBottom: 8,
+              boxSizing: "border-box",
+              borderRadius: 999,
+              background: "#B8412F",
+              color: "#F5ECD9",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            Most talked about · {hot}
+          </div>
+        )}
+        {wish && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              height: 24,
+              padding: "0 10px",
+              marginBottom: 8,
+              boxSizing: "border-box",
+              borderRadius: 999,
+              background: "#FFFBEA",
+              border: "2px dashed #141A47",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              // The tile is 180px wide at its narrowest; the chip has to stay one line inside it.
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Star size={12} />
+            Wishlist
+          </div>
+        )}
+      </div>
       {/* The whole tile opens the item, not the shop: who shared it, how many
           hearts, who has it on a list, and the conversation, all in one place. */}
       <ItemLink
@@ -702,7 +801,9 @@ function SharedFindTile({ find, hot }: { find: FindItem; hot: number | null }) {
         }}
       >
         {owner === null ? (
-          <span style={{ opacity: 0.7 }}>someone in the group</span>
+          <span style={{ opacity: 0.7 }}>
+            someone in the group{wish ? " wants this" : ""}
+          </span>
         ) : (
           <>
             <span
@@ -717,13 +818,56 @@ function SharedFindTile({ find, hot }: { find: FindItem; hot: number | null }) {
             >
               <Avatar who={owner} />
             </span>
-            {getUser(owner).name}
+            {/* The verb is the whole distinction: shared a buy, or shared a want. */}
+            {wish ? `${getUser(owner).name} wants this` : getUser(owner).name}
           </>
         )}
         <span style={{ marginLeft: "auto" }}>
           <FindHeart itemId={find.id} count={find.heartCount} mine={find.iHearted} compact />
         </span>
       </div>
+
+      {/*
+        The wishlist half of the union, on the row itself: an item three people want is one
+        tile that says so rather than three copies of it. Names come from the roster, which
+        the server has already stripped of an anonymous item's own owner.
+      */}
+      {alsoWant.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            marginTop: 7,
+            fontSize: 12,
+            fontWeight: 600,
+            opacity: 0.85,
+          }}
+        >
+          <span style={{ display: "inline-flex", flexShrink: 0 }}>
+            {alsoWant.slice(0, 3).map((person, i) => {
+              const member = memberId(person.id);
+              return member === null ? null : (
+                <span
+                  key={person.id}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: "2px solid #141A47",
+                    marginLeft: i === 0 ? 0 : -7,
+                  }}
+                >
+                  <Avatar who={member} />
+                </span>
+              );
+            })}
+          </span>
+          <Star size={12} />
+          {wantLine(alsoWant, viewerId)}
+        </div>
+      )}
 
       <div style={{ marginTop: 10 }}>
         <CommentDock

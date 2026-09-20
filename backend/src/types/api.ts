@@ -54,6 +54,12 @@ export type FindItem = {
   iHearted: boolean;
   iWishlisted: boolean;
   taken?: boolean;
+  /**
+   * Set only on a row with no `purchasedAt`: the item was shared with the group as something its
+   * owner wants rather than something they bought. A flag and not the date, for the same reason
+   * finds carry no price - the group needs to know which of the two a tile is, and nothing more.
+   */
+  wanted?: boolean;
 };
 
 /**

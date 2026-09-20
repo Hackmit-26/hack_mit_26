@@ -109,6 +109,8 @@ export type FindItem = {
   iHearted: boolean;
   iWishlisted: boolean;
   taken?: boolean;
+  /** Set only when the row carries no purchase date: shared as a want, not as a buy. */
+  wanted?: boolean;
 };
 
 /**

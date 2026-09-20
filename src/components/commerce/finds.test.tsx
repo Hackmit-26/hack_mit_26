@@ -14,8 +14,11 @@ import {
   getCachedFind,
   ownerOf,
   setFindsApi,
+  sharedUnion,
   useGroupFinds,
+  wantLine,
 } from "@/components/commerce/findsStore";
+import type { RosterUser } from "@/components/commerce/findsStore";
 import { setViewer } from "@/lib/api";
 import type { FindItem, WishlistRoster } from "@/lib/apiTypes";
 import { AppProvider, setCommentsApi, setWishlistApi } from "@/state/store";
@@ -169,6 +172,103 @@ describe("feedOrder", () => {
     expect(feedOrder(rows, 2).map((f) => f.id)).toEqual(["k1", "e1"]);
     expect(feedOrder(rows, 99).map((f) => f.id)).toEqual(["k1", "e1", "e2"]);
     expect(feedOrder([], 8)).toEqual([]);
+  });
+});
+
+describe("sharedUnion", () => {
+  const person = (id: string, name: string): RosterUser => ({ id, name, avatarUrl: null });
+
+  const ROWS = [
+    find({ id: "k1", ownerId: "kristina" }),
+    find({ id: "k2", ownerId: "kristina" }),
+    find({ id: "k3", ownerId: "kristina", wanted: true }),
+    find({ id: "e1", ownerId: "esh" }),
+    find({ id: "e2", ownerId: "esh" }),
+    find({ id: "a1", ownerId: null }),
+  ];
+
+  const LISTS: Record<string, RosterUser[]> = {
+    e1: [person("kristina", "Kristina"), person("madhav", "Madhav")],
+    k3: [person("esh", "Esh"), person("kristina", "Kristina")],
+    a1: [person("sabina", "Sabina")],
+  };
+
+  it("is every shared buy and every wishlist entry, and nothing is left behind a limit", () => {
+    // The whole point of the change: the section used to be a 12-row sample of this.
+    expect(sharedUnion(ROWS, LISTS)).toHaveLength(ROWS.length);
+    expect(new Set(sharedUnion(ROWS, LISTS).map((r) => r.find.id)).size).toBe(ROWS.length);
+  });
+
+  it("joins the two halves on item id rather than stacking them, so a wanted buy is one tile", () => {
+    const rows = sharedUnion(ROWS, LISTS);
+    const e1 = rows.filter((r) => r.find.id === "e1");
+
+    expect(e1).toHaveLength(1);
+    expect(e1[0]?.kind).toBe("bought");
+    expect(e1[0]?.wantedBy.map((u) => u.id)).toEqual(["kristina", "madhav"]);
+    expect(rows.find((r) => r.find.id === "k1")?.wantedBy).toEqual([]);
+  });
+
+  it("keeps the round-robin so one person cannot take the top of the page", () => {
+    // One person per turn, and k3 is Kristina's want so it takes her first turn rather than
+    // the last slot on the page — the server sorts by purchase date, which a want has not got.
+    expect(sharedUnion(ROWS, LISTS).map((r) => r.find.id)).toEqual([
+      "k3",
+      "e1",
+      "a1",
+      "k1",
+      "e2",
+      "k2",
+    ]);
+    // Same input, same order, every time — the demo does not reshuffle itself.
+    expect(sharedUnion(ROWS, LISTS).map((r) => r.find.id)).toEqual(
+      sharedUnion(ROWS, LISTS).map((r) => r.find.id),
+    );
+  });
+
+  it("says which rows are a want rather than a buy", () => {
+    const kind = (id: string) => sharedUnion(ROWS, LISTS).find((r) => r.find.id === id)?.kind;
+
+    expect(kind("k3")).toBe("wanted");
+    expect(kind("k1")).toBe("bought");
+    expect(kind("a1")).toBe("bought");
+  });
+
+  it("never turns a wishlist roster back into attribution", () => {
+    const anon = sharedUnion(ROWS, LISTS).find((r) => r.find.id === "a1");
+
+    // Sabina's name is on the roster because she wants it, not because she shared it.
+    expect(anon?.wantedBy.map((u) => u.id)).toEqual(["sabina"]);
+    expect(anon?.find.ownerId).toBeNull();
+    expect(anon ? ownerOf(anon.find) : "missing").toBeNull();
+  });
+
+  it("ignores a roster with no find behind it, and an empty feed", () => {
+    expect(sharedUnion(ROWS, { ...LISTS, "item-private": [person("esh", "Esh")] })).toHaveLength(
+      ROWS.length,
+    );
+    expect(sharedUnion([], LISTS)).toEqual([]);
+  });
+});
+
+describe("wantLine", () => {
+  const person = (id: string, name: string): RosterUser => ({ id, name, avatarUrl: null });
+  const KRISTINA = person("kristina", "Kristina");
+  const ESH = person("esh", "Esh");
+  const MADHAV = person("madhav", "Madhav");
+
+  it("reads the viewer as themselves, whichever of the four is looking", () => {
+    expect(wantLine([KRISTINA], "kristina")).toBe("You want this");
+    expect(wantLine([KRISTINA], "esh")).toBe("Kristina wants this");
+    expect(wantLine([ESH, KRISTINA], "kristina")).toBe("Esh and You want this");
+    expect(wantLine([ESH, KRISTINA], "madhav")).toBe("Esh and Kristina want this");
+  });
+
+  it("counts the rest off rather than running the whole roster into the tile", () => {
+    expect(wantLine([ESH, KRISTINA, MADHAV], "sabina")).toBe(
+      "Esh, Kristina and 1 more want this",
+    );
+    expect(wantLine([], "esh")).toBe("");
   });
 });
 

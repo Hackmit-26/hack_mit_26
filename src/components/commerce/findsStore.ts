@@ -83,6 +83,11 @@ export function getCachedRoster(itemId: string): RosterUser[] {
   return live()?.rosters[itemId] ?? [];
 }
 
+/** Every roster at once, for callers joining the whole feed rather than one row of it. */
+export function getCachedRosters(): Record<string, RosterUser[]> {
+  return live()?.rosters ?? {};
+}
+
 /** Only for tests: drops the cache so the next mount fetches again. */
 export function clearFindsCache(): void {
   cache = null;
@@ -399,6 +404,25 @@ export function ownerOf(find: Pick<FindItem, "ownerId">): UserId | null {
   return isUserId(find.ownerId) ? find.ownerId : null;
 }
 
+/** A roster id narrowed to one of the demo four. Real Postgres ids have no avatar to draw. */
+export function memberId(id: string | null): UserId | null {
+  return isUserId(id) ? id : null;
+}
+
+/**
+ * Who wants a row, in the viewer's own words. The roster arrives sorted by id and is rendered
+ * in that order, so the sentence is the same on every reload; only the viewer's own name moves,
+ * and it moves for every one of the four alike.
+ */
+export function wantLine(people: RosterUser[], viewerId: string | null): string {
+  const names = people.map((p) => (p.id === viewerId ? "You" : p.name));
+  const verb = names[0] === "You" && names.length === 1 ? "want" : "wants";
+  if (names.length === 0) return "";
+  if (names.length === 1) return `${names[0]} ${verb} this`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} want this`;
+  return `${names[0]}, ${names[1]} and ${names.length - 2} more want this`;
+}
+
 /**
  * The comment key for a find.
  *
@@ -439,4 +463,52 @@ export function feedOrder(finds: FindItem[], limit: number): FindItem[] {
     if (out.length === before) break;
   }
   return out;
+}
+
+/** One row of "Shared this month": an item, why it is there, and who else has it on a list. */
+export interface SharedRow {
+  find: FindItem;
+  /** "bought" is a purchase somebody shared; "wanted" is a row shared with no purchase behind it. */
+  kind: "bought" | "wanted";
+  /** The group's wishlist roster for this row, exactly as the server was willing to name it. */
+  wantedBy: RosterUser[];
+}
+
+/**
+ * "Shared this month" in full: everyone's shared purchases and everyone's wishlists as one
+ * deduplicated list, in feed order.
+ *
+ * The two halves join on item id rather than sitting end to end, because they overlap almost
+ * entirely — `GET /groups/:id/wishlists` is built over exactly the slice `GET /groups/:id/finds`
+ * returns, so a wishlist entry is a *reaction on a find*, not a row of its own. An item three
+ * people want is therefore one tile that says so, not four tiles of the same thing. A roster id
+ * with no find behind it cannot happen and could not be drawn if it did: the roster carries a
+ * name, never a product.
+ *
+ * Nothing here reads ownership off a roster. `find.ownerId` is already viewer-relative and null
+ * on an anonymous row, and it stays the only source of who shared what — a roster naming someone
+ * is about their list, and must never be turned back into attribution.
+ *
+ * Order is `feedOrder`'s round-robin, one person per turn, with each person's wants at the head
+ * of their own queue. The server sorts by purchase date and a want has none, so a want sorts to
+ * the very bottom of the month — which is backwards for a group that is here to buy each other
+ * things. Both halves are stable partitions of the server's order, so the page is the same page
+ * every reload.
+ */
+export function sharedUnion(
+  finds: FindItem[],
+  rosters: Record<string, RosterUser[]>,
+): SharedRow[] {
+  const wantsFirst = [...finds.filter((f) => f.wanted), ...finds.filter((f) => !f.wanted)];
+
+  const rows = new Map<string, SharedRow>();
+  for (const find of feedOrder(wantsFirst, wantsFirst.length)) {
+    if (rows.has(find.id)) continue;
+    rows.set(find.id, {
+      find,
+      kind: find.wanted ? "wanted" : "bought",
+      wantedBy: rosters[find.id] ?? [],
+    });
+  }
+  return [...rows.values()];
 }
