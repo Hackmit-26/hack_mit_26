@@ -3,3 +3,6 @@ dist/
 .env
 secrets/
 fixtures/catalogue.embeddings.json
+.vercel
+.env*
+!.env*.example
