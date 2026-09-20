@@ -97,7 +97,9 @@ export default function SettingsPage() {
   }, []);
 
   const rows = mine ?? [];
-  const sharedCount = rows.filter((r) => r.visibility === "shared").length;
+  // Anonymous rows are on the feed too, just unattributed. Counting only "shared" left this
+  // one behind the "N shared" tile on the home page for anyone who had anonymised an item.
+  const sharedCount = rows.filter((r) => r.visibility !== "private").length;
 
   return (
     <PageShell>
