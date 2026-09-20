@@ -5,13 +5,21 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { ClosingCard } from "@/components/chapters/ClosingCard";
+import { DebateCard } from "@/components/chapters/DebateCard";
 import { GiftCard, type GiftState } from "@/components/chapters/GiftCard";
 import { LoreCard } from "@/components/chapters/LoreCard";
 import { SpotlightsCard } from "@/components/chapters/SpotlightsCard";
 import { TasteCard } from "@/components/chapters/TasteCard";
 import { CommentDock } from "@/components/comments/CommentDock";
 import { BuySheet, type BuyRequest } from "@/components/commerce/BuySheet";
-import { MClosing, MGift, MLore, MSpot, MTaste } from "@/components/mobile/MobileChapters";
+import {
+  MClosing,
+  MDebate,
+  MGift,
+  MLore,
+  MSpot,
+  MTaste,
+} from "@/components/mobile/MobileChapters";
 import { M_H, M_W } from "@/components/mobile/MobileFrame";
 import { ReactionBar } from "@/components/wrapped/ReactionBar";
 import { Stage, useIsMobile } from "@/components/primitives/Stage";
@@ -98,6 +106,7 @@ export default function WrappedPage() {
       {chapter === "gift" && (
         <GiftCard state={gift} setState={setGift} onBuy={onBuy} />
       )}
+      {chapter === "debate" && <DebateCard />}
       {chapter === "closing" && <ClosingCard onReplay={replay} />}
     </>
   );
@@ -108,6 +117,7 @@ export default function WrappedPage() {
       {chapter === "spotlights" && <MSpot who={who} onChange={setWho} />}
       {chapter === "lore" && <MLore caseId={caseId} onChange={setCaseId} />}
       {chapter === "gift" && <MGift state={gift} setState={setGift} onBuy={onBuy} />}
+      {chapter === "debate" && <MDebate />}
       {chapter === "closing" && <MClosing onReplay={replay} />}
     </>
   );
@@ -188,30 +198,34 @@ export default function WrappedPage() {
               style={srOnly}
             />
 
-            <div
-              style={{
-                position: "absolute",
-                left: 16,
-                right: 16,
-                bottom: 14,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                zIndex: 12,
-              }}
-            >
-              <ReactionBar targetId={reactionTarget(chapter, who, caseId)} compact />
-              <CommentDock
-                target={commentTarget(chapter, who, caseId)}
-                label="Comments"
-                hideLabel
-                compact
-              />
-            </div>
+            {/* The debate chapter puts its own composer on this line, so the rail would land on
+                top of it. That card carries the interaction instead. */}
+            {chapter !== "debate" && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  right: 16,
+                  bottom: 22,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  zIndex: 12,
+                }}
+              >
+                <ReactionBar targetId={reactionTarget(chapter, who, caseId)} compact />
+                <CommentDock
+                  target={commentTarget(chapter, who, caseId)}
+                  label="Comments"
+                  hideLabel
+                  compact
+                />
+              </div>
+            )}
 
             <Link
-              href="/group"
+              href="/"
               scroll={false}
               aria-label="Close the Wrapped"
               style={{
@@ -266,25 +280,29 @@ export default function WrappedPage() {
             </AnimatePresence>
           </DesktopShell>
 
+          {/* Bottom-right rail, opposite the privacy note. The card ends at
+              y 970 and x 1080, so this clears it in both axes. */}
           <div
             style={{
               position: "absolute",
-              left: 360,
-              top: 962,
-              width: 720,
+              right: 48,
+              bottom: 24,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
               gap: 10,
               zIndex: 20,
             }}
           >
-            <ReactionBar targetId={reactionTarget(chapter, who, caseId)} />
-            <CommentDock target={commentTarget(chapter, who, caseId)} />
+            <ReactionBar targetId={reactionTarget(chapter, who, caseId)} compact />
+            {/* The debate chapter has the item's own thread on the card; a second, card-level
+                dock next to it would just be a decoy conversation. */}
+            {chapter !== "debate" && (
+              <CommentDock target={commentTarget(chapter, who, caseId)} compact />
+            )}
           </div>
 
           <Link
-            href="/group"
+            href="/"
             scroll={false}
             style={{
               position: "absolute",

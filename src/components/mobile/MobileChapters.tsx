@@ -5,9 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Avatar } from "@/components/primitives/Avatar";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
-import { VisaTag } from "@/components/chapters/GiftCard";
+import { CommentComposer } from "@/components/comments/CommentComposer";
+import { artForFind } from "@/components/commerce/findsStore";
+import { VisaTag, contributionChip, useGroupGiftThread } from "@/components/chapters/GiftCard";
+import { DebateTranscript, debateOwner, useDebateThread } from "@/components/chapters/DebateCard";
+import { useGroupDebate } from "@/components/chapters/debateStore";
 import { Blob, MobileCta, MobileFrame } from "./MobileFrame";
 import {
+  birthdayTag,
   budgets,
   getProduct,
   giftProfiles,
@@ -15,7 +20,7 @@ import {
   groupGifts,
   recommendationsFor,
 } from "@/data/products";
-import { getUser } from "@/data/users";
+import { backendGroupId, getUser } from "@/data/users";
 import {
   chainReaction,
   loreCases,
@@ -28,10 +33,22 @@ import {
   closingTiles,
 } from "@/data/wrapped";
 import { formatPrice, searchUrl, shareOf } from "@/services/commerce";
+import { useApp } from "@/state/store";
 import type { GiftState } from "@/components/chapters/GiftCard";
+import type { Debate } from "@/lib/apiTypes";
 import type { UserId } from "@/lib/types";
 
 const TAG_BG = ["#F5ECD9", "#EBB5BD", "#A8DCC2", "#BBA9E8", "#F5ECD9"];
+
+/** Every chapter opens on this line, the same distance below the wordmark. */
+const KICKER: React.CSSProperties = {
+  position: "relative",
+  marginTop: 14,
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+};
 
 /* ------------------------------------------------------------------ 1 */
 
@@ -45,17 +62,7 @@ export function MTaste() {
       grainId="grainMTaste"
       decor={<Blob color="#F5E39B" opacity={0.55} size={240} right={-90} top={-80} />}
     >
-      <div
-        style={{
-          position: "relative",
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}
-      >
-        Chapter 1 · Taste match
-      </div>
+      <div style={KICKER}>Chapter 1 · Taste match</div>
       <div
         style={{
           position: "relative",
@@ -294,17 +301,7 @@ export function MSpot({
       grainId="grainMSpot"
       decor={<Blob color="#F5ECD9" opacity={0.45} size={260} right={-80} top={120} />}
     >
-      <div
-        style={{
-          position: "relative",
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}
-      >
-        Chapter 2 · Spotlights
-      </div>
+      <div style={KICKER}>Chapter 2 · Spotlights</div>
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -571,14 +568,12 @@ export function MLore({
 
       <div
         style={{
-          position: "relative",
+          ...KICKER,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           fontSize: 11.5,
-          fontWeight: 700,
           letterSpacing: "0.14em",
-          textTransform: "uppercase",
         }}
       >
         <div>Chapter 3 · Group lore</div>
@@ -935,8 +930,10 @@ export function MGift({
     forUserId: UserId;
     amountCentsOverride?: number;
     inspiredByUserId?: UserId;
+    threadId?: string;
   }) => void;
 }) {
+  const { viewerId } = useApp();
   const person = getUser(state.who);
   const profile = giftProfiles[state.who];
   const isGroup = state.budget === "group";
@@ -944,6 +941,12 @@ export function MGift({
   const gift = groupGifts[state.who];
   const groupProduct = getProduct(gift.productId);
   const each = shareOf(groupProduct.priceCents, gift.splitWays);
+
+  // Same live thread the desktop card reads, so the mobile approve is the real pull.
+  const { thread } = useGroupGiftThread(state.who);
+  const mine = thread?.contributions.find((c) => c.userId === viewerId) ?? null;
+  const canApprove = thread?.state === "collecting" && mine?.status === "pending";
+  const myShare = mine?.amountCents ?? each;
 
   return (
     <MobileFrame
@@ -957,17 +960,7 @@ export function MGift({
         </>
       }
     >
-      <div
-        style={{
-          position: "relative",
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}
-      >
-        Chapter 4 · Gift mode
-      </div>
+      <div style={KICKER}>Chapter 4 · Gift mode</div>
 
       <div
         style={{
@@ -1077,7 +1070,7 @@ export function MGift({
               boxSizing: "border-box",
               border: "2px solid #141A47",
               borderRadius: 999,
-              background: t === "Birthday in 12 days" ? "#E8806F" : TAG_BG[i % 5],
+              background: t === birthdayTag(state.who) ? "#E8806F" : TAG_BG[i % 5],
               fontSize: 13,
               fontWeight: 600,
               boxShadow: "2px 2px 0 #141A47",
@@ -1148,7 +1141,7 @@ export function MGift({
               >
                 <div style={{ width: 84, flexShrink: 0 }}>
                   <ItemLink
-                    url={searchUrl(p.title, p.merchant)}
+                    url={p.url}
                     label={`${p.title} at ${p.merchant}`}
                     style={{
                       width: 84,
@@ -1176,7 +1169,7 @@ export function MGift({
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <ItemLink
-                    url={searchUrl(p.title, p.merchant)}
+                    url={p.url}
                     label={`${p.title} at ${p.merchant}`}
                     style={{
                       fontFamily: "var(--font-display), Georgia, serif",
@@ -1283,7 +1276,7 @@ export function MGift({
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
             <ItemLink
-              url={searchUrl(groupProduct.title, groupProduct.merchant)}
+              url={groupProduct.url}
               label={`${groupProduct.title} at ${groupProduct.merchant}`}
               style={{
                 width: 96,
@@ -1300,7 +1293,7 @@ export function MGift({
             </ItemLink>
             <div style={{ flex: 1, minWidth: 0 }}>
               <ItemLink
-                url={searchUrl(groupProduct.title, groupProduct.merchant)}
+                url={groupProduct.url}
                 label={`${groupProduct.title} at ${groupProduct.merchant}`}
                 style={{
                   fontFamily: "var(--font-display), Georgia, serif",
@@ -1325,15 +1318,45 @@ export function MGift({
               </div>
             </div>
           </div>
+          {thread && (
+            <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+              {thread.contributions.map((c) => {
+                const chip = contributionChip(c);
+                return (
+                  <div
+                    key={c.userId}
+                    style={{
+                      flex: 1,
+                      padding: "5px 8px",
+                      boxSizing: "border-box",
+                      border: "2px solid #141A47",
+                      borderRadius: 14,
+                      background: chip.bg,
+                      fontSize: 11,
+                      lineHeight: 1.2,
+                      transition: "background .3s",
+                    }}
+                  >
+                    <div style={{ fontWeight: 700 }}>
+                      {c.userId === viewerId ? "You" : c.name}
+                    </div>
+                    <div>{chip.status}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <button
             type="button"
             onClick={() =>
               onBuy({
                 productId: groupProduct.id,
                 forUserId: state.who,
-                amountCentsOverride: each,
+                amountCentsOverride: thread ? myShare : each,
+                ...(thread ? { threadId: thread.id } : {}),
               })
             }
+            disabled={Boolean(thread) && !canApprove && mine?.status !== "failed"}
             style={{
               marginTop: 10,
               width: "100%",
@@ -1345,9 +1368,14 @@ export function MGift({
               fontSize: 15,
               fontWeight: 700,
               boxShadow: "3px 3px 0 #B8412F",
+              opacity: Boolean(thread) && !canApprove && mine?.status !== "failed" ? 0.55 : 1,
             }}
           >
-            Approve your {formatPrice(each)} share
+            {thread && !canApprove && mine?.status !== "failed"
+              ? thread.state === "funded"
+                ? `Funded · push ${thread.pushStatus ?? "pending"}`
+                : `Your ${formatPrice(myShare)} is ${mine ? mine.status : "not requested"}`
+              : `Approve your ${formatPrice(thread ? myShare : each)} share`}
           </button>
         </div>
       )}
@@ -1357,10 +1385,172 @@ export function MGift({
 
 /* ------------------------------------------------------------------ 5 */
 
-export function MClosing({ onReplay }: { onReplay: () => void }) {
+export function MDebate() {
+  const state = useGroupDebate(backendGroupId);
+
   return (
     <MobileFrame
       step={5}
+      bg="#BBA9E8"
+      grainId="grainMDebate"
+      decor={<Blob color="#F5E39B" opacity={0.5} size={250} right={-100} top={-90} />}
+    >
+      <div style={KICKER}>Chapter 5 · The group chat</div>
+      {state.status === "ready" ? (
+        <MDebateBody debate={state.debate} />
+      ) : (
+        <div style={{ position: "relative", marginTop: 40, fontSize: 15, opacity: 0.6 }}>
+          {state.status === "empty"
+            ? "Nothing has been argued about yet."
+            : "Reading the group chat…"}
+        </div>
+      )}
+    </MobileFrame>
+  );
+}
+
+function MDebateBody({ debate }: { debate: Debate }) {
+  const { rows, count, send } = useDebateThread(debate);
+  const owner = debateOwner(debate);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        // The frame's header eats the first 66px; the rest is this card's to divide.
+        height: 744,
+        display: "flex",
+        flexDirection: "column",
+        // Clears the demo viewer pill, which is fixed to the window at bottom-left and would
+        // otherwise sit on top of the composer's avatar.
+        paddingBottom: 52,
+        boxSizing: "border-box",
+      }}
+    >
+      <h2
+        style={{
+          margin: "10px 0 0",
+          fontFamily: "var(--font-display), Georgia, serif",
+          fontSize: 38,
+          lineHeight: 0.96,
+          fontWeight: 400,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        The most <em style={{ color: "#B8412F" }}>debated</em>
+        <br />
+        buy of the month
+      </h2>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginTop: 14,
+          padding: 10,
+          background: "#F5ECD9",
+          border: "2px solid #141A47",
+          borderRadius: 16,
+          boxShadow: "4px 4px 0 #141A47",
+        }}
+      >
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            flexShrink: 0,
+            borderRadius: 11,
+            overflow: "hidden",
+            border: "2px solid #141A47",
+            background: owner ? getUser(owner).color : "#FBF6EA",
+            padding: 5,
+            boxSizing: "border-box",
+          }}
+        >
+          <ProductArt
+            kind={artForFind({ id: debate.itemId, category: debate.category })}
+            src={debate.imageUrl ?? undefined}
+          />
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontSize: 15.5,
+              fontWeight: 800,
+              lineHeight: 1.15,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {debate.name}
+          </div>
+          <div style={{ marginTop: 2, fontSize: 12, fontWeight: 600, opacity: 0.66 }}>
+            {count} messages · {debate.participants.length} arguing ·{" "}
+            {Math.max(1, debate.spanDays)} days
+          </div>
+        </div>
+        {debate.priceCents !== null && (
+          <div style={{ fontSize: 15, fontWeight: 800, flexShrink: 0 }}>
+            {formatPrice(debate.priceCents)}
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 9,
+          marginTop: 10,
+          padding: "10px 13px",
+          background: "#141A47",
+          color: "#F5ECD9",
+          borderRadius: 15,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            fontFamily: "var(--font-display), Georgia, serif",
+            fontSize: 32,
+            lineHeight: 0.8,
+            color: "#F5E39B",
+          }}
+        >
+          “
+        </span>
+        <div>
+          <div
+            style={{
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              opacity: 0.6,
+            }}
+          >
+            The verdict
+          </div>
+          <div style={{ marginTop: 2, fontSize: 13, fontWeight: 600, lineHeight: 1.32 }}>
+            {debate.verdict}
+          </div>
+        </div>
+      </div>
+
+      <DebateTranscript rows={rows} gap={7} indent={20} />
+
+      <CommentComposer onSend={send} label="Join the debate" placeholder="Weigh in…" compact />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ 6 */
+
+export function MClosing({ onReplay }: { onReplay: () => void }) {
+  return (
+    <MobileFrame
+      step={6}
       bg="#F5ECD9"
       grainId="grainMClosing"
       decor={
@@ -1370,17 +1560,7 @@ export function MClosing({ onReplay }: { onReplay: () => void }) {
         </>
       }
     >
-      <div
-        style={{
-          position: "relative",
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}
-      >
-        September issue · The end
-      </div>
+      <div style={KICKER}>September issue · The end</div>
 
       <div style={{ position: "relative", display: "flex", marginTop: 22, paddingLeft: 4 }}>
         {(["kristina", "esh", "sabina", "madhav"] as UserId[]).map((id, i) => (
@@ -1438,11 +1618,14 @@ export function MClosing({ onReplay }: { onReplay: () => void }) {
           marginTop: 8,
         }}
       >
-        {closingTiles.map((t) => (
+        {closingTiles.map((t, i) => (
           <div
             key={t.n}
             style={{
-              height: 92,
+              // An odd tile count would leave a hole in the two-up grid, so the last one widens.
+              gridColumn:
+                i === closingTiles.length - 1 && closingTiles.length % 2 === 1 ? "span 2" : "span 1",
+              height: 80,
               padding: "10px 12px",
               boxSizing: "border-box",
               display: "flex",
@@ -1478,7 +1661,9 @@ export function MClosing({ onReplay }: { onReplay: () => void }) {
         ))}
       </div>
 
-      <MobileCta label="Replay Wrapped" onClick={onReplay} top={764} />
+      {/* Sits on the same line as the other chapters' bottom controls, so the
+          reaction rail below it never gets covered. */}
+      <MobileCta label="Replay Wrapped" onClick={onReplay} top={700} />
     </MobileFrame>
   );
 }

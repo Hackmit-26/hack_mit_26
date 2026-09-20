@@ -19,7 +19,7 @@ export function TasteCard() {
       style={{
         position: "absolute",
         left: 360,
-        top: 50,
+        top: 70,
         width: CARD_W,
         height: CARD_H,
         boxSizing: "border-box",

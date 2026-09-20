@@ -60,9 +60,9 @@ export function LoreSkin() {
         </text>
 
         <g fill="none" stroke="#E8806F" strokeWidth="3" strokeLinecap="round">
-          <path className="a-draw" style={{ animationDelay: "0.5s" }} d="M95 350 C 95 400 130 400 142 440" />
-          <path className="a-draw" style={{ animationDelay: "1s" }} d="M284 350 C 284 400 340 400 360 440" />
-          <path className="a-draw" style={{ animationDelay: "1.5s" }} d="M660 350 C 660 400 600 400 578 440" />
+          <path className="a-draw" style={{ animationDelay: "0.5s" }} d="M95 350 C 95 380 130 380 142 410" />
+          <path className="a-draw" style={{ animationDelay: "1s" }} d="M284 350 C 284 380 340 380 360 410" />
+          <path className="a-draw" style={{ animationDelay: "1.5s" }} d="M660 350 C 660 380 600 380 578 410" />
         </g>
         <g fill="#E8806F" stroke="#141A47" strokeWidth="2.5">
           <circle cx="95" cy="350" r="8" />
@@ -113,7 +113,7 @@ export function LoreSkin() {
         style={{
           position: "absolute",
           left: 44,
-          top: 442,
+          top: 412,
           width: 632,
           display: "flex",
           gap: 22,
@@ -166,9 +166,9 @@ export function LoreSkin() {
             <ItemLink url={searchUrl(s.item, s.merchant)} label={`${s.item} at ${s.merchant}`}>
               <div
                 style={{
-                  width: 104,
-                  height: 104,
-                  margin: "8px auto 6px",
+                  width: 88,
+                  height: 88,
+                  margin: "6px auto 4px",
                   boxSizing: "border-box",
                   border: "2px solid #141A47",
                   borderRadius: "50%",
@@ -219,7 +219,7 @@ export function LoreSkin() {
           animationDelay: "2.1s",
           position: "absolute",
           left: 44,
-          top: 722,
+          top: 690,
           width: 632,
           boxSizing: "border-box",
           display: "flex",
@@ -254,7 +254,7 @@ export function LoreSkin() {
           animationDelay: "2.1s",
           position: "absolute",
           left: 60,
-          top: 776,
+          top: 762,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,
@@ -269,7 +269,7 @@ export function LoreSkin() {
         style={{
           position: "absolute",
           left: 44,
-          top: 812,
+          top: 802,
           fontFamily: "var(--font-hand), cursive",
           fontSize: 23,
           lineHeight: 1,
