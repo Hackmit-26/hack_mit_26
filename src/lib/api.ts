@@ -222,6 +222,11 @@ export function addWishlistLink(body: WishlistLinkBody): Promise<Item> {
   return request<Item>("/wishlist/link", { method: "POST", body });
 }
 
+/** Only what the viewer starred. `listMyItems` also returns receipts. */
+export function listWishlist(): Promise<Item[]> {
+  return request<Item[]>("/wishlist");
+}
+
 /* ---------------------------------------------------------------- finds */
 
 export function listGroupFinds(groupId: string): Promise<FindItem[]> {

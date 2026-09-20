@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 import { Avatar } from "@/components/primitives/Avatar";
-import { ArrowRight, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ArrowRight, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { getProduct } from "@/data/products";
@@ -13,12 +13,25 @@ import { group, getUser, userList } from "@/data/users";
 import { formatPrice } from "@/services/commerce";
 import { useApp } from "@/state/store";
 
+const pill: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 9,
+  height: 48,
+  padding: "0 20px",
+  boxSizing: "border-box",
+  border: "2px solid rgba(245,236,217,0.5)",
+  borderRadius: 999,
+  fontSize: 15,
+  fontWeight: 700,
+};
+
 /**
  * The group screen: who's in, what's shared this month, and the way into the
  * Wrapped. Amounts stay hidden unless the viewer turns them on.
  */
 export default function GroupPage() {
-  const { privacy, orders, savedProductIds, reactionsFor } = useApp();
+  const { privacy, orders, savedProductIds, wishlist, reactionsFor } = useApp();
 
   const visible = purchases.filter(
     (p) => (privacy.sharing[p.id] ?? p.sharing) !== "hidden",
@@ -53,24 +66,17 @@ export default function GroupPage() {
             {group.name}
           </h1>
         </div>
-        <Link
-          href="/settings"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 9,
-            height: 48,
-            padding: "0 20px",
-            boxSizing: "border-box",
-            border: "2px solid rgba(245,236,217,0.5)",
-            borderRadius: 999,
-            fontSize: 15,
-            fontWeight: 700,
-          }}
-        >
-          <Lock />
-          Privacy controls
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <Link href="/wishlist" style={pill}>
+            <Heart />
+            Wishlist
+            {wishlist.length > 0 ? ` · ${wishlist.length}` : ""}
+          </Link>
+          <Link href="/settings" style={pill}>
+            <Lock />
+            Privacy controls
+          </Link>
+        </div>
       </div>
 
       {/* the Wrapped is ready */}

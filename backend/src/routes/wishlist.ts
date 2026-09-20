@@ -26,6 +26,19 @@ async function preview(url: string): Promise<LinkPreview> {
 }
 
 export default async function wishlistRoutes(app: FastifyInstance): Promise<void> {
+  // `GET /items/mine` also returns receipts. The wishlist is only what the viewer starred, so it
+  // reads through the reactions rather than the items.
+  app.get('/wishlist', async (request) => {
+    const { userId } = requireAuth(request);
+    const starred = new Set(
+      db.reactions.filter((r) => r.userId === userId && r.type === 'wishlist').map((r) => r.itemId),
+    );
+    return db.items
+      .filter((i) => starred.has(i.id))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((i) => toItem(i));
+  });
+
   app.post('/wishlist/link', async (request) => {
     const { userId } = requireAuth(request);
     const parsed = body.parse(request.body);

@@ -456,6 +456,28 @@ describe('wishlist', () => {
     const mine = await app.inject({ method: 'GET', url: '/items/mine', headers: auth(alice.id) });
     expect(mine.json<Item[]>().map((i) => i.id)).toContain(created.id);
   });
+
+  it('lists only starred items, and only the caller\u2019s', async () => {
+    const alice = user('Alice');
+    const bob = user('Bob');
+    const receipt = item(alice.id, null, 'private', 'A receipt, not a wish');
+
+    const saved = await app.inject({
+      method: 'POST',
+      url: '/wishlist/link',
+      headers: auth(alice.id),
+      payload: { url: 'https://www.shop.example.com/things/2' },
+    });
+    const created = saved.json<Item>();
+
+    const mine = await app.inject({ method: 'GET', url: '/wishlist', headers: auth(alice.id) });
+    expect(mine.statusCode).toBe(200);
+    expect(mine.json<Item[]>().map((i) => i.id)).toEqual([created.id]);
+    expect(mine.json<Item[]>().map((i) => i.id)).not.toContain(receipt.id);
+
+    const theirs = await app.inject({ method: 'GET', url: '/wishlist', headers: auth(bob.id) });
+    expect(theirs.json<Item[]>()).toEqual([]);
+  });
 });
 
 describe('birthdays', () => {
