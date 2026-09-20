@@ -33,7 +33,7 @@ function buildMenus() {
     await chrome.contextMenus.removeAll();
     chrome.contextMenus.create({
       id: MENU_PRIVATE,
-      title: "Save to my Shop Wrapped wishlist",
+      title: "Save to my Unwrap wishlist",
       contexts: CONTEXTS,
     });
     if (!defaultGroupId) return;

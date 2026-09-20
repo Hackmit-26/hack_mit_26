@@ -8,7 +8,7 @@ import { useApp } from "@/state/store";
 /**
  * Stage control, not a product feature.
  *
- * "Shop Wrapped" is demoed by one person driving a four-person group gift on their own: put in
+ * "Unwrap" is demoed by one person driving a four-person group gift on their own: put in
  * $50 as Kristina, become Sabina, approve, become Madhav, approve, watch the push land. This is
  * the thing that makes that possible, so it is deliberately dressed as scaffolding - taped to the
  * bottom-left corner, labelled DEMO, and collapsed to a single pill until it is wanted.

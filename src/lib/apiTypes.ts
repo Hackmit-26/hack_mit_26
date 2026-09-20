@@ -150,6 +150,27 @@ export type Debate = {
   thread: DebateMessage[];
 };
 
+/**
+ * Chapter 1 of the Wrapped: the group's closest taste pair.
+ *
+ * The three scores are computed server-side from real rows — a cosine over the pair's taste
+ * vectors, their price-band histograms and their weekday histograms. Only the prose is written
+ * by the model, which is why `source` says which of the two produced it.
+ */
+export type TasteMatchResult = {
+  pair: [string, string];
+  tasteScore: number;
+  budgetScore: number;
+  timingScore: number;
+  lead: string;
+  sharedTags: string[];
+  notes: { taste: string; budget: string; timing: string };
+  disagreement: { userId: string; text: string }[];
+  footnote: string;
+  otherPairs: { pair: [string, string]; score: number }[];
+  source: "ai" | "template";
+};
+
 export type ExtractedItem = {
   name: string;
   category: string;

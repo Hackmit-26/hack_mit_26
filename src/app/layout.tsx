@@ -30,7 +30,7 @@ const hand = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Shop Wrapped",
+  title: "Unwrap",
   description:
     "A private monthly recap for a close friend group. Social first, commerce second.",
 };

@@ -143,7 +143,7 @@ export function DesktopShell({
             letterSpacing: "-0.01em",
           }}
         >
-          Shop <em style={{ color: "#EBB5BD" }}>Wrapped</em>
+          Un<em style={{ color: "#EBB5BD" }}>wrap</em>
         </div>
       </div>
 

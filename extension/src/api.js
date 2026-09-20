@@ -1,5 +1,5 @@
 /**
- * Client for the Shop Wrapped backend (`backend/src/routes/`).
+ * Client for the Unwrap backend (`backend/src/routes/`).
  *
  * Only ever imported by the service worker. Extension *pages* are subject to CORS and the backend
  * only allows `FRONTEND_ORIGIN`, but a service worker fetch to a host in `host_permissions` is

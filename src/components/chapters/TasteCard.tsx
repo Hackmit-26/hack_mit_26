@@ -3,9 +3,12 @@
 import { Avatar } from "@/components/primitives/Avatar";
 import { Grain } from "@/components/primitives/Glyphs";
 import { ProductArt } from "@/components/primitives/ProductArt";
-import { getUser } from "@/data/users";
+import { backendGroupId, getUser, users } from "@/data/users";
 import { tasteMatch, tasteStats, tasteVennNotes } from "@/data/wrapped";
+import type { UserId } from "@/lib/types";
 import { useApp } from "@/state/store";
+
+import { useTasteMatch } from "./tasteMatchStore";
 
 const CARD_W = 720;
 const CARD_H = 900;
@@ -13,7 +16,32 @@ const CARD_H = 900;
 /** Chapter 1 · Taste match — the Venn reveal. */
 export function TasteCard() {
   const { viewerId } = useApp();
-  const [a, b] = tasteMatch.pair;
+
+  // The pair and all three scores are computed by the backend off real item rows; only the copy
+  // around them is written by the model. The seeded fixture stays as the fallback so a cold or
+  // thin backend degrades to the old static card rather than to an empty chapter.
+  const state = useTasteMatch(backendGroupId);
+  // Avatars and the Venn art are keyed by the fixture roster, so a group whose ids this build
+  // has no face for renders the fixture rather than crashing on a missing user.
+  const match = state.status === "ready" ? state.match : null;
+  const live =
+    match && [...match.pair, ...match.disagreement.map((d) => d.userId)].every((id) => id in users)
+      ? match
+      : null;
+
+  const [a, b] = (live ? live.pair : tasteMatch.pair) as [UserId, UserId];
+  const tasteScore = live ? live.tasteScore : tasteMatch.tasteScore;
+  const disagreement = live ? live.disagreement : tasteMatch.disagreement;
+  const otherPairs = live ? live.otherPairs : tasteMatch.otherPairs;
+  const footnote = live ? live.footnote : tasteMatch.footnote;
+  const stats = live
+    ? [
+        { kicker: "Taste match", value: `${live.tasteScore}%`, note: live.notes.taste, bg: "#F5ECD9" },
+        { kicker: "Budget match", value: `${live.budgetScore}%`, note: live.notes.budget, bg: "#A8DCC2" },
+        { kicker: "Shopping rhythm", value: `${live.timingScore}%`, note: live.notes.timing, bg: "#F5E39B" },
+      ]
+    : tasteStats;
+
   // The AI picked the group's closest pair, which is not always a pair the viewer is in.
   const inPair = viewerId === a || viewerId === b;
 
@@ -214,7 +242,7 @@ export function TasteCard() {
               letterSpacing: "-0.03em",
             }}
           >
-            {tasteMatch.tasteScore}%
+            {tasteScore}%
           </div>
           <div
             style={{
@@ -254,7 +282,7 @@ export function TasteCard() {
           gap: 12,
         }}
       >
-        {tasteStats.map((s, i) => (
+        {stats.map((s, i) => (
           <div
             key={s.kicker}
             style={{
@@ -302,12 +330,18 @@ export function TasteCard() {
           textWrap: "pretty",
         }}
       >
-        {inPair ? "You both" : `${getUser(a).name} and ${getUser(b).name} both`} gravitate
-        toward{" "}
-        <strong style={{ fontWeight: 700 }}>
-          silver jewelry, neutral basics, skincare,
-        </strong>{" "}
-        and <strong style={{ fontWeight: 700 }}>little drinks under $10.</strong>
+        {live ? (
+          live.lead
+        ) : (
+          <>
+            {inPair ? "You both" : `${getUser(a).name} and ${getUser(b).name} both`} gravitate
+            toward{" "}
+            <strong style={{ fontWeight: 700 }}>
+              silver jewelry, neutral basics, skincare,
+            </strong>{" "}
+            and <strong style={{ fontWeight: 700 }}>little drinks.</strong>
+          </>
+        )}
       </div>
 
       {/* disagreement */}
@@ -337,7 +371,7 @@ export function TasteCard() {
           one thing {inPair ? "you" : "they"} absolutely disagree on
         </div>
         <div style={{ display: "flex", gap: 18 }}>
-          {tasteMatch.disagreement.map((d) => (
+          {disagreement.map((d) => (
             <div
               key={d.userId}
               style={{ display: "flex", gap: 10, alignItems: "flex-start", flex: 1 }}
@@ -351,7 +385,7 @@ export function TasteCard() {
                   border: "2px solid #141A47",
                 }}
               >
-                <Avatar who={d.userId} />
+                <Avatar who={d.userId as UserId} />
               </div>
               <div style={{ fontSize: 15.5, lineHeight: 1.3 }}>
                 <strong>{d.text.split(".")[0]}.</strong>
@@ -372,9 +406,9 @@ export function TasteCard() {
           fontWeight: 500,
         }}
       >
-        <div>{tasteMatch.footnote}</div>
+        <div>{footnote}</div>
         <div style={{ display: "flex", gap: 8 }}>
-          {tasteMatch.otherPairs.map((p) => (
+          {otherPairs.map((p) => (
             <div
               key={p.pair.join("-")}
               style={{
@@ -388,7 +422,7 @@ export function TasteCard() {
                 fontWeight: 700,
               }}
             >
-              {getUser(p.pair[0]).name} + {getUser(p.pair[1]).name} {p.score}%
+              {getUser(p.pair[0] as UserId).name} + {getUser(p.pair[1] as UserId).name} {p.score}%
             </div>
           ))}
         </div>

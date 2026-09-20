@@ -1,5 +1,5 @@
 /**
- * Typed client for the Shop Wrapped backend (`backend/src/routes/`).
+ * Typed client for the Unwrap backend (`backend/src/routes/`).
  * Plain functions over `fetch` - no caching, no retries, safe to import on server or client.
  */
 
@@ -17,6 +17,7 @@ import type {
   CreateItemBody,
   CreateThreadBody,
   Debate,
+  TasteMatchResult,
   DuplicateThreadEnvelope,
   FindItem,
   GiftPick,
@@ -254,6 +255,10 @@ export function listGroupFinds(groupId: string): Promise<FindItem[]> {
  */
 export function getGroupDebate(groupId: string): Promise<Debate> {
   return request<Debate>(`/groups/${seg(groupId)}/debate`);
+}
+
+export function getGroupTasteMatch(groupId: string): Promise<TasteMatchResult> {
+  return request<TasteMatchResult>(`/groups/${seg(groupId)}/taste-match`);
 }
 
 /* -------------------------------------------------------------- wrapped */

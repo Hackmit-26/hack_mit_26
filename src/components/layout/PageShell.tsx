@@ -66,7 +66,7 @@ export function PageShell({ children }: { children: React.ReactNode }) {
               lineHeight: 1,
             }}
           >
-            Shop <em style={{ color: "#EBB5BD" }}>Wrapped</em>
+            Un<em style={{ color: "#EBB5BD" }}>wrap</em>
           </span>
         </Link>
 

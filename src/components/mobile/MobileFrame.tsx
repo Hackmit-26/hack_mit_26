@@ -79,7 +79,7 @@ export function MobileFrame({
         }}
       >
         <div style={{ fontFamily: "var(--font-display), Georgia, serif", fontSize: 24 }}>
-          Shop <em style={{ color: "#B8412F" }}>Wrapped</em>
+          Un<em style={{ color: "#B8412F" }}>wrap</em>
         </div>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.14em" }}>
           {step <= STEPS.length ? `${step} / ${STEPS.length}` : "The end"}
