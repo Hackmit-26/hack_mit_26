@@ -52,6 +52,19 @@ export const group: Group = {
   inviteCode: "TEAPARTY",
 };
 
+/**
+ * The same four people as they exist in Supabase. The cards are keyed by first name because the
+ * copy is written by hand; anything that talks to the API needs the uuid instead.
+ */
+export const backendUserIds: Record<UserId, string> = {
+  kristina: "11111111-1111-1111-1111-111111111111",
+  esh: "22222222-2222-2222-2222-222222222222",
+  sabina: "33333333-3333-3333-3333-333333333333",
+  madhav: "44444444-4444-4444-4444-444444444444",
+};
+
+export const backendGroupId = "99999999-9999-9999-9999-999999999999";
+
 export function getUser(id: UserId): User {
   return users[id];
 }

@@ -9,6 +9,7 @@ import { GiftCard, type GiftState } from "@/components/chapters/GiftCard";
 import { LoreCard } from "@/components/chapters/LoreCard";
 import { SpotlightsCard } from "@/components/chapters/SpotlightsCard";
 import { TasteCard } from "@/components/chapters/TasteCard";
+import { CommentDock } from "@/components/comments/CommentDock";
 import { BuySheet, type BuyRequest } from "@/components/commerce/BuySheet";
 import { MClosing, MGift, MLore, MSpot, MTaste } from "@/components/mobile/MobileChapters";
 import { M_H, M_W } from "@/components/mobile/MobileFrame";
@@ -16,7 +17,7 @@ import { ReactionBar } from "@/components/wrapped/ReactionBar";
 import { Stage, useIsMobile } from "@/components/primitives/Stage";
 import { DesktopShell } from "@/components/shell/DesktopShell";
 import { wrappedCards } from "@/data";
-import { useApp } from "@/state/store";
+import { cardTarget, useApp, type CommentTarget } from "@/state/store";
 import type { ChapterId, UserId } from "@/lib/types";
 
 export default function WrappedPage() {
@@ -194,11 +195,19 @@ export default function WrappedPage() {
                 right: 16,
                 bottom: 14,
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
+                gap: 6,
                 zIndex: 12,
               }}
             >
               <ReactionBar targetId={reactionTarget(chapter, who, caseId)} compact />
+              <CommentDock
+                target={commentTarget(chapter, who, caseId)}
+                label="Comments"
+                hideLabel
+                compact
+              />
             </div>
 
             <Link
@@ -264,11 +273,14 @@ export default function WrappedPage() {
               top: 962,
               width: 720,
               display: "flex",
+              alignItems: "center",
               justifyContent: "center",
+              gap: 10,
               zIndex: 20,
             }}
           >
             <ReactionBar targetId={reactionTarget(chapter, who, caseId)} />
+            <CommentDock target={commentTarget(chapter, who, caseId)} />
           </div>
 
           <Link
@@ -299,6 +311,11 @@ function reactionTarget(chapter: ChapterId, who: UserId, caseId: string): string
   if (chapter === "spotlights") return `spot-${who}`;
   if (chapter === "lore") return `lore-${caseId}`;
   return `card-${chapter}`;
+}
+
+/** Comments hang off the same sub-card the reactions do. */
+function commentTarget(chapter: ChapterId, who: UserId, caseId: string): CommentTarget {
+  return cardTarget(reactionTarget(chapter, who, caseId));
 }
 
 const srOnly: React.CSSProperties = {

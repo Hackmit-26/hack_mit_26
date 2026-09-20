@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 
 import { Avatar } from "@/components/primitives/Avatar";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaTag } from "@/components/chapters/GiftCard";
 import { Blob, MobileCta, MobileFrame } from "./MobileFrame";
@@ -26,7 +27,7 @@ import {
   tasteStats,
   closingTiles,
 } from "@/data/wrapped";
-import { formatPrice, shareOf } from "@/services/commerce";
+import { formatPrice, searchUrl, shareOf } from "@/services/commerce";
 import type { GiftState } from "@/components/chapters/GiftCard";
 import type { UserId } from "@/lib/types";
 
@@ -678,12 +679,25 @@ export function MLore({
                   >
                     <Avatar who={e.userId} />
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.1 }}>{e.store}</div>
+                  <ItemLink
+                    url={searchUrl(e.item, e.store)}
+                    label={`${e.item} at ${e.store}`}
+                    style={{ flex: 1, minWidth: 0 }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      {e.store}
+                    </div>
                     <div style={{ fontSize: 12, opacity: 0.85 }}>
                       {getUser(e.userId).name} · {e.time}
                     </div>
-                  </div>
+                  </ItemLink>
                   <div
                     style={{
                       fontFamily: "var(--font-hand), cursive",
@@ -717,43 +731,55 @@ export function MLore({
                     color: "#141A47",
                   }}
                 >
-                  <div
+                  <ItemLink
+                    url={searchUrl(n.title, null)}
+                    label={n.title}
                     style={{
-                      width: 42,
-                      height: 42,
-                      flexShrink: 0,
-                      borderRadius: "50%",
-                      border: "2px solid #141A47",
-                      background: "#F5ECD9",
-                      boxSizing: "border-box",
-                      padding: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      flex: 1,
+                      minWidth: 0,
                     }}
                   >
-                    {n.art !== "socks" && <ProductArt kind={n.art} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: "#B8412F",
+                        width: 42,
+                        height: 42,
+                        flexShrink: 0,
+                        borderRadius: "50%",
+                        border: "2px solid #141A47",
+                        background: "#F5ECD9",
+                        boxSizing: "border-box",
+                        padding: 4,
                       }}
                     >
-                      {n.kicker}
+                      {n.art !== "socks" && <ProductArt kind={n.art} />}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-display), Georgia, serif",
-                        fontSize: 21,
-                        lineHeight: 1,
-                      }}
-                    >
-                      {n.title}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          color: "#B8412F",
+                        }}
+                      >
+                        {n.kicker}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "var(--font-display), Georgia, serif",
+                          fontSize: 21,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {n.title}
+                      </div>
+                      <div style={{ fontSize: 12 }}>{n.when}</div>
                     </div>
-                    <div style={{ fontSize: 12 }}>{n.when}</div>
-                  </div>
+                  </ItemLink>
                   {n.gap && (
                     <div
                       style={{
@@ -845,30 +871,41 @@ function MSkinCards() {
             transform: `rotate(${[-1.5, 1, -1][i]}deg)`,
           }}
         >
-          <div
-            style={{
-              width: 62,
-              height: 62,
-              margin: "0 auto 4px",
-              boxSizing: "border-box",
-              border: "2px solid #141A47",
-              borderRadius: "50%",
-              background: "#F5ECD9",
-              padding: 6,
-            }}
-          >
-            <ProductArt kind={s.art} />
-          </div>
-          <div
-            style={{
-              fontFamily: "var(--font-display), Georgia, serif",
-              fontSize: 16,
-              lineHeight: 1.05,
-            }}
-          >
-            {s.item}
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 600, marginTop: 2 }}>{s.merchant}</div>
+          <ItemLink url={searchUrl(s.item, s.merchant)} label={`${s.item} at ${s.merchant}`}>
+            <div
+              style={{
+                width: 62,
+                height: 62,
+                margin: "0 auto 4px",
+                boxSizing: "border-box",
+                border: "2px solid #141A47",
+                borderRadius: "50%",
+                background: "#F5ECD9",
+                padding: 6,
+              }}
+            >
+              <ProductArt kind={s.art} />
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display), Georgia, serif",
+                fontSize: 16,
+                lineHeight: 1.05,
+              }}
+            >
+              {s.item}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                marginTop: 2,
+                textDecoration: "underline",
+              }}
+            >
+              {s.merchant}
+            </div>
+          </ItemLink>
           <div
             style={{
               fontFamily: "var(--font-hand), cursive",
@@ -1110,7 +1147,9 @@ export function MGift({
                 }}
               >
                 <div style={{ width: 84, flexShrink: 0 }}>
-                  <div
+                  <ItemLink
+                    url={searchUrl(p.title, p.merchant)}
+                    label={`${p.title} at ${p.merchant}`}
                     style={{
                       width: 84,
                       height: 84,
@@ -1122,7 +1161,7 @@ export function MGift({
                     }}
                   >
                     <ProductArt kind={p.art} />
-                  </div>
+                  </ItemLink>
                   <div
                     style={{
                       fontFamily: "var(--font-display), Georgia, serif",
@@ -1136,7 +1175,9 @@ export function MGift({
                   </div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
+                  <ItemLink
+                    url={searchUrl(p.title, p.merchant)}
+                    label={`${p.title} at ${p.merchant}`}
                     style={{
                       fontFamily: "var(--font-display), Georgia, serif",
                       fontSize: 22,
@@ -1144,7 +1185,7 @@ export function MGift({
                     }}
                   >
                     {p.title}
-                  </div>
+                  </ItemLink>
                   <div
                     style={{
                       display: "flex",
@@ -1241,7 +1282,9 @@ export function MGift({
             {gift.banner}
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
-            <div
+            <ItemLink
+              url={searchUrl(groupProduct.title, groupProduct.merchant)}
+              label={`${groupProduct.title} at ${groupProduct.merchant}`}
               style={{
                 width: 96,
                 height: 96,
@@ -1254,9 +1297,11 @@ export function MGift({
               }}
             >
               <ProductArt kind={groupProduct.art} />
-            </div>
+            </ItemLink>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div
+              <ItemLink
+                url={searchUrl(groupProduct.title, groupProduct.merchant)}
+                label={`${groupProduct.title} at ${groupProduct.merchant}`}
                 style={{
                   fontFamily: "var(--font-display), Georgia, serif",
                   fontSize: 22,
@@ -1264,7 +1309,7 @@ export function MGift({
                 }}
               >
                 {groupProduct.title}
-              </div>
+              </ItemLink>
               <div style={{ fontSize: 12.5, marginTop: 4 }}>
                 {formatPrice(groupProduct.priceCents)} total, split {gift.splitWays} ways
               </div>

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { Avatar } from "@/components/primitives/Avatar";
 import { ArrowRight, GiftIcon, Grain } from "@/components/primitives/Glyphs";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaMark } from "@/components/primitives/VisaMark";
 import {
@@ -15,7 +16,7 @@ import {
   recommendationsFor,
 } from "@/data/products";
 import { getUser } from "@/data/users";
-import { formatPrice, shareOf } from "@/services/commerce";
+import { formatPrice, searchUrl, shareOf } from "@/services/commerce";
 import { useApp } from "@/state/store";
 import type { BudgetKey, Recommendation, UserId } from "@/lib/types";
 
@@ -644,7 +645,9 @@ function RecRow({
           alignItems: "center",
         }}
       >
-        <div
+        <ItemLink
+          url={searchUrl(product.title, product.merchant)}
+          label={`${product.title} at ${product.merchant}`}
           style={{
             width: 132,
             height: 132,
@@ -656,7 +659,7 @@ function RecRow({
           }}
         >
           <ProductArt kind={product.art} />
-        </div>
+        </ItemLink>
         <div
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
@@ -678,7 +681,9 @@ function RecRow({
           gap: 5,
         }}
       >
-        <div
+        <ItemLink
+          url={searchUrl(product.title, product.merchant)}
+          label={`${product.title} at ${product.merchant}`}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 28,
@@ -687,7 +692,7 @@ function RecRow({
           }}
         >
           {product.title}
-        </div>
+        </ItemLink>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
           <b>{product.merchant}</b>
           <VisaTag />
@@ -779,7 +784,9 @@ function DetailScreen({
         Gift for {person.name}
       </div>
 
-      <div
+      <ItemLink
+        url={searchUrl(product.title, product.merchant)}
+        label={`${product.title} at ${product.merchant}`}
         style={{
           position: "absolute",
           left: 44,
@@ -820,10 +827,12 @@ function DetailScreen({
         >
           {formatPrice(product.priceCents)}
         </div>
-      </div>
+      </ItemLink>
 
       <div style={{ position: "absolute", left: 44, top: 358, width: 632 }}>
-        <div
+        <ItemLink
+          url={searchUrl(product.title, product.merchant)}
+          label={`${product.title} at ${product.merchant}`}
           style={{
             fontFamily: "var(--font-display), Georgia, serif",
             fontSize: 50,
@@ -832,7 +841,7 @@ function DetailScreen({
           }}
         >
           {product.title}
-        </div>
+        </ItemLink>
         <div
           style={{
             display: "flex",
@@ -1003,7 +1012,9 @@ function GroupGiftPanel({
       </div>
 
       <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
-        <div
+        <ItemLink
+          url={searchUrl(product.title, product.merchant)}
+          label={`${product.title} at ${product.merchant}`}
           style={{
             width: 140,
             height: 140,
@@ -1016,7 +1027,7 @@ function GroupGiftPanel({
           }}
         >
           <ProductArt kind={product.art} />
-        </div>
+        </ItemLink>
         <div
           style={{
             flex: 1,
@@ -1026,7 +1037,9 @@ function GroupGiftPanel({
             gap: 4,
           }}
         >
-          <div
+          <ItemLink
+            url={searchUrl(product.title, product.merchant)}
+            label={`${product.title} at ${product.merchant}`}
             style={{
               fontFamily: "var(--font-display), Georgia, serif",
               fontSize: 30,
@@ -1034,7 +1047,7 @@ function GroupGiftPanel({
             }}
           >
             {product.title}
-          </div>
+          </ItemLink>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
             <b>{product.merchant}</b>
             <VisaTag />

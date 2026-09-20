@@ -2,23 +2,40 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
 
+import { CommentDock } from "@/components/comments/CommentDock";
 import { Avatar } from "@/components/primitives/Avatar";
-import { ArrowRight, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ArrowRight, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { getProduct } from "@/data/products";
 import { purchases } from "@/data/purchases";
 import { group, getUser, userList } from "@/data/users";
-import { formatPrice } from "@/services/commerce";
-import { useApp } from "@/state/store";
+import type { Purchase } from "@/lib/types";
+import { formatPrice, searchUrl } from "@/services/commerce";
+import { cardTarget, useApp } from "@/state/store";
+
+const pill: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 9,
+  height: 48,
+  padding: "0 20px",
+  boxSizing: "border-box",
+  border: "2px solid rgba(245,236,217,0.5)",
+  borderRadius: 999,
+  fontSize: 15,
+  fontWeight: 700,
+};
 
 /**
  * The group screen: who's in, what's shared this month, and the way into the
  * Wrapped. Amounts stay hidden unless the viewer turns them on.
  */
 export default function GroupPage() {
-  const { privacy, orders, savedProductIds, reactionsFor } = useApp();
+  const { privacy, orders, savedProductIds, wishlist, reactionsFor } = useApp();
 
   const visible = purchases.filter(
     (p) => (privacy.sharing[p.id] ?? p.sharing) !== "hidden",
@@ -53,24 +70,17 @@ export default function GroupPage() {
             {group.name}
           </h1>
         </div>
-        <Link
-          href="/settings"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 9,
-            height: 48,
-            padding: "0 20px",
-            boxSizing: "border-box",
-            border: "2px solid rgba(245,236,217,0.5)",
-            borderRadius: 999,
-            fontSize: 15,
-            fontWeight: 700,
-          }}
-        >
-          <Lock />
-          Privacy controls
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <Link href="/wishlist" style={pill}>
+            <Heart />
+            Wishlist
+            {wishlist.length > 0 ? ` · ${wishlist.length}` : ""}
+          </Link>
+          <Link href="/settings" style={pill}>
+            <Lock />
+            Privacy controls
+          </Link>
+        </div>
       </div>
 
       {/* the Wrapped is ready */}
@@ -257,98 +267,15 @@ export default function GroupPage() {
           marginTop: 14,
         }}
       >
-        {recent.map((p) => {
-          const sharing = privacy.sharing[p.id] ?? p.sharing;
-          const anon = sharing === "anonymous";
-          const reactions = reactionsFor(p.id);
-          return (
-            <div
-              key={p.id}
-              style={{
-                position: "relative",
-                padding: 12,
-                boxSizing: "border-box",
-                border: "2px solid #141A47",
-                borderRadius: 20,
-                background: "#F5ECD9",
-                color: "#141A47",
-                boxShadow: "4px 4px 0 #141A47",
-              }}
-            >
-              <div
-                style={{
-                  height: 92,
-                  borderRadius: 14,
-                  background: anon ? "#F5ECD9" : getUser(p.userId).color,
-                  border: "2px solid #141A47",
-                  padding: 6,
-                  boxSizing: "border-box",
-                }}
-              >
-                <ProductArt kind={p.art} src={p.image} />
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>
-                {p.item}
-              </div>
-              <div style={{ fontSize: 13, opacity: 0.75 }}>{p.merchant}</div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  marginTop: 8,
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                }}
-              >
-                {anon ? (
-                  <span style={{ opacity: 0.7 }}>someone in the group</span>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: "50%",
-                        overflow: "hidden",
-                        border: "2px solid #141A47",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Avatar who={p.userId} />
-                    </span>
-                    {getUser(p.userId).name}
-                  </>
-                )}
-                {privacy.showAmounts && (
-                  <span style={{ marginLeft: "auto", fontWeight: 700 }}>
-                    {formatPrice(p.amountCents)}
-                  </span>
-                )}
-              </div>
-              {reactions.length > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    right: -6,
-                    top: -8,
-                    height: 26,
-                    padding: "0 9px",
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 999,
-                    background: "#F5E39B",
-                    border: "2px solid #141A47",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  {reactions.length}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {recent.map((p) => (
+          <SharedFindTile
+            key={p.id}
+            purchase={p}
+            anon={(privacy.sharing[p.id] ?? p.sharing) === "anonymous"}
+            showAmount={privacy.showAmounts}
+            reactionCount={reactionsFor(p.id).length}
+          />
+        ))}
       </div>
 
       {/* what the viewer has done from inside the Wrapped */}
@@ -357,8 +284,10 @@ export default function GroupPage() {
           <SectionLabel style={{ marginTop: 40 }}>From your Wrapped</SectionLabel>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 14 }}>
             {orders.map((o) => (
-              <div
+              <ItemLink
                 key={o.id}
+                url={searchUrl(getProduct(o.productId).title, o.merchant)}
+                label={`${getProduct(o.productId).title} at ${o.merchant}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -394,11 +323,13 @@ export default function GroupPage() {
                       ` · credited to ${getUser(o.inspiredByUserId).name}`}
                   </div>
                 </div>
-              </div>
+              </ItemLink>
             ))}
             {savedProductIds.map((id) => (
-              <div
+              <ItemLink
                 key={id}
+                url={searchUrl(getProduct(id).title, getProduct(id).merchant)}
+                label={`${getProduct(id).title} at ${getProduct(id).merchant}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -414,7 +345,7 @@ export default function GroupPage() {
                 }}
               >
                 Saved · {getProduct(id).title}
-              </div>
+              </ItemLink>
             ))}
           </div>
         </>
@@ -435,5 +366,132 @@ export default function GroupPage() {
         future Wrappeds.
       </div>
     </PageShell>
+  );
+}
+
+/**
+ * One shared purchase. The comment chip sits under the tile and, while the
+ * conversation is open, the tile takes the whole row so the thread has room to
+ * be a thread rather than a column of one-word bubbles.
+ */
+function SharedFindTile({
+  purchase,
+  anon,
+  showAmount,
+  reactionCount,
+}: {
+  purchase: Purchase;
+  anon: boolean;
+  showAmount: boolean;
+  reactionCount: number;
+}) {
+  const [talking, setTalking] = useState(false);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        gridColumn: talking ? "1 / -1" : "auto",
+        padding: 12,
+        boxSizing: "border-box",
+        border: "2px solid #141A47",
+        borderRadius: 20,
+        background: "#F5ECD9",
+        color: "#141A47",
+        boxShadow: "4px 4px 0 #141A47",
+      }}
+    >
+      <ItemLink
+        url={searchUrl(purchase.item, purchase.merchant)}
+        label={`${purchase.item} at ${purchase.merchant}`}
+      >
+        <div
+          style={{
+            height: 92,
+            maxWidth: talking ? 260 : "none",
+            borderRadius: 14,
+            background: anon ? "#F5ECD9" : getUser(purchase.userId).color,
+            border: "2px solid #141A47",
+            padding: 6,
+            boxSizing: "border-box",
+          }}
+        >
+          <ProductArt kind={purchase.art} src={purchase.image} />
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8, lineHeight: 1.2 }}>
+          {purchase.item}
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.75, textDecoration: "underline" }}>
+          {purchase.merchant}
+        </div>
+      </ItemLink>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          marginTop: 8,
+          fontSize: 12.5,
+          fontWeight: 600,
+        }}
+      >
+        {anon ? (
+          <span style={{ opacity: 0.7 }}>someone in the group</span>
+        ) : (
+          <>
+            <span
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: "2px solid #141A47",
+                flexShrink: 0,
+              }}
+            >
+              <Avatar who={purchase.userId} />
+            </span>
+            {getUser(purchase.userId).name}
+          </>
+        )}
+        {showAmount && (
+          <span style={{ marginLeft: "auto", fontWeight: 700 }}>
+            {formatPrice(purchase.amountCents)}
+          </span>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <CommentDock
+          target={cardTarget(`purchase-${purchase.id}`)}
+          compact
+          placement="inline"
+          label="Comments"
+          title={`On ${purchase.item}`}
+          onOpenChange={setTalking}
+        />
+      </div>
+
+      {reactionCount > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            right: -6,
+            top: -8,
+            height: 26,
+            padding: "0 9px",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: 999,
+            background: "#F5E39B",
+            border: "2px solid #141A47",
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {reactionCount}
+        </div>
+      )}
+    </div>
   );
 }

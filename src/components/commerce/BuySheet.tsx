@@ -5,11 +5,17 @@ import { useEffect, useState } from "react";
 
 import { Avatar } from "@/components/primitives/Avatar";
 import { Check, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaMark } from "@/components/primitives/VisaMark";
 import { VisaTag } from "@/components/chapters/GiftCard";
 import { getUser } from "@/data/users";
-import { findOptions, formatPrice, type ProductOption } from "@/services/commerce";
+import {
+  findOptions,
+  formatPrice,
+  searchUrl,
+  type ProductOption,
+} from "@/services/commerce";
 import {
   buildPaymentInstruction,
   defaultSpendLimits,
@@ -252,7 +258,9 @@ function Review({
       ) : (
         <>
           <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
-            <div
+            <ItemLink
+              url={searchUrl(option.product.title, option.product.merchant)}
+              label={`${option.product.title} at ${option.product.merchant}`}
               style={{
                 width: 150,
                 height: 150,
@@ -266,9 +274,11 @@ function Review({
               }}
             >
               <ProductArt kind={option.product.art} src={option.product.image} />
-            </div>
+            </ItemLink>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div
+              <ItemLink
+                url={searchUrl(option.product.title, option.product.merchant)}
+                label={`${option.product.title} at ${option.product.merchant}`}
                 style={{
                   fontFamily: "var(--font-display), Georgia, serif",
                   fontSize: 34,
@@ -277,7 +287,7 @@ function Review({
                 }}
               >
                 {option.product.title}
-              </div>
+              </ItemLink>
               <div
                 style={{
                   display: "flex",
@@ -624,7 +634,11 @@ function Confirmed({
       </div>
 
       {option && (
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <ItemLink
+          url={searchUrl(option.product.title, option.product.merchant)}
+          label={`${option.product.title} at ${option.product.merchant}`}
+          style={{ display: "flex", alignItems: "center", gap: 14 }}
+        >
           <div
             style={{
               width: 76,
@@ -644,7 +658,7 @@ function Confirmed({
               {formatPrice(outcome.amountCents)} · only visible to you
             </div>
           </div>
-        </div>
+        </ItemLink>
       )}
 
       {request.inspiredByUserId && (
