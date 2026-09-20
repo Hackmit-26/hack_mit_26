@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Lock } from "@/components/primitives/Glyphs";
 import { ProductArt } from "@/components/primitives/ProductArt";
+import { VisaMark } from "@/components/primitives/VisaMark";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { purchasesFor } from "@/data/purchases";
 import { viewer } from "@/data/users";
@@ -332,7 +333,18 @@ export default function SettingsPage() {
 
         {/* payments */}
         <PaperCard>
-          <SectionLabel style={{ color: "#C4553F" }}>Payments</SectionLabel>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            <SectionLabel style={{ color: "#C4553F" }}>Payments</SectionLabel>
+            <VisaMark height={16} />
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 10 }}>
             <div
               style={{

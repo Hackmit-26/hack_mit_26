@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@/components/primitives/Avatar";
 import { Check, Lock, Sparkle } from "@/components/primitives/Glyphs";
 import { ProductArt } from "@/components/primitives/ProductArt";
+import { VisaMark } from "@/components/primitives/VisaMark";
 import { VisaTag } from "@/components/chapters/GiftCard";
 import { getUser } from "@/data/users";
 import { findOptions, formatPrice, type ProductOption } from "@/services/commerce";
@@ -553,13 +554,15 @@ function Authorizing({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 10,
           fontSize: 14,
           opacity: 0.75,
         }}
       >
         <Lock />
         We never store card numbers.
+        <span style={{ opacity: 0.5 }}>·</span>
+        <VisaMark height={13} />
       </div>
     </motion.div>
   );
@@ -690,7 +693,17 @@ function Confirmed({
           : "this one shows up in next month's Wrapped."}
       </div>
 
-      <div style={{ fontSize: 13, opacity: 0.65 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          fontSize: 13,
+          opacity: 0.65,
+        }}
+      >
+        <VisaMark height={12} />
         Receipt {outcome.id} · card ending 4242
       </div>
 

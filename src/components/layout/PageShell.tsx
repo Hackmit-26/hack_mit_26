@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Sparkle } from "@/components/primitives/Glyphs";
+import { VisaLockup } from "@/components/primitives/VisaMark";
 
 /** Shared chrome for the non-story routes: midnight ground, soft blobs. */
 export function PageShell({ children }: { children: React.ReactNode }) {
@@ -70,6 +71,22 @@ export function PageShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         {children}
+
+        <footer
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginTop: "clamp(40px, 6vh, 72px)",
+            paddingTop: 20,
+            borderTop: "1px solid rgba(245,236,217,0.14)",
+            fontSize: 13.5,
+            color: "rgba(245,236,217,0.6)",
+          }}
+        >
+          Buying runs on
+          <VisaLockup tone="cream" height={16} />
+        </footer>
       </div>
     </main>
   );
