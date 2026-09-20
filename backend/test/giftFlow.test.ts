@@ -519,6 +519,222 @@ describe('opt-out and removal', () => {
   });
 });
 
+/**
+ * Pooling is the whole product, and every member has to be able to play every part of it. These
+ * drive the same pot from each person's login rather than always organising as Ada.
+ */
+describe('pooling across every member', () => {
+  const EVERYONE = PEOPLE.map(([id]) => id);
+
+  /** A fresh `collecting` pot for an arbitrary organiser/recipient pair, on a pick at this price. */
+  async function pot(
+    organiserId: string,
+    recipientId: string,
+    priceCents: number,
+  ): Promise<Thread> {
+    resetDb();
+    resetMockVisa();
+    seed();
+
+    picker.prices = [];
+    const created = await app.inject({
+      method: 'POST',
+      url: '/threads',
+      headers: as(organiserId),
+      payload: { groupId: GROUP, recipientId, budgetMinCents: 1_000, budgetMaxCents: 100_000 },
+    });
+    expect(created.statusCode).toBe(201);
+    await new Promise((resolve) => setImmediate(resolve));
+    const threadId = created.json<Thread>().id;
+
+    picker.prices = [priceCents];
+    expect(
+      (await app.inject({ method: 'POST', url: `/threads/${threadId}/picks`, headers: as(organiserId) }))
+        .statusCode,
+    ).toBe(200);
+
+    const locked = await app.inject({
+      method: 'POST',
+      url: `/threads/${threadId}/lock`,
+      headers: as(organiserId),
+    });
+    expect(locked.statusCode).toBe(200);
+    return locked.json<Thread>();
+  }
+
+  const sum = (thread: Thread): number =>
+    thread.contributions.reduce((acc, c) => acc + (c.amountCents ?? 0), 0);
+
+  it.each(
+    EVERYONE.flatMap((organiserId) =>
+      EVERYONE.filter((id) => id !== organiserId).map((recipientId) => [organiserId, recipientId]),
+    ),
+  )('funds a pot organised by %s for %s', async (organiserId, recipientId) => {
+    const locked = await pot(organiserId!, recipientId!, 9_000);
+    const contributors = locked.contributions.map((c) => c.userId).sort();
+
+    // Everyone but the recipient chips in, and the organiser is in there exactly once.
+    expect(contributors).toEqual(EVERYONE.filter((id) => id !== recipientId).sort());
+    expect(contributors.filter((id) => id === organiserId)).toHaveLength(1);
+    expect(sum(locked)).toBe(9_000);
+
+    const pushSpy = vi.spyOn(visa, 'pushFunds');
+    for (const userId of contributors) {
+      const res = await approve(locked.id, userId);
+      expect(res.statusCode).toBe(200);
+      expect(res.json<Contribution>().status).toBe('pulled');
+    }
+
+    const funded = await getThread(locked.id, organiserId!);
+    expect(funded.state).toBe('funded');
+    expect(funded.pushStatus).toBe('succeeded');
+    // The pot that lands on the organiser is the price, not a share of it.
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(pushSpy.mock.calls[0]?.[0].amountCents).toBe(9_000);
+
+    // The recipient still cannot see any of it.
+    const peek = await app.inject({
+      method: 'GET',
+      url: `/threads/${locked.id}`,
+      headers: as(recipientId!),
+    });
+    expect(peek.statusCode).toBe(404);
+  });
+
+  it('splits a price that does not divide evenly without losing or gaining a cent', async () => {
+    const locked = await pot(BO, RECIPIENT, 10_000);
+    const amounts = locked.contributions.map((c) => c.amountCents ?? 0).sort();
+
+    expect(amounts).toEqual([3_333, 3_333, 3_334]);
+    expect(sum(locked)).toBe(10_000);
+
+    const pushSpy = vi.spyOn(visa, 'pushFunds');
+    for (const c of locked.contributions) await approve(locked.id, c.userId);
+
+    expect((await getThread(locked.id, BO)).state).toBe('funded');
+    expect(pushSpy.mock.calls[0]?.[0].amountCents).toBe(10_000);
+  });
+
+  it('rebalances an uneven split onto the people who are left when someone opts out', async () => {
+    const locked = await pot(CY, RECIPIENT, 10_000);
+    const leaver = locked.contributions.find((c) => c.userId !== CY)?.userId;
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/threads/${locked.id}/contributions/me/opt-out`,
+      headers: as(leaver!),
+    });
+    expect(res.statusCode).toBe(200);
+
+    const after = res.json<Thread>();
+    expect(after.contributions.find((c) => c.userId === leaver)?.amountCents).toBe(0);
+    expect(
+      after.contributions
+        .filter((c) => c.userId !== leaver)
+        .map((c) => c.amountCents ?? 0)
+        .sort(),
+    ).toEqual([5_000, 5_000]);
+    expect(sum(after)).toBe(10_000);
+  });
+
+  it('counts the organiser share once when the organiser pays last', async () => {
+    const locked = await pot(CY, RECIPIENT, 9_000);
+    const others = locked.contributions.map((c) => c.userId).filter((id) => id !== CY);
+
+    for (const userId of others) await approve(locked.id, userId);
+    expect((await getThread(locked.id, CY)).state).toBe('collecting');
+
+    const pushSpy = vi.spyOn(visa, 'pushFunds');
+    await approve(locked.id, CY);
+
+    const funded = await getThread(locked.id, CY);
+    expect(funded.state).toBe('funded');
+    expect(funded.contributions.filter((c) => c.userId === CY)).toHaveLength(1);
+    expect(pushSpy.mock.calls[0]?.[0].amountCents).toBe(9_000);
+  });
+
+  it('refuses to let the last contributor opt out and strand the pot', async () => {
+    const locked = await pot(ORGANISER, RECIPIENT, 9_000);
+    const [first, second, last] = locked.contributions.map((c) => c.userId);
+
+    for (const userId of [first, second]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/threads/${locked.id}/contributions/me/opt-out`,
+        headers: as(userId!),
+      });
+      expect(res.statusCode).toBe(200);
+    }
+    expect(rows(locked.id).find((c) => c.userId === last)?.amountCents).toBe(9_000);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/threads/${locked.id}/contributions/me/opt-out`,
+      headers: as(last!),
+    });
+    expect(res.statusCode).toBe(409);
+    // Still payable, rather than a thread nobody owes anything on.
+    expect(rows(locked.id).find((c) => c.userId === last)?.status).toBe('pending');
+    expect((await approve(locked.id, last!)).json<Contribution>().status).toBe('pulled');
+    expect((await getThread(locked.id)).state).toBe('funded');
+  });
+
+  it('refuses to let the organiser remove the last contributor', async () => {
+    const locked = await pot(ORGANISER, RECIPIENT, 9_000);
+    const [first, second, last] = locked.contributions.map((c) => c.userId);
+
+    for (const userId of [first, second]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/threads/${locked.id}/contributions/${userId}/remove`,
+        headers: as(ORGANISER),
+      });
+      expect(res.statusCode).toBe(200);
+    }
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/threads/${locked.id}/contributions/${last}/remove`,
+      headers: as(ORGANISER),
+    });
+    expect(res.statusCode).toBe(409);
+    expect(rows(locked.id).find((c) => c.userId === last)?.status).toBe('pending');
+  });
+
+  it('refuses an opt-out from someone who has already paid', async () => {
+    const locked = await pot(BO, RECIPIENT, 9_000);
+    await approve(locked.id, BO);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/threads/${locked.id}/contributions/me/opt-out`,
+      headers: as(BO),
+    });
+    expect(res.statusCode).toBe(409);
+    expect(rows(locked.id).find((c) => c.userId === BO)?.status).toBe('pulled');
+  });
+
+  it('lets any member organise, but only that member drive their own thread', async () => {
+    const locked = await pot(CY, RECIPIENT, 9_000);
+
+    for (const userId of [ORGANISER, BO]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/threads/${locked.id}/contributions/${ORGANISER}/remove`,
+        headers: as(userId),
+      });
+      expect(res.statusCode).toBe(403);
+    }
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/threads/${locked.id}/contributions/${ORGANISER}/remove`,
+      headers: as(CY),
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});
+
 describe('listing and guards', () => {
   it('lists active group threads for members and hides them from the recipient', async () => {
     const thread = await createThread();

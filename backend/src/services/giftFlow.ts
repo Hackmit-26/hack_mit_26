@@ -450,6 +450,18 @@ function myContribution(threadId: string, userId: string): ContributionRow {
   return row;
 }
 
+/**
+ * Whether this row is the only one still owing anything. Emptying a `collecting` thread would
+ * strand it: `settleIfFunded` never completes a pot nobody owes, no endpoint puts a contributor
+ * back, and the shares cannot be recomputed onto anyone. `lockThread` refuses to start such a
+ * thread for the same reason, so leaving is refused rather than allowed to create one.
+ */
+function isLastActiveContributor(threadId: string, userId: string): boolean {
+  return threadContributions(threadId).every(
+    (c) => isExcluded(c.status) || c.userId === userId,
+  );
+}
+
 export function optOut(threadId: string, userId: string): GiftThreadRow {
   const thread = getThread(threadId);
   if (thread.state !== 'collecting') {
@@ -457,6 +469,9 @@ export function optOut(threadId: string, userId: string): GiftThreadRow {
   }
   const row = myContribution(threadId, userId);
   if (isExcluded(row.status)) throw invalidState('You are already out of this gift');
+  if (isLastActiveContributor(threadId, userId)) {
+    throw invalidState('You are the last one chipping in; ask the organiser to cancel the gift');
+  }
   if (!canOptOut(threadContributions(threadId))) {
     throw invalidState('Someone has already paid; ask the organiser to remove you instead');
   }
@@ -481,6 +496,9 @@ export async function removeContributor(
   const row = myContribution(threadId, targetUserId);
   if (row.status !== 'pending' && row.status !== 'failed') {
     throw invalidState('Only unpaid contributors can be removed');
+  }
+  if (isLastActiveContributor(threadId, targetUserId)) {
+    throw invalidState('Cannot remove the last contributor; cancel the gift instead');
   }
   db.contributions.update((c) => c.id === row.id, {
     status: 'removed',
