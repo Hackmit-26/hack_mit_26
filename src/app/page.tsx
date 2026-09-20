@@ -15,16 +15,26 @@ import {
   useGroupFinds,
 } from "@/components/commerce/findsStore";
 import { useItemDetail } from "@/components/commerce/ItemDetailModal";
+import { useGroupDebate } from "@/components/chapters/debateStore";
+import { PersonSheet } from "@/components/group/PersonSheet";
 import { Avatar } from "@/components/primitives/Avatar";
-import { ArrowRight, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
+import { ArrowRight, GiftIcon, Heart, Lock, Sparkle } from "@/components/primitives/Glyphs";
 import { ItemLink } from "@/components/primitives/ItemLink";
 import { ProductArt } from "@/components/primitives/ProductArt";
 import { VisaLockup } from "@/components/primitives/VisaMark";
 import { PageShell, PaperCard, SectionLabel } from "@/components/layout/PageShell";
 import { storyChapters } from "@/data/chapters";
-import { getProduct } from "@/data/products";
+import {
+  daysUntilBirthday,
+  getProduct,
+  giftProfiles,
+  giftableUserIds,
+  groupGifts,
+} from "@/data/products";
 import { backendGroupId, group, getUser, userList } from "@/data/users";
 import type { FindItem } from "@/lib/apiTypes";
+import type { UserId } from "@/lib/types";
+import { formatPrice } from "@/services/commerce";
 import { useApp } from "@/state/store";
 
 const pill: React.CSSProperties = {
@@ -51,10 +61,17 @@ const FEED_SIZE = 12;
 export default function HomePage() {
   const { orders, savedProductIds, wishlist } = useApp();
   const { openItem } = useItemDetail();
+  const [whose, setWhose] = useState<UserId | null>(null);
 
   const feed = useGroupFinds(backendGroupId);
   const finds = feed.status === "ready" ? feed.finds : [];
-  const recent = feedOrder(finds, FEED_SIZE);
+  const debate = useGroupDebate(backendGroupId);
+
+  // The Wrapped calls one item the month's most argued-about buy. Round-robining the
+  // feed by person buries it around row six, so the claim has nothing behind it on the
+  // page the judges land on. Pin it instead, and say why it is pinned.
+  const hotId = debate.status === "ready" ? debate.debate.itemId : null;
+  const recent = pinFirst(feedOrder(finds, FEED_SIZE), finds, hotId);
 
   return (
     <PageShell>
@@ -185,6 +202,39 @@ export default function HomePage() {
         </PaperCard>
       </motion.div>
 
+      {/* gifting — the second thing the Wrapped is for, so it is on the page too */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+          marginTop: 40,
+        }}
+      >
+        <SectionLabel>Gifting</SectionLabel>
+        <Link
+          href="/wrapped?chapter=gift"
+          scroll={false}
+          style={{ fontSize: 14, fontWeight: 700, color: "#F5E39B" }}
+        >
+          Open the gifting chapter →
+        </Link>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: 14,
+          marginTop: 14,
+        }}
+      >
+        {giftableUserIds.map((id) => (
+          <GiftLead key={id} forUserId={id} />
+        ))}
+      </div>
+
       {/* members */}
       <SectionLabel style={{ marginTop: 40 }}>The group</SectionLabel>
       <div
@@ -199,8 +249,11 @@ export default function HomePage() {
           // Anonymous items are stripped of their owner, so they count for that person alone.
           const count = finds.filter((f) => f.ownerId === u.id).length;
           return (
-            <div
+            <button
               key={u.id}
+              type="button"
+              onClick={() => setWhose(u.id)}
+              aria-label={`Open ${u.name}'s purchases and wishlist`}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -213,6 +266,9 @@ export default function HomePage() {
                 color: "#141A47",
                 boxShadow: "4px 4px 0 #141A47",
                 transform: `rotate(${[-0.8, 0.6, -0.5, 0.7][i]}deg)`,
+                font: "inherit",
+                textAlign: "left",
+                cursor: "pointer",
               }}
             >
               <div
@@ -244,10 +300,12 @@ export default function HomePage() {
                   {u.persona}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.8 }}>
-                  {feed.status === "ready" ? `${count} shared this month` : "counting…"}
+                  {feed.status === "ready"
+                    ? `${count} shared · see their lists`
+                    : "counting…"}
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
 
@@ -285,7 +343,17 @@ export default function HomePage() {
         {feed.status === "loading" &&
           Array.from({ length: FEED_SIZE }, (_, i) => <FindTileGhost key={i} />)}
         {feed.status === "ready" &&
-          recent.map((find) => <SharedFindTile key={find.id} find={find} />)}
+          recent.map((find) => (
+            <SharedFindTile
+              key={find.id}
+              find={find}
+              hot={
+                find.id === hotId && debate.status === "ready"
+                  ? debate.debate.commentCount
+                  : null
+              }
+            />
+          ))}
       </div>
 
       {feed.status === "error" && <FeedNotice>the group feed is not answering.</FeedNotice>}
@@ -397,7 +465,148 @@ export default function HomePage() {
           <VisaLockup height={18} />
         </span>
       </div>
+
+      <PersonSheet userId={whose} finds={finds} onClose={() => setWhose(null)} />
     </PageShell>
+  );
+}
+
+/** Hoists one row to the front of an already-trimmed page, keeping the page the same size. */
+function pinFirst(page: FindItem[], all: FindItem[], id: string | null): FindItem[] {
+  if (!id) return page;
+  const pinned = all.find((f) => f.id === id);
+  if (!pinned) return page;
+  const rest = page.filter((f) => f.id !== id);
+  return [pinned, ...rest].slice(0, page.length);
+}
+
+/**
+ * One person's gift lead: the countdown, the group gift the Wrapped picked, and the
+ * signals it read them off. Everything here is the same data the gifting chapter
+ * shows — the point of a Wrapped is that you do not have to play it to see the facts.
+ */
+function GiftLead({ forUserId }: { forUserId: UserId }) {
+  const { openItem } = useItemDetail();
+  const person = getUser(forUserId);
+  const gift = groupGifts[forUserId];
+  const product = getProduct(gift.productId);
+  const days = daysUntilBirthday(forUserId);
+  const tags = giftProfiles[forUserId].tags.slice(0, 3);
+  const each = Math.ceil(product.priceCents / gift.splitWays);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        padding: 14,
+        boxSizing: "border-box",
+        border: "2px solid #141A47",
+        borderRadius: 22,
+        background: "#F5ECD9",
+        color: "#141A47",
+        boxShadow: "4px 4px 0 #141A47",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            flexShrink: 0,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "2px solid #141A47",
+          }}
+        >
+          <Avatar who={forUserId} />
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 700, flex: 1, minWidth: 0 }}>
+          For {person.name}
+        </div>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 26,
+            padding: "0 10px",
+            boxSizing: "border-box",
+            borderRadius: 999,
+            background: gift.bannerBg,
+            border: "2px solid #141A47",
+            fontSize: 11.5,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <GiftIcon size={13} />
+          {days} days
+        </div>
+      </div>
+
+      <ItemLink
+        url={product.url}
+        label={`${product.title} at ${product.merchant}`}
+        onActivate={() => openItem({ kind: "product", id: product.id })}
+        style={{ display: "flex", gap: 12, marginTop: 12 }}
+      >
+        <div
+          style={{
+            width: 84,
+            height: 84,
+            flexShrink: 0,
+            boxSizing: "border-box",
+            border: "2px solid #141A47",
+            borderRadius: 16,
+            background: product.bg,
+            padding: product.image ? 0 : 8,
+            overflow: "hidden",
+          }}
+        >
+          <ProductArt kind={product.art} src={product.image} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-display), Georgia, serif",
+              fontSize: 22,
+              lineHeight: 1.02,
+            }}
+          >
+            {product.title}
+          </div>
+          <div style={{ fontSize: 13, opacity: 0.75 }}>{product.merchant}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+            {formatPrice(product.priceCents)} · {formatPrice(each)} each, split{" "}
+            {gift.splitWays} ways
+          </div>
+        </div>
+      </ItemLink>
+
+      <div style={{ fontSize: 13.5, lineHeight: 1.35, marginTop: 10 }}>{gift.why}</div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+        {tags.map((t) => (
+          <span
+            key={t}
+            style={{
+              height: 24,
+              padding: "0 10px",
+              display: "inline-flex",
+              alignItems: "center",
+              boxSizing: "border-box",
+              border: "1.5px solid #141A47",
+              borderRadius: 999,
+              fontSize: 11.5,
+              fontWeight: 600,
+            }}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -409,7 +618,7 @@ export default function HomePage() {
  * Finds carry no price — that is the backend's privacy design, not a gap — so
  * the row that used to hold the amount holds the real heart count instead.
  */
-function SharedFindTile({ find }: { find: FindItem }) {
+function SharedFindTile({ find, hot }: { find: FindItem; hot: number | null }) {
   const [talking, setTalking] = useState(false);
   const { openItem } = useItemDetail();
   const owner = ownerOf(find);
@@ -421,13 +630,35 @@ function SharedFindTile({ find }: { find: FindItem }) {
         gridColumn: talking ? "1 / -1" : "auto",
         padding: 12,
         boxSizing: "border-box",
-        border: "2px solid #141A47",
+        border: hot === null ? "2px solid #141A47" : "3px solid #B8412F",
         borderRadius: 20,
         background: "#F5ECD9",
         color: "#141A47",
-        boxShadow: "4px 4px 0 #141A47",
+        boxShadow: hot === null ? "4px 4px 0 #141A47" : "5px 5px 0 #B8412F",
       }}
     >
+      {hot !== null && (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 24,
+            padding: "0 10px",
+            marginBottom: 8,
+            boxSizing: "border-box",
+            borderRadius: 999,
+            background: "#B8412F",
+            color: "#F5ECD9",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Most talked about · {hot}
+        </div>
+      )}
       {/* The whole tile opens the item, not the shop: who shared it, how many
           hearts, who has it on a list, and the conversation, all in one place. */}
       <ItemLink
